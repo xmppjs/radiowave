@@ -1,0 +1,44 @@
+'use strict';
+
+var ltx = require('ltx'),
+    util = require('util'),
+    winston = require('winston'),
+    logger = winston.loggers.get('xepcomponent'),
+    XepComponent = require('./XepComponent');
+
+var NS_DISCO_INFO = 'http://jabber.org/protocol/disco#info';
+//  NS_DISCO_ITEM = 'http://jabber.org/protocol/disco#items';
+
+/*
+ * XEP-0030: Service Discovery
+ * http://xmpp.org/extensions/xep-0030.html
+ *
+ */
+function Disco() {
+    XepComponent.call(this);
+}
+util.inherits(Disco, XepComponent);
+
+Disco.prototype.name = 'XEP-0030: Service Discovery';
+
+Disco.prototype.match = function (stanza) {
+    if (stanza.is('iq') && stanza.attrs.type === 'get' && (stanza.getChild('query', NS_DISCO_INFO))) {
+        logger.debug('detected discovery request');
+        return true;
+    }
+    return false;
+};
+
+Disco.prototype.handle = function (stanza) {
+    // stanza is already verified
+
+    var error = ltx.parse(stanza.toString());
+    error.attrs.type = 'error';
+    error.attrs.to = stanza.attrs.from;
+    delete error.attrs.from;
+
+    logger.debug('error send');
+    this.send(error);
+};
+
+module.exports = Disco;
