@@ -1,0 +1,55 @@
+#!/usr/bin/env node
+'use strict';
+
+var winston = require('winston'),
+    logconfig = require('../config/LogConfig');
+
+var logger = winston.loggers.get('xrocket');
+
+// Xmpp Server
+var XRocket = require('../core/XRocket');
+
+// initialize connection manager
+var C2SServer = require('../net/C2SServer');
+
+// C2S Server 
+var cs2 = new C2SServer({});
+
+// attach connection manager to xrocket
+var xR = new XRocket();
+xR.addConnectionManager(cs2);
+
+// base system is up and running
+var ComponentRouter = require('../router/ComponentRouter');
+var Rfc3921Roaster = require('../xep/Rfc3921-roaster');
+var Rfc3921Messaging = require('../xep/Rfc3921-messaging');
+var Xep0199 = require('../xep/Xep0199-ping');
+var Xep0092 = require('../xep/Xep0092-version');
+var Xep0030 = require('../xep/Xep0030-disco');
+
+var cr = new ComponentRouter();
+
+// start roaster
+var PGConn = require('../util/PGConn');
+var pgConnectionString = process.env.DATABASE_URL;
+var pgC = new PGConn(pgConnectionString);
+pgC.connect(function () {
+    cr.register(new Rfc3921Roaster({
+        storage: {
+            client: pgC.getClient()
+        }
+    }));
+});
+
+cr.register(new Rfc3921Messaging());
+cr.register(new Xep0030());
+cr.register(new Xep0199());
+cr.register(new Xep0092());
+
+var LogRouter = require('../router/LogRouter');
+var lpr = new LogRouter();
+
+// chain XRocket to Logger to ComponentRouter
+xR.chain(lpr).chain(cr);
+
+logger.debug('successfully started xrocket');
