@@ -1,0 +1,27 @@
+{
+  "name": "xrocket",
+  "description": "lightweight xmpp server",
+  "version": "0.1.0",
+  "dependencies": {
+    "node-xmpp-core" : "~0.2.0",
+    "node-xmpp-server" : "0.2.3",
+    "nconf": "~0.6.8",
+    "ltx": ">= 0.2.0",
+    "node-uuid": "1.4.1",
+    "winston": "*",
+    "pg": "2.8.2"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-jshint": "~0.6.0",
+    "grunt-mocha-cli": "~1.1.0",
+    "node-xmpp-client" : "0.1.2",
+    "grunt-retire": "~0.1.20",
+    "should" : "2.0.2"
+  },
+  "scripts": {},
+  "engines": {
+    "node": "0.10.x",
+    "npm": "1.2.x"
+  }
+}
