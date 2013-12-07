@@ -5,15 +5,14 @@ var JID = require('node-xmpp-core').JID,
     logger = winston.loggers.get('authentication');
 
 function Simple() {
-
-    this.users = {
-        'romeo' : 'romeo',
-        'mercutio' : 'mercutio',
-        'benvolio' : 'benvolio'
-    };
+    this.users = {};
 }
 
 Simple.prototype.name = 'Simple';
+
+Simple.prototype.addUser = function (username, password) {
+    this.users[username] = password;
+};
 
 Simple.prototype.match = function (method) {
     if (method === 'PLAIN') {

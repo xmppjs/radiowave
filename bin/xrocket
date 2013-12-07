@@ -7,7 +7,8 @@ var winston = require('winston'),
 var logger = winston.loggers.get('xrocket');
 
 // Xmpp Server
-var XRocket = require('../core/XRocket');
+var XRocket = require('../core/XRocket'),
+    Simple = require('../auth/Simple');
 
 // initialize connection manager
 var C2SServer = require('../net/C2SServer');
@@ -18,6 +19,13 @@ var cs2 = new C2SServer({});
 // attach connection manager to xrocket
 var xR = new XRocket();
 xR.addConnectionManager(cs2);
+
+// register users
+var simpleAuth = new Simple();
+simpleAuth.addUser('romeo','romeo');
+simpleAuth.addUser('mercutio','mercutio');
+simpleAuth.addUser('benvolio','benvolio');
+xR.connectionRouter.addAuthMethod(simpleAuth);
 
 // base system is up and running
 var ComponentRouter = require('../router/ComponentRouter');
