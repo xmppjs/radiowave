@@ -1,8 +1,12 @@
 'use strict';
 
 // assertion
-var assert = require("assert"),
+var assert = require('assert'),
     should = require('should');
+
+// logging
+var LogConfig = require('../config/LogConfig');
+LogConfig.configure('error');
 
 // xmpp client
 var ltx = require('ltx'),
