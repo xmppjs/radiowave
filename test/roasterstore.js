@@ -113,8 +113,6 @@ describe('Roaster', function () {
                 assert.ok(roaster.length === initialroaster.length);
                 done();
             });
-
-            done();
         });
     });
 });

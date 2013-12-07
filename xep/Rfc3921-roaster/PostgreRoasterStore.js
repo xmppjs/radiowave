@@ -77,6 +77,53 @@ var Roaster = function(options) {
 Roaster.prototype = {
 
     /**
+     * returns a specific roaster item
+     * @param  jid      jid of the roaster owner
+     * @param  itemjid  jid of roaster entry
+     */
+    get: function(jid, itemjid, callback) {
+        if (!this.client) {
+            callback('no established db connection');
+        }
+
+        var err = null;
+        var select = this.client.query({
+            name: 'roaster_select_item',
+            text: 'SELECT item FROM roaster where  jid = $1 and item->>\'jid\' = $2;',
+            values: [jid, itemjid]
+        });
+
+        select.on('row', function(row, result) {
+            result.addRow(row);
+        });
+
+        select.on('error', function(error) {
+            err = error;
+        });
+
+        select.on('end', function(result) {
+            if (err) {
+                if (callback) {
+                    callback(err, null);
+                }
+            } else {
+                // proper list
+                if (result.rows && result.rows.length >= 1) {
+                    if (callback) {
+                        callback(null, result.rows[0].item);
+                    }
+                }
+                // not found
+                else {
+                    if (callback) {
+                        callback(null, null);
+                    }
+                }
+            }
+        });
+    },
+
+    /**
      * Returns the roaster items
      * @param  jid      jid of the roaster owner
      * @param  callback error and roaster item array, 
@@ -185,10 +232,12 @@ Roaster.prototype = {
             }
 
             if (err) {
+                logger.error(err);
                 if (callback) {
                     callback(err, null);
                 }
             } else {
+                logger.debug('database query successfully');
                 if (callback) {
                     callback(null, item);
                 }
