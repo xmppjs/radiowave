@@ -11,15 +11,42 @@ var XRocket = require('../core/XRocket'),
     Simple = require('../auth/Simple');
 
 // initialize connection manager
-var C2SServer = require('../net/C2SServer');
-
-// C2S Server 
-var cs2 = new C2SServer({});
+var C2SServer = require('../net/C2SServer'),
+    pem = require('pem');
 
 // attach connection manager to xrocket
 var xR = new XRocket();
-xR.addConnectionManager(cs2);
 
+// C2S Server 
+var cs2 = null;
+var tls = null;
+pem.createCertificate({
+    days: 1,
+    selfSigned: true,
+    organization : 'xrocket',
+    organizationUnit : 'development',
+    commonName : 'xrocket'
+
+}, function (err, keys) {
+    if (err) {
+        logger.error(err);
+    } else {
+        tls = {
+            key: keys.serviceKey + '\n',
+            cert: keys.certificate + '\n'
+        };
+        tls.ca = tls.cert;
+
+        cs2 = new C2SServer({
+            port: 5222,
+            domain: 'example.net',
+            requestCert: true,
+            rejectUnauthorized: false,
+            tls: tls
+        });
+        xR.addConnectionManager(cs2);
+    }
+});
 // register users
 var simpleAuth = new Simple();
 simpleAuth.addUser('romeo','romeo');
