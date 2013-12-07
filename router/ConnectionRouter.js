@@ -5,11 +5,8 @@ var util = require('util'),
     logger = winston.loggers.get('connrouter'),
     BaseRouter = require('./BaseRouter');
 
-var Simple = require('../auth/Simple');
-
 var JID = require('node-xmpp-core').JID,
     XmppVerify = require('../core/XmppVerify');
-
 
 /**
  * Manages connections and route the requests to other routes
@@ -19,11 +16,15 @@ var JID = require('node-xmpp-core').JID,
 function ConnectionRouter() {
     BaseRouter.call(this);
 
-    this.authMethods = [new Simple()];
+    this.authMethods = [];
 
     this.sessions = {};
 }
 util.inherits(ConnectionRouter, BaseRouter);
+
+ConnectionRouter.prototype.addAuthMethod = function(method) {
+    this.authMethods.push(method);
+};
 
 ConnectionRouter.prototype.findAuthMethod = function (method) {
     var found = [];
