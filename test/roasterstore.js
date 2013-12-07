@@ -2,6 +2,10 @@
 var assert = require('assert'),
     should = require('should');
 
+// logging
+var LogConfig = require('../config/LogConfig');
+LogConfig.configure('error');
+
 // postgresql and roaster storage
 var PGConn = require('../util/PGConn'),
     PostgreRoasterStore = require('../xep/Rfc3921-roaster/PostgreRoasterStore');

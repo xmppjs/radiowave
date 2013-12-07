@@ -1,8 +1,12 @@
 'use strict';
 
 // assertion
-var assert = require("assert"),
+var assert = require('assert'),
     should = require('should');
+
+// logging
+var LogConfig = require('../config/LogConfig');
+LogConfig.configure('error');
 
 // xmpp client
 var ltx = require('ltx'),
@@ -66,12 +70,11 @@ function sendRoasterItem(el, result, done) {
             'xmlns': 'jabber:iq:roster'
         }).cnode(el);
 
-        console.log(roaster.root().toString());
         cl.send(roaster);
     });
 
     cl.on('error', function (e) {
-        console.log(e);
+        console.error(e);
         done(e);
     });
 }
@@ -167,12 +170,11 @@ describe('Rfc3921', function () {
                 }).c('query', {
                     'xmlns': 'jabber:iq:roster'
                 });
-                console.log(roaster.root().toString());
                 cl.send(roaster);
             });
 
             cl.on('error', function (e) {
-                console.log(e);
+                console.error(e);
                 done(e);
             });
         });

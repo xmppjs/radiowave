@@ -4,6 +4,10 @@
 var assert = require('assert'),
     should = require('should');
 
+// logging
+var LogConfig = require('../config/LogConfig');
+LogConfig.configure('error');
+
 // xmpp client
 var ltx = require('ltx'),
     Client = require('node-xmpp-client');
@@ -105,12 +109,11 @@ describe('Version', function () {
                 }).c('query', {
                     'xmlns': NS_VERSION
                 });
-                console.log(version.root().toString());
                 cl.send(version);
             });
 
             cl.on('error', function (e) {
-                console.log(e);
+                console.error(e);
                 done(e);
             });
 
