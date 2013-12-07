@@ -2,7 +2,7 @@
 'use strict';
 
 var winston = require('winston'),
-    logconfig = require('../config/LogConfig');
+    LogConfig = require('../config/LogConfig');
 
 var logger = winston.loggers.get('xrocket');
 
@@ -13,6 +13,9 @@ var XRocket = require('../core/XRocket'),
 // initialize connection manager
 var C2SServer = require('../net/C2SServer'),
     pem = require('pem');
+
+// set log level
+LogConfig.configure('silly');
 
 // attach connection manager to xrocket
 var xR = new XRocket();
