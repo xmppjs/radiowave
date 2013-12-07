@@ -9,7 +9,8 @@
     "ltx": ">= 0.2.0",
     "node-uuid": "1.4.1",
     "winston": "*",
-    "pg": "2.8.2"
+    "pg": "2.8.2",
+    "pem": ">=1.2.2"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
