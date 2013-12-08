@@ -2,6 +2,8 @@
   "name": "xrocket",
   "description": "lightweight xmpp server",
   "version": "0.1.0",
+  "bin" : { "xrocket" : "./bin/xrocket" },
+  "main": "xrocket.js",
   "dependencies": {
     "node-xmpp-core" : "~0.2.0",
     "node-xmpp-server" : "0.2.3",
