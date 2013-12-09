@@ -22,6 +22,8 @@ util.inherits(Ping, XepComponent);
 
 Ping.prototype.name = 'XEP-0199: XMPP Ping';
 
+Ping.prototype.version = '0.1.0';
+
 /**
  * check if this component handles this type of message
  * 

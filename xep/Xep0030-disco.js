@@ -21,6 +21,8 @@ util.inherits(Disco, XepComponent);
 
 Disco.prototype.name = 'XEP-0030: Service Discovery';
 
+Disco.prototype.version = '0.1.0';
+
 Disco.prototype.match = function (stanza) {
     if (stanza.is('iq') && stanza.attrs.type === 'get' && (stanza.getChild('query', NS_DISCO_INFO))) {
         logger.debug('detected discovery request');

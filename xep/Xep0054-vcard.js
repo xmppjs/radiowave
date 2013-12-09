@@ -23,6 +23,8 @@ util.inherits(VCard, XepComponent);
 
 VCard.prototype.name = 'XEP-0054: vcard-temp';
 
+VCard.prototype.version = '0.1.0';
+
 var NS_VCARD = 'vcard-temp';
 
 VCard.prototype.set = function (user, vcard, callback) {
