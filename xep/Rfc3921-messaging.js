@@ -16,6 +16,8 @@ util.inherits(Messaging, XepComponent);
 
 Messaging.prototype.name = 'RFC 3921:  Exchanging Messages';
 
+Messaging.prototype.version = '0.1.0';
+
 Messaging.prototype.match = function (stanza) {
     if (stanza.is('message') && stanza.attrs.type === 'chat') {
         logger.debug('detected message request');

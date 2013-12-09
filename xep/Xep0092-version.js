@@ -26,6 +26,8 @@ util.inherits(Version, XepComponent);
 
 Version.prototype.name = 'XEP-0092: Software Version';
 
+Version.prototype.version = '0.1.0';
+
 /**
  * check if this component handles this type of message
  * <iq

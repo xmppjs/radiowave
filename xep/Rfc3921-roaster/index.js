@@ -32,6 +32,8 @@ util.inherits(Roaster, XepComponent);
 
 Roaster.prototype.name = 'RFC 3921: Roaster';
 
+Roaster.prototype.version = '0.1.0';
+
 Roaster.prototype.RoasterStore = PostgreRoasterStore;
 
 /*
