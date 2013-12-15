@@ -116,6 +116,9 @@ Roaster.prototype.handleGetRoaster  = function(stanza) {
             type: 'result'
         });
 
+        if (!list) {
+            list = [];
+        }
         roasterResult.cnode(self.convertJSONtoXML(list));
 
         logger.debug('send roaster to ' + stanza.attrs.from);

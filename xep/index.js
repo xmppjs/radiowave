@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+    XepComponent : require('./XepComponent'),
     Rfc3921Messaging: require('./Rfc3921-messaging'),
     Rfc3921Roaster : require('./Rfc3921-roaster'),
     Xep0030 : require('./Xep0030-disco'),
