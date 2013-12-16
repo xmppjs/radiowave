@@ -214,7 +214,7 @@ PubSub.prototype.handleSubscribe = function (node, stanza, pubsub) {
 
     // check that jids match
     if (!from.bare().equals(subscriber)) {
-        logger.error('subscriptions jids do not match : '+ from.bare().toString() + ' != ' + subscriber.toString() );
+        logger.error('subscriptions jids do not match : ' + from.bare().toString() + ' != ' + subscriber.toString());
         // this is a wrong stanza
         var errorXml = ltx.parse('<error type=\'modify\'><bad-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><invalid-jid xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
         this.sendError(stanza, errorXml);
@@ -275,7 +275,7 @@ PubSub.prototype.getNode = function (nodename, callback) {
  * @see http://xmpp.org/extensions/xep-0060.html#subscriber-unsubscribe
  */
 PubSub.prototype.handleUnSubscribe = function (node, stanza, pubsub) {
-
+    var errorXml = null;
     var sub = pubsub.getChild('unsubscribe');
 
     var from = new JID(stanza.attrs.from);
@@ -284,18 +284,25 @@ PubSub.prototype.handleUnSubscribe = function (node, stanza, pubsub) {
     // check that jids match
     if (!from.bare().equals(subscriber)) {
         // this is a wrong stanza
-        var errorXml = ltx.parse('<error type=\'modify\'><bad-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><invalid-jid xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
+        errorXml = ltx.parse('<error type=\'modify\'><bad-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><invalid-jid xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
         this.sendError(stanza, errorXml);
         return;
     }
 
-    // unsubscribe user
-    node.unsubscribe(subscriber);
+    // unregister subscriber
+    if (node.isSubscribed(subscriber)) {
 
-    // store change
-    this.Storage.Nodes.update(node.getNodeDescription());
+        // unsubscribe user
+        node.unsubscribe(subscriber);
 
-    this.sendSuccess(stanza);
+        // store change
+        this.Storage.Nodes.update(node.getNodeDescription());
+
+        this.sendSuccess(stanza);
+    } else {
+        errorXml = ltx.parse('<error type=\'cancel\'><unexpected-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><not-subscribed xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
+        this.sendError(stanza, errorXml);
+    }
 
 };
 
@@ -352,9 +359,10 @@ PubSub.prototype.handlePublish = function (node, stanza) {
     }
 };
 
-
 PubSub.prototype.handlePubSub = function (stanza, pubsub) {
-    var self = this, nodename = null, sub = null;
+    var self = this,
+        nodename = null,
+        sub = null;
 
     // handle create a new node
     if (pubsub.getChild('create')) {
