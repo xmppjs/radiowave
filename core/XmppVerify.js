@@ -20,10 +20,10 @@ XmppVerify.prototype = {
         var fromJID = new JID(stanza.attrs.from);
         var streamJID = stream.jid;
 
-        logger.debug('verify sender JID ' + fromJID + ' with stream JID ' + streamJID);
+        logger.debug('verification of sender JID ' + fromJID + ' with stream JID ' + streamJID);
 
         if (!streamJID.equals(fromJID)) {
-            logger.error('verify of JIDs failed');
+            logger.error('verification of JIDs failed');
             return 'invalid-from';
         } else {
             return null;
