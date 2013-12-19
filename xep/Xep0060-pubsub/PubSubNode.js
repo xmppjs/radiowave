@@ -31,6 +31,14 @@ function PubSubNode(item) {
 
 PubSubNode.prototype = {
 
+    name : function () {
+        return this.item.name;
+    },
+
+    subdomain : function () {
+        return this.item.subdomain;
+    },
+
     jid: function () {
         return new JID(null, this.domain, null);
     },
