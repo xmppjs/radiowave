@@ -136,7 +136,7 @@ describe('Xep-0060', function () {
 
     describe('Pubblish-Subscribe', function () {
 
-        describe('6.1 Subscribe to a Node', function () {
+        describe('8.1 Create a Node', function () {
             /**
              * request
              * <iq type='set'
@@ -433,10 +433,6 @@ describe('Xep-0060', function () {
                     }
                 });
             });
-        });
-
-        it('7.1 Publish an Item to a Node', function (done) {
-            done();
         });
 
         describe('6.2. Unsubscribe from a Node', function () {
