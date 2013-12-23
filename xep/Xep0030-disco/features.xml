@@ -1,0 +1,12 @@
+<features>
+<var>
+  <name>http://jabber.org/protocol/disco#info</name>
+  <desc>See XEP-0030</desc>
+  <doc>XEP-0030</doc>
+</var>
+<var>
+  <name>http://jabber.org/protocol/disco#items</name>
+  <desc>See XEP-0030</desc>
+  <doc>XEP-0030</doc>
+</var>
+</features>

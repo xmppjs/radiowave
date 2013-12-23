@@ -1,11 +1,14 @@
 'use strict';
 
-module.exports = function (grunt) {
+module.exports = function(grunt) {
 
     // Load the plugins.
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-mocha-cli');
     grunt.loadNpmTasks('grunt-retire');
+
+    // load xrocket tasks
+    grunt.loadTasks('./grunt/tasks')
 
     // Project configuration.
     grunt.initConfig({
@@ -28,6 +31,11 @@ module.exports = function (grunt) {
             options: {
                 nodeOnly: true,
                 verbose: true
+            }
+        },
+        genfeatures: {
+            options: {
+                files: ['xep/Xep0030-disco/features.xml', 'xep/Xep0060-pubsub/features.xml']
             }
         }
     });
