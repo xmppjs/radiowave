@@ -79,7 +79,15 @@ PubSub.prototype.createNode = function(name, features, callback) {
     // create a new pub sub node description
     var node = new PubSubNode({
         name: name,
-        subdomain: this.getSubdomain()
+        subdomain: this.getSubdomain(),
+        fields : {
+            'pubsub#deliver_payloads' : 1,
+            'pubsub#persist_items' : 1,
+            'pubsub#deliver_notifications' : 1,
+            'pubsub#access_model' : 'open',
+            'pubsub#notify_config' : 0,
+            'pubsub#notify_delete' : 1
+        }
     });
 
     // TODO handle with features
@@ -340,7 +348,7 @@ PubSub.prototype.handlePublish = function(node, stanza, publish) {
             item.text('');
 
             itemswithoutpayload.push(item);
-        })
+        });
 
         logger.debug(itemswithpayload.toString());
         logger.debug(itemswithoutpayload.toString());
