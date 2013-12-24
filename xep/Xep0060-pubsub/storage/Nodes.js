@@ -125,7 +125,7 @@ Nodes.prototype = {
                 // proper list
                 if (result.rows && result.rows.length >= 1) {
                     if (callback) {
-                        logger.debug(JSON.stringify(result.rows[0].node));
+                        // logger.debug(JSON.stringify(result.rows[0].node));
                         callback(null, result.rows[0].node);
                     }
                 }

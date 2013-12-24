@@ -73,25 +73,27 @@ PubSub.prototype.getSubdomain = function() {
  * creates a new pubsub node
  * @param node name of the pubsub node
  */
-PubSub.prototype.createNode = function(name, features, callback) {
+PubSub.prototype.createNode = function(name, configuration, callback) {
     logger.debug('create new pubsub node ' + name);
 
     // create a new pub sub node description
     var node = new PubSubNode({
         name: name,
-        subdomain: this.getSubdomain(),
-        fields : {
-            'pubsub#deliver_payloads' : 1,
-            'pubsub#persist_items' : 1,
-            'pubsub#deliver_notifications' : 1,
-            'pubsub#access_model' : 'open',
-            'pubsub#notify_config' : 0,
-            'pubsub#notify_delete' : 1
-        }
+        subdomain: this.getSubdomain()
     });
 
-    // TODO handle with features
-    // node.setConfiguration(NodeConfig.PUBSUB_NODE_Title, "my node title");
+    // set default parameter
+    node.setConfiguration('pubsub#deliver_payloads', 1);
+    node.setConfiguration('pubsub#deliver_notifications', 1);
+    node.setConfiguration('pubsub#persist_items', 1);
+    node.setConfiguration('pubsub#access_model', 'open');
+    node.setConfiguration('pubsub#notify_delete', 1);
+
+    // overwrite configuration
+    for (var i = 0; i < configuration.length; i++) {
+        logger.debug('set ' + name + ' key: ' + configuration[i].key + ' ' + configuration[i].value);
+        node.setConfiguration(configuration[i].key, configuration[i].value);
+    }
 
     this.Storage.Nodes.add(node.getNodeDescription(), callback);
 };
@@ -158,7 +160,24 @@ PubSub.prototype.handleCreate = function(stanza) {
     this.getNode(nodename, function(err, node) {
         // no node found, let's create it
         if (node === null) {
-            self.createNode(nodename, null, function(err) {
+            // extract features
+            var configuration = [];
+            var configure = pubsub.getChild('configure');
+            if (configure) {
+                var x = configure.getChild('x', 'jabber:x:data');
+                if (x) {
+                    var fields = x.getChildren('field');
+                    for (var i = 0, l = fields.length; i < l; i++) {
+                        configuration.push({
+                            key: fields[i].attrs.var,
+                            value: fields[i].getChild('value').text()
+                        });
+                    }
+                }
+            }
+
+            // create new node
+            self.createNode(nodename, configuration, function(err) {
                 // answer with error
                 if (err) {
                     logger.error(err);
@@ -214,7 +233,6 @@ PubSub.prototype.handleDelete = function(stanza, pubsub) {
  * @see @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe
  */
 PubSub.prototype.handleSubscribe = function(node, stanza, pubsub) {
-
     var sub = pubsub.getChild('subscribe');
     var jid = sub.attrs.jid;
 
@@ -231,46 +249,51 @@ PubSub.prototype.handleSubscribe = function(node, stanza, pubsub) {
     }
 
     // check that node exists
-
-    logger.debug('SUBSCRIBE: ' + jid + ' -> ' + node.name);
+    logger.debug(JSON.stringify(node.getNodeDescription()));
+    logger.debug('SUBSCRIBE: ' + jid + ' -> ' + node.name());
 
     // store new subscriber
     // TODO add barejid instead of full jid
     node.subscribe(subscriber.bare().toString());
 
     // store change
-    this.Storage.Nodes.update(node.getNodeDescription());
+    var self = this;
+    this.Storage.Nodes.update(node.getNodeDescription(), function() {
 
-    // Success Case, send confirmation
-    var msg = new Iq({
-        from: this.domain,
-        to: stanza.attrs.from,
-        id: stanza.attrs.id,
-        type: 'result'
+        logger.debug(JSON.stringify(node.getNodeDescription()));
+
+        // Success Case, send confirmation
+        var msg = new Iq({
+            from: self.domain,
+            to: stanza.attrs.from,
+            id: stanza.attrs.id,
+            type: 'result'
+        });
+        //var humanname = node.getConfiguration(NodeConfig.PUBSUB_NODE_Title);
+
+        msg.c('pubsub', {
+            'xmlns': NS_PUBSUB
+        }).c('subscription', {
+            'node': sub.attrs.node,
+            'jid': sub.attrs.jid,
+            'subscription': 'subscribed'
+        });
+
+        // send subscribe response
+        self.send(msg);
+
+        /*
+         * send old items to new subscriber
+         * TODO make dependend on node default
+         * @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe-last
+         */
+        /*node.eachMessage(function (el) {
+            el.attrs.to = sub.attrs.jid;
+            // route message
+            this.send(el, null);
+        });*/
+
     });
-    //var humanname = node.getConfiguration(NodeConfig.PUBSUB_NODE_Title);
-
-    msg.c('pubsub', {
-        'xmlns': NS_PUBSUB
-    }).c('subscription', {
-        'node': sub.attrs.node,
-        'jid': sub.attrs.jid,
-        'subscription': 'subscribed'
-    });
-
-    // send subscribe response
-    this.send(msg);
-
-    /*
-     * send old items to new subscriber
-     * TODO make dependend on node default
-     * @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe-last
-     */
-    /*node.eachMessage(function (el) {
-        el.attrs.to = sub.attrs.jid;
-        // route message
-        this.send(el, null);
-    });*/
 };
 
 PubSub.prototype.getNode = function(nodename, callback) {
@@ -325,7 +348,7 @@ PubSub.prototype.handlePublish = function(node, stanza, publish) {
     var self = this;
 
     logger.debug(stanza.toString());
-    logger.debug(publish.toString());
+    logger.debug(JSON.stringify(node));
 
     // if node is available
     if (node) {
@@ -350,19 +373,26 @@ PubSub.prototype.handlePublish = function(node, stanza, publish) {
             itemswithoutpayload.push(item);
         });
 
-        logger.debug(itemswithpayload.toString());
-        logger.debug(itemswithoutpayload.toString());
+        logger.debug('With Payload:  ' + itemswithpayload.toString());
+        logger.debug('W/out Payload: ' +itemswithoutpayload.toString());
+
+        // generate notification message
+        var attachment = [];
+        if (node.getConfiguration('pubsub#deliver_payloads') === 1) {
+            attachment = itemswithpayload;
+        } else {
+            attachment = itemswithoutpayload;
+        }
 
         var msg = new Message({
             from: this.domain,
             to: ''
         });
-        msg.c('body').t('PubSubMessage.');
         msg.c('event', {
             'xmlns': 'http://jabber.org/protocol/pubsub#event'
         }).c('items', {
-            'node': node
-        }).children = itemswithpayload;
+            'node': node.name()
+        }).children = attachment;
 
         // store message if this option is activated
         /*if (item && item[0] && item[0].attrs && item[0].attrs.type) {
@@ -375,17 +405,6 @@ PubSub.prototype.handlePublish = function(node, stanza, publish) {
                 node.addMessage(msg);
             }
         }*/
-
-        // send message to subscriber
-        node.eachSubscriber(function(subscriber) {
-            var submsg = msg.clone();
-            submsg.attrs.to = subscriber;
-
-            logger.debug(submsg.root().toString());
-
-            self.send(submsg);
-        });
-
 
         // send response to sender
         var publishDetail = new ltx.Element('publish', {
@@ -400,6 +419,18 @@ PubSub.prototype.handlePublish = function(node, stanza, publish) {
 
 
         this.sendSuccess(stanza, detail);
+
+        logger.debug('send message to ' + JSON.stringify(node.getSubscriptions()));
+
+        // send notification message to subscriber
+        node.eachSubscriber(function(subscriber) {
+            var submsg = msg.clone();
+            submsg.attrs.to = subscriber;
+
+            logger.debug(submsg.root().toString());
+
+            self.send(submsg);
+        });
 
     } else {
         // TODO send error that the node is not available
@@ -423,7 +454,7 @@ PubSub.prototype.handlePubSub = function(stanza, pubsub) {
 
         sub = pubsub.getChild('subscribe');
         nodename = sub.attrs.node;
-        console.log(nodename);
+        logger.debug(nodename);
         self.getNode(nodename, function(err, node) {
             if (!err) {
                 // no node found
@@ -446,7 +477,7 @@ PubSub.prototype.handlePubSub = function(stanza, pubsub) {
     if (pubsub.getChild('unsubscribe')) {
         sub = pubsub.getChild('unsubscribe');
         nodename = sub.attrs.node;
-        console.log(nodename);
+        logger.debug(nodename);
         self.getNode(nodename, function(err, node) {
             if (!err) {
                 // no node found

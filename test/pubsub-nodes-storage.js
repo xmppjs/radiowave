@@ -29,13 +29,34 @@ var node1 =  {
 var node2 =  {
      "name" : "node2",
      "subdomain" : "pubsub",
+     "fiels" : {
+         "pubsub#title" : "node2 title",
+         "pubsub#description" : "description of node2"
+     }
+ };
+
+ var node2a =  {
+     "name" : "node2",
+     "subdomain" : "pubsub",
+     "subscription": {
+         "romeo@example.net" : {}
+     },
+     "fiels" : {
+         "pubsub#title" : "node2a title",
+         "pubsub#description" : "desc 2a"
+     }
+ };
+
+  var node2b =  {
+     "name" : "node2",
+     "subdomain" : "pubsub",
      "subscription": {
          "romeo@example.net" : {},
          "julia@examplenet" : {}
      },
      "fiels" : {
-         "pubsub#title" : "node2 title",
-         "pubsub#description" : "description of node2"
+         "pubsub#title" : "node2b title",
+         "pubsub#description" : "desc 2b"
      }
  };
 
@@ -97,6 +118,46 @@ describe('Pubsub Nodes', function () {
             pubsubNodes.add(node2, function (err, node) {
                 should.not.exist(err);
                 assert.deepEqual(node2, node);
+                done();
+            });
+        });
+
+        it('Update should be stored', function (done) {
+            pubsubNodes.get(node2.subdomain, node2.name, function (err, node) {
+                should.not.exist(err);
+                assert.deepEqual(node, node2);
+                done();
+            });
+        });
+
+        it('Update pubsub item', function (done) {
+            pubsubNodes.update(node2a, function (err, node) {
+                should.not.exist(err);
+                assert.deepEqual(node2a, node);
+                done();
+            });
+        });
+
+        it('Update should be stored', function (done) {
+            pubsubNodes.get(node2.subdomain, node2.name, function (err, node) {
+                should.not.exist(err);
+                assert.deepEqual(node, node2a);
+                done();
+            });
+        });
+
+        it('Update pubsub item', function (done) {
+            pubsubNodes.update(node2b, function (err, node) {
+                should.not.exist(err);
+                assert.deepEqual(node2b, node);
+                done();
+            });
+        });
+
+        it('Update should be stored', function (done) {
+            pubsubNodes.get(node2.subdomain, node2.name, function (err, node) {
+                should.not.exist(err);
+                assert.deepEqual(node, node2b);
                 done();
             });
         });
