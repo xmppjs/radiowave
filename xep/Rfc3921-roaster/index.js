@@ -8,6 +8,9 @@ var ltx = require('ltx'),
     JID = require('node-xmpp-core').JID,
     PostgreRoasterStore = require('./PostgreRoasterStore');
 
+var path = require('path'),
+    PGSchema = require('../../util/PGSchema');
+
 var NS_ROASTER = 'jabber:iq:roster';
 
 /*
@@ -25,6 +28,8 @@ function Roaster(options) {
         options.storage = {};
     }
 
+    this.options = options;
+
     XepComponent.call(this);
     this.roasterStorage = new this.RoasterStore(options.storage);
 }
@@ -35,6 +40,11 @@ Roaster.prototype.name = 'RFC 3921: Roaster';
 Roaster.prototype.version = '0.1.0';
 
 Roaster.prototype.RoasterStore = PostgreRoasterStore;
+
+Roaster.prototype.initialize = function() {
+    var filename = path.resolve(__dirname , './schema.json');
+    (new PGSchema(this.options.storage.client)).run(filename);
+};
 
 /*
  * Detects if the stanza is a roaster request
