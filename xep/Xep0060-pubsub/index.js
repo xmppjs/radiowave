@@ -10,15 +10,19 @@ var ltx = require('ltx'),
     Message = require('node-xmpp-core').Stanza.Message,
     JID = require('node-xmpp-core').JID;
 
+
+var path = require('path'),
+    PGSchema = require('../../util/PGSchema');
+
+var PubSubNode = require('./PubSubNode'),
+    Storage = require('./storage');
+
 // namespaces
 var NS_PUBSUB = 'http://jabber.org/protocol/pubsub',
     NS_PUBSUB_OWNER = 'http://jabber.org/protocol/pubsub#owner',
     NS_PUBSUB_CONFIG = 'http://jabber.org/protocol/pubsub#node_config';
 //    NS_JABBER_DATA =    'jabber:x:data';
 
-var PubSubNode = require('./PubSubNode');
-
-var Storage = require('./storage');
 
 /*
  * XEP-0060: Publish-Subscribe
@@ -26,6 +30,8 @@ var Storage = require('./storage');
  */
 
 function PubSub(options) {
+    this.options = options;
+
     this.subdomain = options.subdomain;
     this.domain = options.domain;
 
@@ -38,6 +44,11 @@ function PubSub(options) {
 util.inherits(PubSub, XepComponent);
 
 PubSub.prototype.name = 'XEP-0060: Publish-Subscribe';
+
+PubSub.prototype.initialize = function() {
+    var filename = path.resolve(__dirname , './storage/schema.json');
+    (new PGSchema(this.options.storage.client)).run(filename);
+};
 
 PubSub.prototype.match = function(stanza) {
     // TODO verify that this stanza is for this message
@@ -374,7 +385,7 @@ PubSub.prototype.handlePublish = function(node, stanza, publish) {
         });
 
         logger.debug('With Payload:  ' + itemswithpayload.toString());
-        logger.debug('W/out Payload: ' +itemswithoutpayload.toString());
+        logger.debug('W/out Payload: ' + itemswithoutpayload.toString());
 
         // generate notification message
         var attachment = [];
