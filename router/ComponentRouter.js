@@ -55,6 +55,9 @@ ComponentRouter.prototype.register = function (comp) {
         self.send(stanza);
     };
 
+    // initialize component
+    comp.initialize();
+
     // store component
     this.components.push(comp);
 
