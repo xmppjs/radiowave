@@ -5,8 +5,8 @@
   "bin" : { "xrocket" : "./bin/xrocket" },
   "main": "xrocket.js",
   "dependencies": {
-    "node-xmpp-core" : "~0.2.0",
-    "node-xmpp-server" : "0.2.3",
+    "node-xmpp-core" : "~0.2.2",
+    "node-xmpp-server" : "0.2.4",
     "nconf": "~0.6.8",
     "ltx": ">= 0.2.0",
     "node-uuid": "1.4.1",

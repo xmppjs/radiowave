@@ -64,6 +64,7 @@ var Rfc3921Messaging = require('../xep/Rfc3921-messaging');
 var Xep0199 = require('../xep/Xep0199-ping');
 var Xep0092 = require('../xep/Xep0092-version');
 var Xep0030 = require('../xep/Xep0030-disco');
+var Xep0060 = require('../xep/Xep0060-pubsub');
 
 var cr = new ComponentRouter();
 
@@ -72,7 +73,17 @@ var PGConn = require('../util/PGConn');
 var pgConnectionString = process.env.DATABASE_URL;
 var pgC = new PGConn(pgConnectionString);
 pgC.connect(function () {
+    // roaster
     cr.register(new Rfc3921Roaster({
+        storage: {
+            client: pgC.getClient()
+        }
+    }));
+
+    // pubsub
+    cr.register(new Xep0060({
+        subdomain: 'pubsub',
+        domain: 'example.net',
         storage: {
             client: pgC.getClient()
         }

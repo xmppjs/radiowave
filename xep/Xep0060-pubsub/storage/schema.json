@@ -1,0 +1,23 @@
+{
+    "name": "pubsub",
+    "type": "postgresql",
+    "versions": [{
+        "version": "0.0.2",
+        "description" : "Data model for pubsub items",
+        "statements": [
+            "CREATE TABLE pubsub_items (id SERIAL, subdomain TEXT, node TEXT, itemid TEXT, sender TEXT,  entry TEXT);",
+            "CREATE INDEX ON pubsub_items(subdomain);",
+            "CREATE INDEX ON pubsub_items(node);",
+            "CREATE INDEX ON pubsub_items(itemid);"
+        ]
+    }, 
+    {
+        "version": "0.0.1",
+        "description" : "Data model for pubsub nodes",
+        "statements": [
+            "CREATE TABLE pubsub_nodes (id SERIAL, node JSON);",
+            "CREATE INDEX ON pubsub_nodes ((node->>'name'));",
+            "CREATE INDEX ON pubsub_nodes ((node->>'subdomain'));"
+        ]
+    }]
+}
