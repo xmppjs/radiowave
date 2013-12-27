@@ -33,6 +33,8 @@ function generateFeatureJs(filename) {
     var features = loadFile(filename);
     console.log(features);
 
+    console.log('start generating javascript file');
+
     var fileContent = '';
 
     fileContent += '\'use strict\n;';
@@ -54,14 +56,27 @@ function generateFeatureJs(filename) {
         fileContent += ' * @see ' + feature.doc + '\n';
         fileContent += ' */\n';
 
+        // possible feature names:
+        // e.g. http://jabber.org/protocol/muc#roominfo
+        // e.g. muc_hidden
+        // if we have # we use the name after # otherwise the full name
+
         var featurename = feature.name.toUpperCase();
         featurename = featurename.replace(/-/g, '_');
-        var key = featurename.match(/#(\w*)/);
+        var featurekey = featurename.match(/#(\w*)/);
 
+        // console.log(featurekey);
+        var key = '';
+        if (featurekey && featurekey[1]) {
+            key = featurekey[1];
+        } else {
+            key = featurename;
+        }
+        console.log(featurename);
         console.log(key);
 
         // fileContent += key + ' : ' + '\'' + feature.name + '\','
-        fileContent += key[1] + ' : ' + JSON.stringify(feature)
+        fileContent += key + ' : ' + JSON.stringify(feature)
         if (i+1 < features.length) {
             fileContent += ',';
         }
