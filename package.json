@@ -10,7 +10,8 @@
     "nconf": "~0.6.8",
     "ltx": ">= 0.2.0",
     "node-uuid": "1.4.1",
-    "winston": "*",
+    "winston": "0.7.2",
+    "winston-posix-syslog" : "git+https://github.com/chris-rock/winston-posix-syslog.git#tests",
     "pg": "2.8.2",
     "pem": ">=1.2.2"
   },

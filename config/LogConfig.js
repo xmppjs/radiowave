@@ -1,82 +1,48 @@
 'use strict';
 
-var winston = require('winston');
+var winston = require('winston'),
+    PosixSyslog = require('winston-posix-syslog').PosixSyslog;
 
-var LogConfig = function () {};
+var LogConfig = function() {};
 
-LogConfig.prototype.configure = function (level) {
+var defaultConfiguration = {
+    console: {
+        level: 'debug',
+        colorize: 'true',
+    }
+}
 
-    winston.loggers.add('xrocket', {
-        console: {
-            level: level,
-            colorize: 'true',
-            label: 'xrocket'
-        }
-    });
+var syslogConfiguration = {
+    PosixSyslog: {
+        level: 'silly',
+        identity: 'xRocket Server'
+    } 
+}
 
-    winston.loggers.add('cm', {
-        console: {
-            level: level,
-            colorize: 'true',
-            label: 'cm'
-        }
-    });
+function getConfiguration (label) {
+    var conf = Object.create(defaultConfiguration);
+    conf.console.label = label;
+    conf.PosixSyslog.label = label;
+    return conf;
+} 
 
-    winston.loggers.add('router', {
-        console: {
-            level: level,
-            colorize: 'true',
-            label: 'router'
-        }
-    });
+LogConfig.prototype.configure = function(level) {
 
-    winston.loggers.add('connrouter', {
-        console: {
-            level: level,
-            colorize: 'true',
-            label: 'connrouter'
-        }
-    });
+    defaultConfiguration.console.level = level;
+    syslogConfiguration.PosixSyslog.level = level;
 
-    winston.loggers.add('logrouter', {
-        console: {
-            level: level,
-            colorize: 'true',
-            label: 'logrouter'
-        }
-    });
+    // activate syslog by default
+    defaultConfiguration.PosixSyslog = syslogConfiguration.PosixSyslog;
 
-    winston.loggers.add('xeprouter', {
-        console: {
-            level: level,
-            colorize: 'true',
-            label: 'xeprouter'
-        }
-    });
-
-    winston.loggers.add('xepcomponent', {
-        console: {
-            level: level,
-            colorize: 'true',
-            label: 'component'
-        }
-    });
-
-    winston.loggers.add('authentication', {
-        console: {
-            level: level,
-            colorize: 'true',
-            label: 'auth'
-        }
-    });
-
-    winston.loggers.add('postgresql', {
-        console: {
-            level: level,
-            colorize: 'true',
-            label: 'postgresql'
-        }
-    });
+    winston.loggers.add('xrocket', getConfiguration('xrocket'));
+    winston.loggers.add('cm', getConfiguration('cm'));
+    winston.loggers.add('router', getConfiguration('router'));
+    winston.loggers.add('connrouter', getConfiguration('connrouter'));
+    winston.loggers.add('logrouter', getConfiguration('logrouter'));
+    winston.loggers.add('xeprouter', getConfiguration('xeprouter'));
+    winston.loggers.add('xepcomponent', getConfiguration('xepcomponent'));
+    winston.loggers.add('authentication', getConfiguration('authentication'));
+    winston.loggers.add('postgresql', getConfiguration('postgresql'));
 };
 
 module.exports = new LogConfig();
