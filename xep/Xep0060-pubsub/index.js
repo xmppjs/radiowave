@@ -10,7 +10,6 @@ var ltx = require('ltx'),
     Message = require('node-xmpp-core').Stanza.Message,
     JID = require('node-xmpp-core').JID;
 
-
 var path = require('path'),
     PGSchema = require('../../util/PGSchema');
 
