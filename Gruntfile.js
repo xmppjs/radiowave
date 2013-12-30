@@ -35,7 +35,7 @@ module.exports = function(grunt) {
         },
         genfeatures: {
             options: {
-                files: ['xep/Xep0030-disco/features.xml', 'xep/Xep0060-pubsub/features.xml']
+                files: ['xep/Xep0030-disco/features.xml', 'xep/Xep0060-pubsub/features.xml', 'xep/Xep0045-muc/features.xml']
             }
         }
     });
