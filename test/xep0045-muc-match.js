@@ -116,5 +116,18 @@ describe('Xep-0045', function () {
             assert.equal(check(message), false);
             done();
         });
+
+        it('iq with wrong namespace', function (done) {
+            var message =
+            "<iq from='crone1@shakespeare.lit/desktop' \
+                id='unique1' \
+                to='chat.shakespeare.lit' \
+                type='get'> \
+                <unique xmlns='http://jabber.org/protocol/muc#unique'/> \
+                </iq>"
+
+            assert.equal(check(message), false);
+            done();
+        });
     });
 });
