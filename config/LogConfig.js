@@ -10,21 +10,21 @@ var defaultConfiguration = {
         level: 'debug',
         colorize: 'true',
     }
-}
+};
 
 var syslogConfiguration = {
     PosixSyslog: {
         level: 'silly',
         identity: 'xRocket Server'
-    } 
-}
+    }
+};
 
 function getConfiguration (label) {
     var conf = Object.create(defaultConfiguration);
     conf.console.label = label;
     conf.PosixSyslog.label = label;
     return conf;
-} 
+}
 
 LogConfig.prototype.configure = function(level) {
 

@@ -8,7 +8,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-retire');
 
     // load xrocket tasks
-    grunt.loadTasks('./grunt/tasks')
+    grunt.loadTasks('./grunt/tasks');
 
     // Project configuration.
     grunt.initConfig({
