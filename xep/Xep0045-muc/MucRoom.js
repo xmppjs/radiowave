@@ -51,11 +51,23 @@ MucRoom.prototype = {
             this.item.members = {};
         }
 
-        return this.item.subscriptions;
+        return this.item.members;
+    },
+
+    getMembers: function () {
+        var members = this.members();
+        var member = null;
+        var jids = [];
+        for (member in members) {
+            if (members.hasOwnProperty(member)) {
+                jids.push(member);
+            }
+        }
+        return jids;
     },
 
     join: function (jid, nickname) {
-    	logger.debug("join " + jid + " for room " + this.id);
+    	logger.debug("join " + jid + " for room " + this.name());
         if (!(jid instanceof JID)) {
             // detected jid instance
             jid = new JID(jid);
@@ -72,10 +84,8 @@ MucRoom.prototype = {
         return true;
     },
 
-	isSubscribed: function() {},
-
 	leave: function (jid) {
-		logger.debug("leave " + jid + " for room " + this.id);
+		logger.debug("leave " + jid + " for room " + this.name());
         if (!(jid instanceof JID)) {
             // detected jid instance
             jid = new JID(jid);
@@ -84,33 +94,31 @@ MucRoom.prototype = {
         // check that we have the bare jid
         jid = jid.bare();
 
-        // unsubscribe
-        logger.debug('unsubscribe ' + jid + ' for node ' + this.id);
+        // leave
         var members = this.members();
         delete members[jid.toString()];
     },
-
 
 	countMembers: function() {
         var members = this.members();
         return Object.keys(members).length;
 	},
 
-	/**
-	 * This is used to store more nicks than members. Here we store nicks of other nodes,
-	 * but they are not members on this node
-	 */
-	addNick: function(jid, nickname) {
-		this.nicks[jid] = nickname;
-	},
+    isMember: function(jid) {
+        if (!(jid instanceof JID)) {
+            // detected jid instance
+            jid = new JID(jid);
+        }
 
-	getNick: function(jid) {
-		return this.nicks[jid];
-	},
+        var bare = jid.bare();
 
-	removeNick: function(jid, nickname) {
-		delete this.nicks[jid];
-	},
+        var members = this.members();
+        if (members[bare.toString()]) {
+            return true;
+        } else {
+            return false;
+        }
+    },
 
 	/**
 	 * [eachMember description]
@@ -122,37 +130,25 @@ MucRoom.prototype = {
 		if (callback) {
 			for (member in this.members) {
 				if (this.members.hasOwnProperty(member) && member !== filter) {
-					console.log("mem:" + JSON.stringify(member));
 					callback(member);
 				}
 			}
 		}
 	},
 
-	eachMessage: function(callback) {
-		var i, l, el;
-		if (callback) {
-			for (i = 0, l = this.messages.length; i < l; i += 1) {
-				// extract message
-				el = ltx.parse(this.messages[i]);
-				callback(el);
-			}
-		}
-	},
+	setConfiguration: function (key, value) {
+        if (!this.item.fields) {
+            this.item.fields = {};
+        }
+        this.item.fields[key] = value;
+    },
 
-	addMessage: function(msg)  {
-		// store message in history
-		// implement storage filter
-		this.messages.push(msg.toString());
-	},
-
-	setConfiguration: function(key, value) {
-		this.configuration[key] = value;
-	},
-
-	getConfiguration: function(key) {
-		return this.configuration[key];
-	},
+    getConfiguration: function (key) {
+        if (!this.item.fields) {
+            this.item.fields = {};
+        }
+        return this.item.fields[key];
+    },
 
 	/**
 	 * Check whether the given JID is allowed to perform the requested task.
@@ -180,3 +176,5 @@ MucRoom.prototype = {
         return this.item;
     }
 };
+
+module.exports = MucRoom;
