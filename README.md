@@ -48,6 +48,7 @@ xRocket is a lightweight xmpp server that is made for the web:
 | [XEP-0199: XMPP Ping](http://xmpp.org/extensions/xep-0199.html)  | Ping Pong for XMPP | ✔ |
 | [XEP-0203: Delayed Delivery](http://xmpp.org/extensions/xep-0203.html)  | Offline messaging|✘ |
 | [DRAFT: Websocket](http://tools.ietf.org/html/draft-ietf-xmpp-websocket-00)  | Connect over HTTP with websockets |✘ |
+| [XEP-0307:Unique Room Names for Multi-User Chat](http://xmpp.org/extensions/xep-0307.html)  | Create unique room names | ✔ |
 | XMPP Security    |||
 | [XEP-0077: In-band Registration](http://xmpp.org/extensions/xep-0077.html)  | For account creators | ✘ |
 | [XEP-0158: CAPTCHA Forms](http://xmpp.org/extensions/xep-0158.html)  | Prevent bots | ✘ |
