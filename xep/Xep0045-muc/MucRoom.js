@@ -99,6 +99,17 @@ MucRoom.prototype = {
         delete members[jid.toString()];
     },
 
+    getNick : function (jid) {
+        var members = this.members();
+        var member = members[jid.toString()]
+
+        if (member['nick']) {
+            return member['nick'];
+        } else {
+             return null;
+        }
+    },
+
 	countMembers: function() {
         var members = this.members();
         return Object.keys(members).length;

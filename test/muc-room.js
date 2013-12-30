@@ -129,6 +129,16 @@ describe('Muc Rooms', function () {
         done();
     });
 
+    it('Get nick from romeo', function (done) {
+        assert.equal(room.getNick(members[0]),'romeo');
+        done();
+    });
+
+    it('Get nick from john', function (done) {
+        assert.equal(room.getNick(members[1]),'John Doe');
+        done();
+    });
+
     it('Delete subscription', function (done) {
         room.leave(members[0]);
         //console.log("SUBS: " + room.isSubscribed(members[0]));
