@@ -44,6 +44,7 @@ LogConfig.prototype.configure = function(level) {
     winston.loggers.add('authentication', getConfiguration('authentication'));
     winston.loggers.add('postgresql', getConfiguration('postgresql'));
     winston.loggers.add('storage', getConfiguration('storage'));
+    winston.loggers.add('webapi', getConfiguration('webapi'));
 };
 
 module.exports = new LogConfig();
