@@ -1,0 +1,82 @@
+<features>
+<var>
+  <name>http://jabber.org/protocol/muc#register</name>
+  <desc>Support for the muc#register FORM_TYPE</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>http://jabber.org/protocol/muc#roomconfig</name>
+  <desc>Support for the muc#roomconfig FORM_TYPE</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>http://jabber.org/protocol/muc#roominfo</name>
+  <desc>Support for the muc#roominfo FORM_TYPE</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_hidden</name>
+  <desc>Hidden room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_membersonly</name>
+  <desc>Members-only room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_moderated</name>
+  <desc>Moderated room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_nonanonymous</name>
+  <desc>Non-anonymous room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_open</name>
+  <desc>Open room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_passwordprotected</name>
+  <desc>Password-protected room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_persistent</name>
+  <desc>Persistent room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_public</name>
+  <desc>Public room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_rooms</name>
+  <desc>List of MUC rooms (each as a separate item)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_semianonymous</name>
+  <desc>Semi-anonymous room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_temporary</name>
+  <desc>Temporary room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_unmoderated</name>
+  <desc>Unmoderated room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+<var>
+  <name>muc_unsecured</name>
+  <desc>Unsecured room in Multi-User Chat (MUC)</desc>
+  <doc>XEP-0045</doc>
+</var>
+</features>
