@@ -183,6 +183,23 @@ MucRoom.prototype = {
 	 */
 	getAffiliation: function(jid) {},
 
+    eachMessage: function(callback) {
+        var i, l, el;
+        if (callback) {
+            for (i = 0, l = this.messages.length; i < l; i += 1) {
+                // extract message
+                el = ltx.parse(this.messages[i]);
+                callback(el);
+            }
+        }
+    },
+
+    addMessage: function(msg)  {
+        // store message in history
+        // implement storage filter
+        this.messages.push(msg.toString());
+    },
+
     getRoomDescription: function () {
         return this.item;
     }
