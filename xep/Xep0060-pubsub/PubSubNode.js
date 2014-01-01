@@ -40,7 +40,8 @@ PubSubNode.prototype = {
     },
 
     jid: function () {
-        return new JID(null, this.domain, null);
+        // TODO this does not work properly because domain is missing
+        return new JID(null, this.subdomain(), null);
     },
 
     // internal only

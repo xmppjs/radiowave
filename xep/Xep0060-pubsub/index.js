@@ -10,7 +10,6 @@ var ltx = require('ltx'),
     Message = require('node-xmpp-core').Stanza.Message,
     JID = require('node-xmpp-core').JID;
 
-
 var path = require('path'),
     PGSchema = require('../../util/PGSchema');
 
@@ -20,7 +19,9 @@ var PubSubNode = require('./PubSubNode'),
 // namespaces
 var NS_PUBSUB = 'http://jabber.org/protocol/pubsub',
     NS_PUBSUB_OWNER = 'http://jabber.org/protocol/pubsub#owner',
-    NS_PUBSUB_CONFIG = 'http://jabber.org/protocol/pubsub#node_config';
+    NS_PUBSUB_CONFIG = 'http://jabber.org/protocol/pubsub#node_config',
+    NS_DISCO_ITEMS = "http://jabber.org/protocol/disco#items",
+    NS_DISCO_INFO = "http://jabber.org/protocol/disco#info";
 //    NS_JABBER_DATA =    'jabber:x:data';
 
 
@@ -38,8 +39,12 @@ function PubSub(options) {
     XepComponent.call(this);
 
     this.Storage = {};
-    this.Storage.Nodes = new Storage.Nodes(options.storage);
-    this.Storage.Items = new Storage.Items(options.storage);
+    if (options.storage) {
+        this.Storage.Nodes = new Storage.Nodes(options.storage);
+        this.Storage.Items = new Storage.Items(options.storage);
+    } else {
+        logger.warn("PubSub cannot be properly initialized because options.storage is not defined");
+    }
 }
 util.inherits(PubSub, XepComponent);
 
@@ -51,7 +56,14 @@ PubSub.prototype.initialize = function() {
 };
 
 PubSub.prototype.match = function(stanza) {
-    // TODO verify that this stanza is for this message
+    var domain = this.subdomain + '.' + this.domain;
+    var jid = new JID(stanza.attrs.to);
+
+    // check that the domain fits
+    if (jid.getDomain().toString().localeCompare(domain) !== 0){
+        logger.debug('Muc ' + domain + ' does not accept ' + jid.toString());
+        return false;
+    }
 
     // normal pubsub request
     if (stanza.is('iq') && stanza.getChild('pubsub', NS_PUBSUB)) {
@@ -66,6 +78,15 @@ PubSub.prototype.match = function(stanza) {
     // configure requests
     else if (stanza.is('iq') && stanza.getChild('pubsub', NS_PUBSUB_CONFIG)) {
         logger.debug('detected pubsub request');
+        return true;
+    }
+
+    if (stanza.is('iq') && stanza.getChild('query', NS_DISCO_ITEMS)) {
+        logger.debug('detected muc ' + domain);
+        return true;
+    }
+    if (stanza.is('iq') && stanza.getChild('query', NS_DISCO_INFO)) {
+        logger.debug('detected muc ' + domain);
         return true;
     }
 
