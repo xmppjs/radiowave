@@ -14,7 +14,7 @@ module.exports = function(grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
         jshint: {
-            allFiles: ['gruntfile.js', 'auth/**/*.js', 'config/**/*.js', 'core/**/*.js', 'net/**/*.js', 'router/**/*.js', 'xep/**/*.js'],
+            allFiles: ['gruntfile.js', 'storage/**/*.js', 'auth/**/*.js', 'config/**/*.js', 'core/**/*.js', 'net/**/*.js', 'router/**/*.js', 'xep/**/*.js'],
             options: {
                 jshintrc: '.jshintrc',
             }
