@@ -51,7 +51,7 @@ util.inherits(PubSub, XepComponent);
 PubSub.prototype.name = 'XEP-0060: Publish-Subscribe';
 
 PubSub.prototype.initialize = function() {
-    var filename = path.resolve(__dirname , './storage/schema.json');
+    var filename = path.resolve(__dirname , '../../storage/postgre/pubsub/schema.json');
     (new PGSchema(this.options.storage.client)).run(filename);
 };
 

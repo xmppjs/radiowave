@@ -42,7 +42,7 @@ Roaster.prototype.version = '0.1.0';
 Roaster.prototype.RoasterStore = PostgreRoasterStore;
 
 Roaster.prototype.initialize = function() {
-    var filename = path.resolve(__dirname , './schema.json');
+    var filename = path.resolve(__dirname , '../../storage/postgre/roaster/schema.json');
     (new PGSchema(this.options.storage.client)).run(filename);
 };
 
