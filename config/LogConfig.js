@@ -41,6 +41,7 @@ LogConfig.prototype.configure = function(level) {
     winston.loggers.add('logrouter', getConfiguration('logrouter'));
     winston.loggers.add('xeprouter', getConfiguration('xeprouter'));
     winston.loggers.add('xepcomponent', getConfiguration('xepcomponent'));
+    winston.loggers.add('xep-0045', getConfiguration('xep-0045'));
     winston.loggers.add('authentication', getConfiguration('authentication'));
     winston.loggers.add('postgresql', getConfiguration('postgresql'));
     winston.loggers.add('storage', getConfiguration('storage'));
