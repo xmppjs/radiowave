@@ -18,7 +18,6 @@ var Users = new UsrModule();
 var username = 'romeo';
 
 describe('storage', function () {
-
     describe('room members', function () {
 
         var user = null;
@@ -47,11 +46,12 @@ describe('storage', function () {
                 }
             }
 
-            var result = {
-                'romeo@shakespeare.lit': {
-                    'name': 'Romeo J.'
-                }
-            };
+            var result = [{
+                "content": {
+                    "name": "Romeo J."
+                },
+                "jid": "romeo@shakespeare.lit"
+            }];
 
             // add member
             room.addMember(user.jid, user.content).then(function (success) {
@@ -72,16 +72,19 @@ describe('storage', function () {
                 'content': {
                     'name': 'Julia J.'
                 }
-            }
-
-            var result = {
-                'romeo@shakespeare.lit': {
-                    'name': 'Romeo J.'
-                },
-                'julia@shakespeare.lit': {
-                    'name': 'Julia J.'
-                }
             };
+
+            var result = [{
+                "content": {
+                    "name": "Romeo J."
+                },
+                "jid": "romeo@shakespeare.lit"
+            }, {
+                "content": {
+                    "name": "Julia J."
+                },
+                "jid": "julia@shakespeare.lit"
+            }];
 
             // add member
             room.addMember(user.jid, user.content).then(function (success) {
@@ -97,14 +100,17 @@ describe('storage', function () {
         });
 
         it('list members', function (done) {
-            var result = {
-                'romeo@shakespeare.lit': {
-                    'name': 'Romeo J.'
+            var result = [{
+                "content": {
+                    "name": "Romeo J."
                 },
-                'julia@shakespeare.lit': {
-                    'name': 'Julia J.'
-                }
-            };
+                "jid": "romeo@shakespeare.lit"
+            }, {
+                "content": {
+                    "name": "Julia J."
+                },
+                "jid": "julia@shakespeare.lit"
+            }];
 
             // list all members
             room.listMembers().then(function (members) {
@@ -118,11 +124,12 @@ describe('storage', function () {
 
 
         it('remove member', function (done) {
-            var result = {
-                'julia@shakespeare.lit': {
-                    'name': 'Julia J.'
-                }
-            };
+            var result = [{
+                "content": {
+                    "name": "Julia J."
+                },
+                "jid": "julia@shakespeare.lit"
+            }];
 
             // remove emails
             room.removeMember('romeo@shakespeare.lit').then(function (success) {
@@ -136,11 +143,12 @@ describe('storage', function () {
         });
 
         it('list members', function (done) {
-            var result = {
-                'julia@shakespeare.lit': {
-                    'name': 'Julia J.'
-                }
-            };
+            var result = [{
+                "content": {
+                    "name": "Julia J."
+                },
+                "jid": "julia@shakespeare.lit"
+            }];
 
             // list all members
             room.listMembers().then(function (members) {
@@ -153,14 +161,19 @@ describe('storage', function () {
         });
 
         it('edit member', function (done) {
-            var result = {
-                'julia@shakespeare.lit': {
-                    'name': 'Julia K.'
-                }
+            var content = {
+                    "name": "Julia K."
             };
 
+            var result = [{
+                "content": {
+                    "name": "Julia K."
+                },
+                "jid": "julia@shakespeare.lit"
+            }];
+
             // remove emails
-            room.editMember('julia@shakespeare.lit', result['julia@shakespeare.lit']).then(function (success) {
+            room.editMember('julia@shakespeare.lit', content).then(function (success) {
                 // list all emails
                 room.listMembers().then(function (members) {
                     members.should.not.be.empty;
