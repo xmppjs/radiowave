@@ -13,21 +13,28 @@ var ltx = require('ltx'),
 //    PGSchema = require('../../util/PGSchema');
 // var Storage = require('./storage');
 
-var NS_MUC = 'http://jabber.org/protocol/muc',
+var NS_DISCO_ITEMS = 'http://jabber.org/protocol/disco#items',
+    NS_DISCO_INFO = 'http://jabber.org/protocol/disco#info',
+    NS_MUC_USER = 'http://jabber.org/protocol/muc#user';
+
+/*  
+    NS_MUC = 'http://jabber.org/protocol/muc',
     NS_MUC_UNIQUE = 'http://jabber.org/protocol/muc#unique',
-    NS_MUC_USER = 'http://jabber.org/protocol/muc#user',
-    NS_DISCO_ITEMS = 'http://jabber.org/protocol/disco#items',
-    NS_DISCO_INFO = 'http://jabber.org/protocol/disco#info';
+*/
+    
 
 var MUC_ROLE_ADMIN = 'admin',
+    MUC_AFFILIATION_ADMIN = 'admin';
+
+/*
     MUC_ROLE_NONE = 'none',
     MUC_ROLE_PARTICIPANT = 'participant',
     MUC_ROLE_VISITOR = 'visitor',
     MUC_AFFILIATION_OWNER = 'owner',
-    MUC_AFFILIATION_ADMIN = 'admin',
     MUC_AFFILIATION_MEMBER = 'member',
     MUC_AFFILIATION_OUTCAST = 'outcast',
     MUC_AFFILIATION_NONE = 'none';
+*/
 
 /*
  * XEP-0045: Multi-User Chat
@@ -87,7 +94,7 @@ Muc.prototype.match = function (stanza) {
         (stanza.is('iq') && stanza.getChild('query', NS_DISCO_ITEMS)) ||
         (stanza.is('iq') && stanza.getChild('query', NS_DISCO_INFO))
     ) {
-        logger.debug('detected meesage for muc ' + domain);
+        logger.debug('detected meesage for Xep-0045 ' + domain);
         return true;
     }
 

@@ -21,9 +21,9 @@ module.exports = function(grunt) {
 
         if (options && options.files) {
             for (var i = 0,  l = options.files.length; i < l; i++) {
-            	grunt.log.writeln('Generate feature javascript: ' + options.files[i]);
+                grunt.log.writeln('Generate feature javascript: ' + options.files[i]);
                 featureGenerator.generateFeatureJs(options.files[i]);
-            };
+            }
         }
 
         done(0);

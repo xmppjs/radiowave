@@ -37,11 +37,11 @@ function generateFeatureJs(filename) {
 
     var fileContent = '';
 
-    fileContent += '\'use strict\n;';
+    fileContent += '\'use strict\';\n';
 
     // generate features as javascript file
     var headline = '// Generated with xRocket. Please change the feature.xml file and run grunt generate:features';
-    var fileContent = headline + '\n';
+    fileContent += headline + '\n';
 
     fileContent += '\n';
     fileContent += 'var Features = {';
@@ -76,17 +76,17 @@ function generateFeatureJs(filename) {
         console.log(key);
 
         // fileContent += key + ' : ' + '\'' + feature.name + '\','
-        fileContent += key + ' : ' + JSON.stringify(feature)
+        fileContent += key + ' : ' + JSON.stringify(feature);
         if (i+1 < features.length) {
             fileContent += ',';
         }
         fileContent += '\n';
 
-    };
+    }
 
-    fileContent += '}'
-    fileContent += '\n\n'
-    fileContent += 'module.exports = Features;'
+    fileContent += '};';
+    fileContent += '\n\n';
+    fileContent += 'module.exports = Features;';
 
     console.log(fileContent);
     fs.writeFileSync(jsfile, fileContent);
@@ -96,4 +96,4 @@ function generateFeatureJs(filename) {
 module.exports = {
     loadFile: loadFile,
     generateFeatureJs: generateFeatureJs
-}
+};
