@@ -5,11 +5,11 @@ var assert = require('assert'),
     should = require('should');
 
 // logging
-var LogConfig = require('../config/LogConfig');
+var LogConfig = require('../../config/LogConfig');
 LogConfig.configure('silly');
 
 var ltx = require('ltx'),
-    Xep0060 = require('../xep/Xep0060-pubsub');
+    Xep0060 = require('../../xep/Xep0060-pubsub');
 
 describe('Xep-0060', function () {
     var xep = null;

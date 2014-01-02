@@ -20,7 +20,7 @@ module.exports = function(grunt) {
             }
         },
         mochacli: {
-            all: ['test/*.js'],
+            all: ['test/**/*.js'],
             options: {
                 reporter: 'spec',
                 ui: 'tdd'

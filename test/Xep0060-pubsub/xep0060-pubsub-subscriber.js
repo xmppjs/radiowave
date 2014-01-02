@@ -5,7 +5,7 @@ var assert = require('assert'),
     should = require('should');
 
 // logging
-var LogConfig = require('../config/LogConfig');
+var LogConfig = require('../../config/LogConfig');
 LogConfig.configure('silly');
 
 // xmpp client
@@ -14,11 +14,11 @@ var ltx = require('ltx'),
     Message = require('node-xmpp-core').Stanza.Message;
 
 // x rocket server
-var xRocket = require('../xrocket'),
+var xRocket = require('../../xrocket'),
     C2SServer = xRocket.Net.C2SServer;
 
 // Xep Components
-var Xep0060 = require('../xep/Xep0060-pubsub');
+var Xep0060 = require('../../xep/Xep0060-pubsub');
 
 // user
 var userRomeo = {
@@ -92,7 +92,7 @@ describe('Xep-0060', function () {
 
 
         // register pubsub component
-        var PGConn = require('../util/PGConn');
+        var PGConn = require('../../storage/postgre/PGConn');
         var pgConnectionString = process.env.DATABASE_URL;
         var pgC = new PGConn(pgConnectionString);
         pgC.connect(function () {

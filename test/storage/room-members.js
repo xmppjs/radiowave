@@ -12,7 +12,7 @@ winston.loggers.add('storage', {
     }
 });
 
-var UsrModule = require('../../storage/Users');
+var UsrModule = require('../../storage/in-memory/Users');
 var Users = new UsrModule();
 
 var username = 'romeo';

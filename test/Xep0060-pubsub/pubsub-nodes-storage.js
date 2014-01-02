@@ -3,12 +3,12 @@ var assert = require('assert'),
     should = require('should');
 
 // logging
-var LogConfig = require('../config/LogConfig');
+var LogConfig = require('../../config/LogConfig');
 LogConfig.configure('error');
 
 // postgresql and roaster storage
-var PGConn = require('../util/PGConn');
-    PubsubNodes = require('../xep/Xep0060-pubsub/storage/Nodes');
+var PGConn = require('../../storage/postgre/PGConn');
+    PubsubNodes = require('../../storage/postgre/pubsub/Nodes');
 
 var subdomain = 'pubsub';
 var node = 'princely_musings';

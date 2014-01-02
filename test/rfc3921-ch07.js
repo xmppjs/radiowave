@@ -107,7 +107,7 @@ describe('Rfc3921', function () {
             xR.chain(cr);
 
             // start roaster
-            var PGConn = require('../util/PGConn');
+            var PGConn = require('../storage/postgre/PGConn');
             var pgConnectionString = process.env.DATABASE_URL;
             var pgC = new PGConn(pgConnectionString);
             pgC.connect(function () {

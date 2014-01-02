@@ -7,8 +7,8 @@ var LogConfig = require('../config/LogConfig');
 LogConfig.configure('error');
 
 // postgresql and roaster storage
-var PGConn = require('../util/PGConn'),
-    PostgreRoasterStore = require('../xep/Rfc3921-roaster/PostgreRoasterStore');
+var PGConn = require('../storage/postgre/PGConn'),
+    PostgreRoasterStore = require('../storage/postgre/roaster/PostgreRoasterStore');
 
 // user
 var user = {

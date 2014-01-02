@@ -3,7 +3,7 @@ var assert = require('assert'),
     should = require('should');
 
 
-var PubSubNode = require('../xep/Xep0060-pubsub/PubSubNode');
+var PubSubNode = require('../../xep/Xep0060-pubsub/PubSubNode');
 
 describe('Pubsub Nodes', function () {
     describe('Node Creation', function () {

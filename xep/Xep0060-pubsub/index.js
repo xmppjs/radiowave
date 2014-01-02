@@ -11,10 +11,10 @@ var ltx = require('ltx'),
     JID = require('node-xmpp-core').JID;
 
 var path = require('path'),
-    PGSchema = require('../../util/PGSchema');
+    PGSchema = require('../../storage/postgre/PGSchema');
 
 var PubSubNode = require('./PubSubNode'),
-    Storage = require('./storage');
+    Storage = require('../../storage/postgre/pubsub');
 
 // namespaces
 var NS_PUBSUB = 'http://jabber.org/protocol/pubsub',

@@ -6,10 +6,10 @@ var ltx = require('ltx'),
     logger = winston.loggers.get('xepcomponent'),
     XepComponent = require('../XepComponent'),
     JID = require('node-xmpp-core').JID,
-    PostgreRoasterStore = require('./PostgreRoasterStore');
+    PostgreRoasterStore = require('../../storage/postgre/roaster/PostgreRoasterStore');
 
 var path = require('path'),
-    PGSchema = require('../../util/PGSchema');
+    PGSchema = require('../../storage/postgre/PGSchema');
 
 var NS_ROASTER = 'jabber:iq:roster';
 
