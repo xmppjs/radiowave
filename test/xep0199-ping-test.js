@@ -48,11 +48,13 @@ describe('Ping', function () {
 
             // register users
             var simpleAuth = new Simple();
-            simpleAuth.addUser('admin','password');
+            simpleAuth.addUser('admin', 'password');
             xR.connectionRouter.authMethods.push(simpleAuth);
 
             // register xep component
-            var cr = new ComponentRouter();
+            var cr = new ComponentRouter({
+                domain: 'example.net'
+            });
             cr.register(new Xep0199());
 
             // chain XRocket to ComponentRouter
@@ -79,11 +81,11 @@ describe('Ping', function () {
             cl.on('stanza',
                 function (stanza) {
                     if (stanza.is('iq')) {
-                        assert.equal(stanza.attrs.type, 'result' );
-                        assert.equal(stanza.attrs.id, id );
+                        assert.equal(stanza.attrs.type, 'result');
+                        assert.equal(stanza.attrs.id, id);
                         done();
                     } else {
-                        done('wrong stanza ' +  stanza.root().toString());
+                        done('wrong stanza ' + stanza.root().toString());
                     }
                 });
 

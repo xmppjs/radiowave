@@ -51,11 +51,13 @@ describe('Version', function () {
 
             // register users
             var simpleAuth = new Simple();
-            simpleAuth.addUser('admin','password');
+            simpleAuth.addUser('admin', 'password');
             xR.connectionRouter.authMethods.push(simpleAuth);
 
             // register xep component
-            var cr = new ComponentRouter();
+            var cr = new ComponentRouter({
+                domain: 'example.net'
+            });
             cr.register(new Xep0092());
 
             // chain XRocket to ComponentRouter
@@ -83,19 +85,19 @@ describe('Version', function () {
             cl.on('stanza',
                 function (stanza) {
                     if (stanza.is('iq')) {
-                        assert.equal(stanza.attrs.type, 'result' );
-                        assert.equal(stanza.attrs.id, id );
+                        assert.equal(stanza.attrs.type, 'result');
+                        assert.equal(stanza.attrs.id, id);
 
                         var query = stanza.getChild('query', NS_VERSION);
                         assert.notEqual(query, null);
 
-                        assert.equal(query.getChild('name').getText(), NAME );
-                        assert.equal(query.getChild('version').getText(), VERSION );
-                        assert.equal(query.getChild('os').getText(), OS );
+                        assert.equal(query.getChild('name').getText(), NAME);
+                        assert.equal(query.getChild('version').getText(), VERSION);
+                        assert.equal(query.getChild('os').getText(), OS);
 
                         done();
                     } else {
-                        done('wrong stanza ' +  stanza.root().toString());
+                        done('wrong stanza ' + stanza.root().toString());
                     }
                 });
 
@@ -125,7 +127,7 @@ describe('Version', function () {
                 password: 'secretsecret',
                 host: user.host
             });
-            
+
             cl.on('online', function () {
                 done('user is not valid');
             });

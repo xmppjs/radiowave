@@ -67,7 +67,7 @@ describe('Rfc3921', function () {
         var clJulia = null;
         var clRomeo = null;
 
-        function setUpServer (done) {
+        function setUpServer(done) {
             // C2S Server 
             var cs2 = new C2SServer({});
             cs2.registerSaslMechanism(Plain);
@@ -78,12 +78,14 @@ describe('Rfc3921', function () {
 
             // register users
             var simpleAuth = new Simple();
-            simpleAuth.addUser('romeo','romeo');
-            simpleAuth.addUser('julia','julia');
+            simpleAuth.addUser('romeo', 'romeo');
+            simpleAuth.addUser('julia', 'julia');
             xR.connectionRouter.authMethods.push(simpleAuth);
 
             // register xep component
-            var cr = new ComponentRouter();
+            var cr = new ComponentRouter({
+                domain: 'example.net'
+            });
 
             // chain XRocket to ComponentRouter
             xR.chain(cr);
@@ -144,7 +146,7 @@ describe('Rfc3921', function () {
 
         /**
          * sample message :
-         * 
+         *
          * <message
          *     to='romeo@example.net'
          *     from='juliet@example.com/balcony'
@@ -152,13 +154,13 @@ describe('Rfc3921', function () {
          *     xml:lang='en'>
          *   <body>Wherefore art thou, Romeo?</body>
          * </message>
-         * 
+         *
          */
         it('4.2. Specifying a Message Type', function (done) {
-            var el = ltx.parse("<message to='"+userRomeo.jid+"' from='" + userJulia+ "' type='chat' xml:lang='en'></message>");
+            var el = ltx.parse("<message to='" + userRomeo.jid + "' from='" + userJulia + "' type='chat' xml:lang='en'></message>");
             var body = ltx.parse("<body>Wherefore art thou, Romeo?</body>");
             el.cnode(body);
-            sendMessage(el,function (err, stanza) {
+            sendMessage(el, function (err, stanza) {
                 should.not.exist(err);
                 var responseBody = stanza.getChild('body');
                 assert.equal(body.toString(), responseBody.toString());
@@ -168,7 +170,7 @@ describe('Rfc3921', function () {
 
         /**
          * sample message :
-         * 
+         *
          * <message
          *     to='romeo@example.net'
          *     from='juliet@example.com/balcony'
@@ -177,15 +179,15 @@ describe('Rfc3921', function () {
          *   <body>Wherefore art thou, Romeo?</body>
          *   <body xml:lang='cz'>Pro&#x010D;e&#x017D; jsi ty, Romeo?</body>
          * </message>
-         * 
+         *
          */
         it('4.3. Specifying a Message Body', function (done) {
-            var el = ltx.parse("<message to='"+userRomeo.jid+"' from='" + userJulia+ "' type='chat' xml:lang='en'></message>");
+            var el = ltx.parse("<message to='" + userRomeo.jid + "' from='" + userJulia + "' type='chat' xml:lang='en'></message>");
             var body = ltx.parse("<body>Wherefore art thou, Romeo?</body>");
             var body2 = ltx.parse("<body xml:lang='cz'>Pro&#x010D;e&#x017D; jsi ty, Romeo?</body>");
             el.cnode(body);
             el.cnode(body2);
-            sendMessage(el,function (err, stanza) {
+            sendMessage(el, function (err, stanza) {
                 should.not.exist(err);
                 var responseBody = stanza.getChildren('body');
                 assert.equal(body.toString(), responseBody[0].toString());
@@ -196,7 +198,7 @@ describe('Rfc3921', function () {
 
         /**
          * sample message :
-         * 
+         *
          * <message
          *     to='romeo@example.net'
          *     from='juliet@example.com/balcony'
@@ -208,10 +210,10 @@ describe('Rfc3921', function () {
          *   <body>Wherefore art thou, Romeo?</body>
          *   <body xml:lang='cz'>Pro&#x010D;e&#x017D; jsi ty, Romeo?</body>
          * </message>
-         * 
+         *
          */
         it('4.4. Specifying a Message Subject', function (done) {
-            var el = ltx.parse("<message to='"+userRomeo.jid+"' from='" + userJulia+ "' type='chat' xml:lang='en'></message>");
+            var el = ltx.parse("<message to='" + userRomeo.jid + "' from='" + userJulia + "' type='chat' xml:lang='en'></message>");
             var subject = ltx.parse("<subject>I implore you!</subject>");
             var subject2 = ltx.parse("<subject xml:lang='cz'>&#x00DA;p&#x011B;nliv&#x011B; prosim!</subject>");
             el.cnode(subject);
@@ -221,7 +223,7 @@ describe('Rfc3921', function () {
             var body2 = ltx.parse("<body xml:lang='cz'>Pro&#x010D;e&#x017D; jsi ty, Romeo?</body>");
             el.cnode(body);
             el.cnode(body2);
-            sendMessage(el,function (err, stanza) {
+            sendMessage(el, function (err, stanza) {
                 should.not.exist(err);
 
                 var responseSubject = stanza.getChildren('subject');
@@ -245,7 +247,7 @@ describe('Rfc3921', function () {
          *   <body>Art thou not Romeo, and a Montague?</body>
          *   <thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>
          * </message>
-         * 
+         *
          * <message
          *     to='juliet@example.com/balcony'
          *     from='romeo@example.net/orchard'
@@ -254,7 +256,7 @@ describe('Rfc3921', function () {
          *   <body>Neither, fair saint, if either thee dislike.</body>
          *   <thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>
          * </message>
-         * 
+         *
          * <message
          *     to='romeo@example.net/orchard'
          *     from='juliet@example.com/balcony'
@@ -266,12 +268,12 @@ describe('Rfc3921', function () {
          */
         it('4.5. Specifying a Conversation Thread', function (done) {
 
-            var el = ltx.parse("<message to='"+userRomeo.jid+"' from='" + userJulia+ "' type='chat' xml:lang='en'></message>");
+            var el = ltx.parse("<message to='" + userRomeo.jid + "' from='" + userJulia + "' type='chat' xml:lang='en'></message>");
             var body = ltx.parse("<body>Wherefore art thou, Romeo?</body>");
             var thread = ltx.parse("<thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>");
             el.cnode(body);
             el.cnode(thread);
-            sendMessage(el,function (err, stanza) {
+            sendMessage(el, function (err, stanza) {
                 should.not.exist(err);
                 var responseBody = stanza.getChild('body');
                 assert.equal(body.toString(), responseBody.toString());

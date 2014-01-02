@@ -95,11 +95,13 @@ describe('Rfc3921', function () {
 
             // register users
             var simpleAuth = new Simple();
-            simpleAuth.addUser('romeo','romeo');
+            simpleAuth.addUser('romeo', 'romeo');
             xR.connectionRouter.authMethods.push(simpleAuth);
 
             // register xep component
-            var cr = new ComponentRouter();
+            var cr = new ComponentRouter({
+                domain: 'example.net'
+            });
 
             // chain XRocket to ComponentRouter
             xR.chain(cr);
@@ -142,7 +144,7 @@ describe('Rfc3921', function () {
          *     </item>
          *   </query>
          * </iq>
-         * 
+         *
          */
         it('7.3. Retrieving One\'s Roster on Login', function (done) {
             var cl = getClient();
@@ -152,11 +154,11 @@ describe('Rfc3921', function () {
             cl.on('stanza',
                 function (stanza) {
                     if (stanza.is('iq')) {
-                        assert.equal(stanza.attrs.type, 'result' );
-                        assert.equal(stanza.attrs.id, id );
+                        assert.equal(stanza.attrs.type, 'result');
+                        assert.equal(stanza.attrs.id, id);
                         done();
                     } else {
-                        done('wrong stanza ' +  stanza.root().toString());
+                        done('wrong stanza ' + stanza.root().toString());
                     }
                 });
 
@@ -192,9 +194,9 @@ describe('Rfc3921', function () {
          *   </query>
          * </iq>
          *
-         * Sample server response: 
+         * Sample server response:
          * <iq to='juliet@example.com/balcony' type='result' id='roster_2'/>
-         * 
+         *
          */
         it('7.4. Adding a Roster Item with empty item', function (done) {
             var el = ltx.parse("<item></item>");

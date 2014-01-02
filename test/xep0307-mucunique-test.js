@@ -52,7 +52,9 @@ describe('XEP-0307', function () {
         xR.connectionRouter.authMethods.push(simpleAuth);
 
         // register xep component
-        var cr = new xRocket.Router.ComponentRouter();
+        var cr = new xRocket.Router.ComponentRouter({
+            domain: 'example.net'
+        });
         var lr = new xRocket.Router.LogRouter();
 
         cr.register(new Xep0307());
@@ -126,7 +128,7 @@ describe('XEP-0307', function () {
 
                 var unique = stanza.getChild('unique', 'http://jabber.org/protocol/muc#unique');
                 unique.should.not.be.empty;
-                
+
                 var id = unique.text();
                 id.should.match(/[A-Za-z0-9-]{36}/); // uuid
 
