@@ -4,7 +4,7 @@ var ltx = require('ltx'),
     util = require('util'),
     winston = require('winston'),
     uuid = require('node-uuid'),
-    logger = winston.loggers.get('xepcomponent'),
+    logger = winston.loggers.get('xep-0060'),
     XepComponent = require('../XepComponent'),
     Iq = require('node-xmpp-core').Stanza.Iq,
     Message = require('node-xmpp-core').Stanza.Message,
@@ -61,32 +61,22 @@ PubSub.prototype.match = function(stanza) {
 
     // check that the domain fits
     if (jid.getDomain().toString().localeCompare(domain) !== 0){
-        logger.debug('Muc ' + domain + ' does not accept ' + jid.toString());
+        // logger.debug('Pubsub ' + domain + ' does not accept ' + jid.toString());
         return false;
     }
 
     // normal pubsub request
-    if (stanza.is('iq') && stanza.getChild('pubsub', NS_PUBSUB)) {
-        logger.debug('detected pubsub request');
-        return true;
-    }
-    // owner requests
-    else if (stanza.is('iq') && stanza.getChild('pubsub', NS_PUBSUB_OWNER)) {
-        logger.debug('detected pubsub request');
-        return true;
-    }
-    // configure requests
-    else if (stanza.is('iq') && stanza.getChild('pubsub', NS_PUBSUB_CONFIG)) {
-        logger.debug('detected pubsub request');
-        return true;
-    }
-
-    if (stanza.is('iq') && stanza.getChild('query', NS_DISCO_ITEMS)) {
-        logger.debug('detected muc ' + domain);
-        return true;
-    }
-    if (stanza.is('iq') && stanza.getChild('query', NS_DISCO_INFO)) {
-        logger.debug('detected muc ' + domain);
+    if (
+        (stanza.is('iq') && stanza.getChild('pubsub', NS_PUBSUB)) ||
+        // owner requests
+        (stanza.is('iq') && stanza.getChild('pubsub', NS_PUBSUB_OWNER)) ||
+        // configure requests
+        (stanza.is('iq') && stanza.getChild('pubsub', NS_PUBSUB_CONFIG)) ||
+        // disco
+        (stanza.is('iq') && stanza.getChild('query', NS_DISCO_ITEMS)) ||
+        (stanza.is('iq') && stanza.getChild('query', NS_DISCO_INFO))
+    ) {
+        logger.debug('detected meesage for Xep-0060 ' + domain);
         return true;
     }
 
