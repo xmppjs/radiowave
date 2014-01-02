@@ -63,7 +63,7 @@ clRomeo = getClientRomeo();
 /**
  * @see http://xmpp.org/extensions/xep-0060.html
  */
-describe('Xep-0060', function() {
+describe('Xep-0060', function () {
 
     var xR = null;
 
@@ -83,7 +83,9 @@ describe('Xep-0060', function() {
         xR.connectionRouter.authMethods.push(simpleAuth);
 
         // register xep component
-        var cr = new xRocket.Router.ComponentRouter();
+        var cr = new xRocket.Router.ComponentRouter({
+            domain: 'example.net'
+        });
         var lr = new xRocket.Router.LogRouter();
         // chain XRocket to ComponentRouter
         xR.chain(lr).chain(cr);
@@ -93,7 +95,7 @@ describe('Xep-0060', function() {
         var PGConn = require('../util/PGConn');
         var pgConnectionString = process.env.DATABASE_URL;
         var pgC = new PGConn(pgConnectionString);
-        pgC.connect(function() {
+        pgC.connect(function () {
             cr.register(new Xep0060({
                 subdomain: 'pubsub',
                 domain: 'example.net',
@@ -110,36 +112,36 @@ describe('Xep-0060', function() {
         var cl = getClientRomeo();
 
         cl.on('stanza',
-            function(stanza) {
+            function (stanza) {
                 done(null, stanza);
             });
 
-        cl.on('online', function() {
+        cl.on('online', function () {
             cl.send(stanza);
         });
 
-        cl.on('error', function(e) {
+        cl.on('error', function (e) {
             console.log(e);
             done(e);
         });
     }
 
-    before(function(done) {
-        setUpServer(function(err) {
+    before(function (done) {
+        setUpServer(function (err) {
             done(err);
         });
     });
 
-    after(function(done) {
+    after(function (done) {
         xR.shutdown();
         done();
     });
 
-    describe('6. Subscriber Use Cases', function() {
+    describe('6. Subscriber Use Cases', function () {
 
-        describe('6.1 Subscribe to a Node', function() {
+        describe('6.1 Subscribe to a Node', function () {
 
-        	it('Precondition: Create a node', function(done) {
+            it('Precondition: Create a node', function (done) {
                 var id = 'newnode-r2d2';
                 var create = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
@@ -152,7 +154,7 @@ describe('Xep-0060', function() {
                     'node': 'princely_musings'
                 });
 
-                sendMessageWithRomeo(create, function(err, stanza) {
+                sendMessageWithRomeo(create, function (err, stanza) {
                     should.not.exist(err);
                     if (stanza.is('iq')) {
                         assert.equal(stanza.attrs.type, 'result');
@@ -175,7 +177,7 @@ describe('Xep-0060', function() {
              *   </error>
              * </iq>
              */
-            it('6.1.3.1 JIDs Do Not Match', function(done) {
+            it('6.1.3.1 JIDs Do Not Match', function (done) {
                 var id = 'subscribe-r2d2';
                 var subscribe = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
@@ -189,7 +191,7 @@ describe('Xep-0060', function() {
                     'jid': userJulia.jid
                 });
 
-                sendMessageWithRomeo(subscribe, function(err, stanza) {
+                sendMessageWithRomeo(subscribe, function (err, stanza) {
                     should.not.exist(err);
                     if (stanza.is('iq')) {
                         assert.equal(stanza.attrs.type, 'error');
@@ -223,7 +225,7 @@ describe('Xep-0060', function() {
              *   </error>
              * </iq>
              */
-            it('6.1.3.12 Node Does Not Exist', function(done) {
+            it('6.1.3.12 Node Does Not Exist', function (done) {
                 var id = 'subscribe-r2d2';
                 var subscribe = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
@@ -237,7 +239,7 @@ describe('Xep-0060', function() {
                     'jid': userRomeo.jid
                 });
 
-                sendMessageWithRomeo(subscribe, function(err, stanza) {
+                sendMessageWithRomeo(subscribe, function (err, stanza) {
                     should.not.exist(err);
                     if (stanza.is('iq')) {
                         assert.equal(stanza.attrs.type, 'error');
@@ -285,7 +287,7 @@ describe('Xep-0060', function() {
              *   </pubsub>
              * </iq>
              */
-            it('6.1 Subscribe to a Node', function(done) {
+            it('6.1 Subscribe to a Node', function (done) {
                 var id = 'subscribe-r2d2';
                 var subscribe = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
@@ -299,7 +301,7 @@ describe('Xep-0060', function() {
                     'jid': userRomeo.jid
                 });
 
-                sendMessageWithRomeo(subscribe, function(err, stanza) {
+                sendMessageWithRomeo(subscribe, function (err, stanza) {
                     console.log(stanza.toString());
                     should.not.exist(err);
                     if (stanza.is('iq')) {
@@ -324,7 +326,7 @@ describe('Xep-0060', function() {
             });
         });
 
-        describe('6.2. Unsubscribe from a Node', function() {
+        describe('6.2. Unsubscribe from a Node', function () {
 
             /*
              * request
@@ -345,7 +347,7 @@ describe('Xep-0060', function() {
              *     to='francisco@denmark.lit/barracks'
              *     id='unsub1'/>
              */
-            it('6.2. Unsubscribe from a Node', function(done) {
+            it('6.2. Unsubscribe from a Node', function (done) {
                 var id = 'unsubscribe-r2d2';
                 var unsubscribe = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
@@ -359,7 +361,7 @@ describe('Xep-0060', function() {
                     'jid': userRomeo.jid
                 });
 
-                sendMessageWithRomeo(unsubscribe, function(err, stanza) {
+                sendMessageWithRomeo(unsubscribe, function (err, stanza) {
                     should.not.exist(err);
                     if (stanza.is('iq')) {
                         assert.equal(stanza.attrs.type, 'result');
@@ -382,7 +384,7 @@ describe('Xep-0060', function() {
              *   </error>
              * </iq>
              */
-            it('6.2.3.2 No Such Subscriber', function(done) {
+            it('6.2.3.2 No Such Subscriber', function (done) {
                 var id = 'unsubscribe-r2d2';
                 var unsubscribe = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
@@ -396,7 +398,7 @@ describe('Xep-0060', function() {
                     'jid': userRomeo.jid
                 });
 
-                sendMessageWithRomeo(unsubscribe, function(err, stanza) {
+                sendMessageWithRomeo(unsubscribe, function (err, stanza) {
                     should.not.exist(err);
                     if (stanza.is('iq')) {
                         assert.equal(stanza.attrs.type, 'error');
@@ -430,7 +432,7 @@ describe('Xep-0060', function() {
              *   </error>
              * </iq>
              */
-            it('6.2.3.4 Node Does Not Exist', function(done) {
+            it('6.2.3.4 Node Does Not Exist', function (done) {
                 var id = 'unsubscribe-r2d2';
                 var unsubscribe = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
@@ -444,7 +446,7 @@ describe('Xep-0060', function() {
                     'jid': userRomeo.jid
                 });
 
-                sendMessageWithRomeo(unsubscribe, function(err, stanza) {
+                sendMessageWithRomeo(unsubscribe, function (err, stanza) {
                     should.not.exist(err);
                     if (stanza.is('iq')) {
                         assert.equal(stanza.attrs.type, 'error');
@@ -465,7 +467,7 @@ describe('Xep-0060', function() {
                 });
             });
 
-			it('Postcondition: delete node', function(done) {
+            it('Postcondition: delete node', function (done) {
                 var id = 'delete-r2d2';
                 var deleteIQ = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
@@ -478,7 +480,7 @@ describe('Xep-0060', function() {
                     'node': 'princely_musings'
                 });
 
-                sendMessageWithRomeo(deleteIQ, function(err, stanza) {
+                sendMessageWithRomeo(deleteIQ, function (err, stanza) {
                     should.not.exist(err);
                     if (stanza.is('iq')) {
                         assert.equal(stanza.attrs.type, 'result');

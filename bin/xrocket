@@ -20,6 +20,10 @@ LogConfig.configure('silly');
 // attach connection manager to xrocket
 var xR = new XRocket();
 
+// storage
+var UsrModule = require('../storage/Users');
+var Users = new UsrModule();
+
 // C2S Server 
 var cs2 = null;
 var tls = null;
@@ -68,7 +72,9 @@ var Xep0045 = require('../xep/Xep0045-muc');
 var Xep0060 = require('../xep/Xep0060-pubsub');
 var Xep0307 = require('../xep/Xep0307-mucunique');
 
-var cr = new ComponentRouter();
+var cr = new ComponentRouter({
+    domain: 'example.net'
+});
 
 // start roaster
 var PGConn = require('../util/PGConn');
@@ -90,16 +96,14 @@ pgC.connect(function () {
             client: pgC.getClient()
         }
     }));
-
-    // muc
-    cr.register(new Xep0045({
-        subdomain: 'chat',
-        domain: 'example.net',
-        storage: {
-            client: pgC.getClient()
-        }
-    }));
 });
+
+// muc
+cr.register(new Xep0045({
+    subdomain: 'chat',
+    domain: 'example.net',
+    Users: Users
+}));
 
 cr.register(new Rfc3921Messaging());
 cr.register(new Xep0030());

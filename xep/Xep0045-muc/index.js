@@ -3,33 +3,31 @@
 var ltx = require('ltx'),
     util = require('util'),
     winston = require('winston'),
-    logger = winston.loggers.get('xepcomponent'),
+    logger = winston.loggers.get('xep-0045'),
     XepComponent = require('../XepComponent'),
     Message = require('node-xmpp-core').Stanza.Message,
     Presence = require('node-xmpp-core').Stanza.Presence,
     JID = require('node-xmpp-core').JID;
 
-var path = require('path'),
-    PGSchema = require('../../util/PGSchema');
+//var path = require('path'),
+//    PGSchema = require('../../util/PGSchema');
+// var Storage = require('./storage');
 
-var MucRoom = require('./MucRoom'),
-    Storage = require('./storage');
+var NS_MUC = 'http://jabber.org/protocol/muc',
+    NS_MUC_UNIQUE = 'http://jabber.org/protocol/muc#unique',
+    NS_MUC_USER = 'http://jabber.org/protocol/muc#user',
+    NS_DISCO_ITEMS = 'http://jabber.org/protocol/disco#items',
+    NS_DISCO_INFO = 'http://jabber.org/protocol/disco#info';
 
-var NS_MUC = "http://jabber.org/protocol/muc",
-    NS_MUC_UNIQUE = "http://jabber.org/protocol/muc#unique",
-    NS_MUC_USER = "http://jabber.org/protocol/muc#user",
-    NS_DISCO_ITEMS = "http://jabber.org/protocol/disco#items",
-    NS_DISCO_INFO = "http://jabber.org/protocol/disco#info";
-
-var MUC_ROLE_ADMIN = "admin",
-    MUC_ROLE_NONE = "none",
-    MUC_ROLE_PARTICIPANT = "participant",
-    MUC_ROLE_VISITOR = "visitor",
-    MUC_AFFILIATION_OWNER = "owner",
-    MUC_AFFILIATION_ADMIN = "admin",
-    MUC_AFFILIATION_MEMBER = "member",
-    MUC_AFFILIATION_OUTCAST = "outcast",
-    MUC_AFFILIATION_NONE = "none";
+var MUC_ROLE_ADMIN = 'admin',
+    MUC_ROLE_NONE = 'none',
+    MUC_ROLE_PARTICIPANT = 'participant',
+    MUC_ROLE_VISITOR = 'visitor',
+    MUC_AFFILIATION_OWNER = 'owner',
+    MUC_AFFILIATION_ADMIN = 'admin',
+    MUC_AFFILIATION_MEMBER = 'member',
+    MUC_AFFILIATION_OUTCAST = 'outcast',
+    MUC_AFFILIATION_NONE = 'none';
 
 /*
  * XEP-0045: Multi-User Chat
@@ -43,60 +41,60 @@ function Muc(options) {
 
     XepComponent.call(this);
 
-    this.Storage = {};
+    this.autoCreateRoom = false;
+
+    this.Users = options.Users;
+
+    /*this.Storage = {};
     if (options.storage) {
         this.Storage.Rooms = new Storage.Rooms(options.storage);
     } else {
-        logger.warn("Muc cannot be properly initialized because options.storage is not defined");
-    }
+        logger.warn('Muc cannot be properly initialized because options.storage is not defined');
+    }*/
 }
 util.inherits(Muc, XepComponent);
 
 Muc.prototype.name = 'XEP-0045: Multi-User Chat';
+
+Muc.prototype.getDomain = function ()  {
+    return this.subdomain + '.' + this.domain;
+};
 
 Muc.prototype.features = function () {
     return [];
 };
 
 Muc.prototype.initialize = function () {
-    var filename = path.resolve(__dirname, './storage/schema.json');
-    (new PGSchema(this.options.storage.client)).run(filename);
+    //var filename = path.resolve(__dirname, './storage/schema.json');
+    //(new PGSchema(this.options.storage.client)).run(filename);
 };
 
 Muc.prototype.match = function (stanza) {
 
-    var domain = this.subdomain + '.' + this.domain;
-    var jid = new JID(stanza.attrs.to);
 
+    var jid = new JID(stanza.attrs.to);
+    var domain = this.getDomain();
     // check that the domain fits
     if (jid.getDomain().toString().localeCompare(domain) !== 0) {
-        logger.debug('Muc ' + domain + ' does not accept ' + jid.toString());
+        
+        //logger.debug('Muc ' + domain + ' does not accept ' + jid.toString());
         return false;
     }
 
-    if (stanza.is('message') && stanza.attrs.type === 'groupchat') {
-        logger.debug('detected muc ' + domain);
-        return true;
-    }
-
-    if (stanza.is('presence')) {
-        logger.debug('detected muc ' + domain);
-        return true;
-    }
-
-    if (stanza.is('iq') && stanza.getChild('query', NS_DISCO_ITEMS)) {
-        logger.debug('detected muc ' + domain);
-        return true;
-    }
-    if (stanza.is('iq') && stanza.getChild('query', NS_DISCO_INFO)) {
-        logger.debug('detected muc ' + domain);
+    if (
+        (stanza.is('message') && stanza.attrs.type === 'groupchat') ||
+        (stanza.is('presence')) ||
+        (stanza.is('iq') && stanza.getChild('query', NS_DISCO_ITEMS)) ||
+        (stanza.is('iq') && stanza.getChild('query', NS_DISCO_INFO))
+    ) {
+        logger.debug('detected meesage for muc ' + domain);
         return true;
     }
 
     return false;
 };
 
-Muc.prototype.getNode = function(nodename, callback) {
+Muc.prototype.getNode = function (nodename, callback) {
     this.Storage.Nodes.get(this.getSubdomain(), nodename, callback);
 };
 
@@ -104,7 +102,7 @@ Muc.prototype.getNode = function(nodename, callback) {
  * creates a new room
  * @param node name of the pubsub node
  */
-Muc.prototype.createRoom = function (name, configuration, callback) {
+/*Muc.prototype.createRoom = function (name, configuration, callback) {
     logger.debug('create new pubsub node ' + name);
 
     // create a new pub sub node description
@@ -114,7 +112,7 @@ Muc.prototype.createRoom = function (name, configuration, callback) {
     });
 
     // set default parameter
-    room.setConfiguration('muc#roomconfig_roomname', "Title");
+    room.setConfiguration('muc#roomconfig_roomname', 'Title');
 
     // overwrite configuration
     for (var i = 0; i < configuration.length; i++) {
@@ -129,18 +127,21 @@ Muc.prototype.createRoom = function (name, configuration, callback) {
 
 Muc.prototype.handleOwnerCreate = function (stanza) {
 
-}
+};
 
 Muc.prototype.handleOwnerDelete = function (stanza) {
 
-}
+};
+*/
 
 Muc.prototype.sendPresenceLeave = function (roomjid, userjid, room) {
+    var self = this;
+
     // send client the confirmation
     var confirmMsg = new Presence({
         from: roomjid,
         to: userjid,
-        type: "unavailable"
+        type: 'unavailable'
     });
     var x = confirmMsg.c('x', {
         'xmlns': NS_MUC_USER
@@ -156,9 +157,9 @@ Muc.prototype.sendPresenceLeave = function (roomjid, userjid, room) {
 
     // send new presense to exsting members
     var newPresence = new Presence({
-        from: "",
-        to: "",
-        type: "unavailable"
+        from: '',
+        to: '',
+        type: 'unavailable'
     });
     newPresence.c('x', {
         'xmlns': NS_MUC_USER
@@ -167,54 +168,123 @@ Muc.prototype.sendPresenceLeave = function (roomjid, userjid, room) {
         'role': MUC_ROLE_ADMIN
     });
 
-    // iterate over existing members
-    room.eachMember(function (member) {
-        // send existing room members the info
-        var memberMessage = newPresence.clone();
-        memberMessage.attrs.from = roomjid;
-        memberMessage.attrs.to = member;
-        self.send(memberMessage);
-    }, jid);
+    room.listMembers().then(
+        function (members) {
+            for (var i = 0, l = members.length; i < l; i += 1) {
+                var member = members[i];
+
+                // send existing room members the info
+                var memberMessage = newPresence.clone();
+                memberMessage.attrs.from = roomjid;
+                memberMessage.attrs.to = member.jid;
+                self.send(memberMessage);
+            }
+        }
+    );
 };
 
-Muc.prototype.sendPresenceJoin = function (roomjid, userjid, room) {
-    // send client the confirmation
-    var msg = new xmpp.Presence({
-        from: "",
-        to: userjid
+Muc.prototype.generatePresence = function (affiliation, role) {
+    var presence = new Presence({
+        from: '',
+        to: ''
     });
-    msg.c('x', {
+    presence.c('x', {
         'xmlns': NS_MUC_USER
     }).c('item', {
-        'affiliation': MUC_AFFILIATION_ADMIN,
-        'role': MUC_ROLE_ADMIN
+        'affiliation': affiliation,
+        'role': role
     });
 
-    // send presense to exsting members
-    var newPresence = new xmpp.Presence({
-        from: "",
-        to: ""
-    });
-    newPresence.c('x', {
-        'xmlns': NS_MUC_USER
-    }).c('item', {
-        'affiliation': MUC_AFFILIATION_ADMIN,
-        'role': MUC_ROLE_ADMIN
-    });
+    return presence;
+};
+
+Muc.prototype.sendPresenceJoin = function (roomjid, userjid, usernick, room) {
+    logger.debug('send join of ' + userjid + ' to all participants');
+    var self = this;
 
     // iterate over existing members
-    room.eachMember(function (member) {
-        // send existing room members the info
-        var memberMessage = newPresence.clone();
-        memberMessage.attrs.from = roomjid;
-        memberMessage.attrs.to = member;
-        self.send(memberMessage);
+    room.listMembers().then(
+        function (members) {
+            try {
+                // send presence to each member
+                var newPresence = self.generatePresence(MUC_AFFILIATION_ADMIN, MUC_ROLE_ADMIN);
+                for (var i = 0, l = members.length; i < l; i++) {
+                    var member = members[i];
 
-        // send presence of existing room member to new member
-        var joinermsg = msg.clone();
-        joinermsg.attrs.from = new xmpp.JID(room.name(), room.domain(), room.getNick(member));
-        self.send(joinermsg, null);
+                    // send existing room members the info about new user
+                    if (member.jid !== userjid) {
+                        var memberMessage = newPresence.clone();
+                        var newuser = roomjid.bare();
+                        newuser.setResource(usernick);
+                        memberMessage.attrs.from = newuser.toString(); // must be with nickname of user
+                        memberMessage.attrs.to = member.jid;
+                        self.send(memberMessage);
+                    }
+
+                    // read member details
+                    var nickname = member.affiliation.nickname;
+                    var affiliation = MUC_AFFILIATION_ADMIN; // member.affiliation.type;
+                    var role = MUC_ROLE_ADMIN; // member.role.type;
+                    //logger.debug('JID: ' + member.jid);
+                    //logger.debug('NICK: ' + nickname);
+                    //logger.debug('AFFILIATION: ' + affiliation);
+                    //logger.debug('ROLE: ' + role);
+
+                    // send presence of existing room members to new user
+                    var joinermsg = self.generatePresence(affiliation, role);
+
+                    var memberroomjid = roomjid.bare();
+                    memberroomjid.setResource(nickname);
+
+                    joinermsg.attrs.from = memberroomjid.toString();
+                    joinermsg.attrs.to = userjid;
+                    self.send(joinermsg, null);
+                }
+            } catch (err) {
+                logger.error(err.toString());
+            }
+        }
+    );
+};
+
+Muc.prototype.sendPresenceConfirmation = function (roomjid, userjid) {
+    logger.debug('send presence confirmation to ' + userjid);
+
+    // send client the confirmation
+    var confirmMsg = new Presence({
+        from: roomjid,
+        to: userjid
     });
+    var x = confirmMsg.c('x', {
+        'xmlns': NS_MUC_USER
+    });
+    x.c('item', {
+        'affiliation': MUC_AFFILIATION_ADMIN,
+        'role': MUC_ROLE_ADMIN
+    });
+    x.c('status', {
+        'code': '110'
+    });
+    this.send(confirmMsg);
+};
+
+Muc.prototype.sendRoomHistory = function (roomjid, userjid, room) {
+    logger.debug('send room ' + roomjid + ' history to ' + userjid);
+    logger.debug(room);
+    var self = this;
+    room.listMessages().then(
+        function (messages) {
+            logger.debug(JSON.stringify(messages));
+            // send room history
+            for (var i = 0, l = messages.length; i < l; i += 1) {
+                // extract message
+                var el = ltx.parse(messages[i]);
+                // el.attrs.from = roomjid;
+                el.attrs.to = userjid;
+                self.send(el);
+            }
+        }
+    );
 };
 
 /**
@@ -223,148 +293,180 @@ Muc.prototype.sendPresenceJoin = function (roomjid, userjid, room) {
  * @see http://xmpp.org/extensions/xep-0045.html#enter
  */
 Muc.prototype.handleOccupantPresence = function (stanza) {
+    logger.debug('muc handle presence');
     var self = this;
-    var roomjid = new xmpp.JID(stanza.attrs.to);
-    var x = stanza.getChild('x', NS_MUC);
+    var roomjid = new JID(stanza.attrs.to);
+    // var x = stanza.getChild('x', NS_MUC);
 
     // extract data
     var userjid = stanza.attrs.from;
     var roomname = roomjid.user;
-    var nick = roomjid.resource.toString();
-    var room = this.rooms[roomname];
+    var nickname = roomjid.resource.toString();
 
-    // check if the room exists
-    if (!room) {
-        this.createRoom(roomname);
+    function joinMember(room, roomjid, userjid, nickname) {
+        logger.debug('user' + userjid + ' joins the room');
 
-        this.createRoom(roomname, [], function (err, room) {
-
+        // join room
+        room.join(userjid, nickname).then(function () {
+            self.sendPresenceJoin(roomjid, userjid, nickname, room);
+            self.sendPresenceConfirmation(roomjid, userjid);
+            self.sendRoomHistory(roomjid, userjid, room);
         });
     }
 
-    // user leaves the room 
-    // @see http://xmpp.org/extensions/xep-0045.html#exit
-    if (room && stanza.attrs.type == "unavailable") {
-        // leave room
-        room.leave(jid);
+    function ro(room) {
+        // room is there
+        logger.debug('found room: ' + roomname);
 
-        // delete local memory if all users logged out of room
-        if (room.countMembers === 0) {
-            this.closeRoom(roomname);
+        // user leaves the room 
+        // @see http://xmpp.org/extensions/xep-0045.html#exit
+        if (room && stanza.attrs.type === 'unavailable') {
+            logger.debug('user' + userjid + ' leaves the room');
+            // leave room
+            room.leave(userjid).then(
+                function () {
+                    logger.debug('send unavailibility to all users');
+                    self.sendPresenceLeave(roomjid, userjid, room);
+                });
         }
-
-        this.sendPresenceLeave(roomjid, userjid, room);
-
+        // user joins the room
+        else {
+            // check if the user is already member
+            room.isMember(userjid).then(
+                function () {
+                    // user exists
+                    joinMember(room, roomjid, userjid, nickname);
+                },
+                function () {
+                    logger.debug('user is not member of the room yet');
+                    // user does not exist
+                    return room.addMember(userjid).then(
+                        function () {
+                            // user exists
+                            joinMember(room, roomjid, userjid, nickname);
+                        }
+                    );
+                }
+            );
+        }
     }
-    // user joins the room
-    else {
 
-        this.sendPresenceJoin(roomjid, userjid, room);
+    // TODO verify the name is unique
+    var username = 'romeo';
 
-        // register user in room
-        room.join(jid, nick);
+    // check if the room exists, if not create it
+    this.Users.user(username).then(
+        function (user) {
 
-        // send client the confirmation
-        var confirmMsg = new xmpp.Presence({
-            from: toJid,
-            to: jid
+            user.getRoom(roomname).then(
+                function (room) {
+                    ro(room);
+                },
+                function () {
+                    // if flag is not set, create a room, otherwise we send an error
+                    if (self.autoCreateRoom) {
+                        // room does not exist
+                        user.createRoom(roomname).then(
+                            function (room) {
+                                ro(room);
+                            }
+                        );
+                    } else {
+                        // room does not exists
+                        var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+                        self.sendError(stanza, errXml);
+                    }
+                }
+            );
+        },
+        function () {
+            // user does not exist, we close the stream;
+            logger.error('user ' + username + 'does not exist');
         });
-        var x = confirmMsg.c('x', {
-            'xmlns': NS_MUC_USER
-        });
-        x.c('item', {
-            'affiliation': MUC_AFFILIATION_ADMIN,
-            'role': MUC_ROLE_ADMIN
-        });
-        x.c('status', {
-            'code': '110'
-        });
-        self.send(confirmMsg);
-
-        // send room history
-        //room.eachMessage(function (el) {
-        //    el.attrs.to = jid;
-        //    self.send(el);
-        //}, jid);
-    }
-}
+};
 
 /**
  * Implement 7.4
  * @see http://xmpp.org/extensions/xep-0045.html#message
  */
 Muc.prototype.handleOccupantMessage = function (stanza) {
-    logger.debug("muc handleMessage");
+    logger.debug('muc handle message');
     var self = this;
-    var toJid = new xmpp.JID(stanza.attrs.to);
+    var roomjid = new JID(stanza.attrs.to);
     // route messages to room members
 
     // extract all data
-    var fulljid = stanza.attrs.from;
-    var roomname = toJid.user;
+    var userjid = stanza.attrs.from;
+    var roomname = roomjid.getLocal();
 
+    var username = 'romeo';
+    this.Users.user(username).then(
+        function (user) {
+            return user.getRoom(roomname);
+        }).then(
+        function (room) {
+            // check if user is part of this room
+            room.getMember(userjid).then(
+                function (member) {
 
-    //var nick = toJid.resource;
-    var room = this.rooms[roomname];
-    // TODO check if user has access to the room
+                    logger.debug('send message to all members');
 
-    if (room) {
+                    // find nickname for user
+                    var nickname = member.affiliation.nickname;
 
-        // find nickname for user
+                    // extract message body
+                    var messagebody = stanza.children;
 
-        // extract message body
-        var messagebody = stanza.children;
+                    var msg = new Message({
+                        'from': new JID(roomname, self.getDomain(), nickname),
+                        'to': '',
+                        'type': 'groupchat'
+                    });
+                    msg.children = messagebody;
 
-        // extract in message plugin
-        var body = stanza.getChild('body');
-        var markdown = ghm.parse(body.getText());
+                    logger.debug(msg.attrs.from);
 
-        var el = new ltx.Element('html');
-        el.t(markdown);
-        messagebody.push(el);
+                    logger.debug('store mesage');
+                    // store message in history
+                    room.createMessage(msg.root().toString());
 
-        // attach html body
-        //messagebody
+                    logger.debug('send message to all members');
+                    // iterate over room members and submit message
+                    room.listMembers().then(
+                        function (members) {
+                            for (var i = 0, l = members.length; i < l; i += 1) {
+                                var member = members[i];
 
-        // create empty message
-
-        var nick = room.getNick(fulljid);
-
-        var msg = new xmpp.Message({
-            'from': new xmpp.JID(roomname, this.domain, nick),
-            'to': "",
-            'type': "groupchat"
+                                var clientmsg = msg.clone();
+                                clientmsg.attrs.to = member.jid;
+                                self.send(clientmsg);
+                            }
+                        }
+                    );
+                }, function () {
+                    // room does not exists
+                    var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+                    self.sendError(stanza, errXml);
+                });
         });
-        msg.children = messagebody;
-
-        // store message in history
-        // only non forwarded messages need to be persisted, but they should be stored in memory
-        room.addMessage(msg);
-
-        // iterate over room members and submit message
-        room.eachMember(function (member) {
-            var clientmsg = msg.clone();
-            clientmsg.attrs.to = member;
-            //  logger.debug(clientmsg.toString());
-            self.server.router.route(clientmsg, null);
-        }, fulljid);
-    } else {
-        // TODO return error
-    }
-}
+};
 
 Muc.prototype.handle = function (stanza) {
-    logger.debug("muc route");
+    logger.debug('muc route');
 
-    var toJid = new xmpp.JID(stanza.attrs.to);
+    var to = new JID(stanza.attrs.to);
 
-    // handle presence request
-    if (stanza.is('presence')) {
+    // handle presence request for specific room
+    if (stanza.is('presence') && (to.getDomain().toString().localeCompare(this.getDomain) !== 0)) {
         this.handleOccupantPresence(stanza);
     }
 
+    // TODO handle normal presence request
+    // 1. check if user is already offline
+    // 2. make user offline in all active rooms
+
     // handle messages
-    if (stanza.is('message') && stanza.attrs.type === "groupchat") {
+    if (stanza.is('message') && stanza.attrs.type === 'groupchat') {
         this.handleOccupantMessage(stanza);
     }
 };
