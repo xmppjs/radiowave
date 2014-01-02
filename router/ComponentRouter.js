@@ -5,9 +5,10 @@ var util = require('util'),
     logger = winston.loggers.get('xeprouter'),
     BaseRouter = require('./BaseRouter');
 
-function ComponentRouter() {
+function ComponentRouter(options) {
     BaseRouter.call(this);
 
+    this.domain = options.domain;
     this.components = [];
 }
 util.inherits(ComponentRouter, BaseRouter);
@@ -20,6 +21,12 @@ ComponentRouter.prototype.connect = function () {
 };
 
 ComponentRouter.prototype.stanza = function (stanza) {
+
+    // check the to field is properly set. otherwise we expect this server
+    if (!stanza.attrs.to) {
+        stanza.attrs.to = this.domain;
+    }
+
     // emit events for pipe
     this.emit('stanza', stanza);
 
