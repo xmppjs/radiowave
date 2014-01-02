@@ -1,7 +1,7 @@
 'use strict';
 
 var winston = require('winston'),
-    logger = winston.loggers.get('xepcomponent');
+    logger = winston.loggers.get('xep-0060');
 
 /*
 var schema = {
