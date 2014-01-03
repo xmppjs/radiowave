@@ -9,7 +9,6 @@
   "dependencies": {
     "node-xmpp-core": "~0.2.2",
     "node-xmpp-server": "0.2.4",
-    "nconf": "~0.6.8",
     "ltx": ">= 0.2.0",
     "node-uuid": "1.4.1",
     "winston": "0.7.2",
@@ -17,7 +16,9 @@
     "pg": "2.8.2",
     "pem": ">=1.2.2",
     "rsvp": "~3.0.1",
-    "express": "3.x"
+    "express": "3.x",
+    "socket.io" : "0.9.x",
+    "ws" : "0.4.31"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
