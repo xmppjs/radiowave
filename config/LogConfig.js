@@ -50,6 +50,7 @@ LogConfig.prototype.configure = function(level) {
 
     winston.loggers.add('websocket', getConfiguration('websocket'));
     winston.loggers.add('socketio', getConfiguration('socketio'));
+    winston.loggers.add('bosh', getConfiguration('bosh'));
 };
 
 module.exports = new LogConfig();
