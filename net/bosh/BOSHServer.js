@@ -33,31 +33,44 @@ function parseBody(stream, cb) {
 /**
  * Sessions are stored *in memory!* You wouldn't want that for very
  * large setups.
+ * 
+ * This implementation is based on 
+ * https://github.com/node-xmpp/node-xmpp-server/blob/master/lib/bosh/bosh_server.js
+ * 
+ * License: MIT
  */
-function BOSHServer() {
+function BOSHServer(options) {
+    this.options = options ||  {};
+
+    // set default cors properties
+    if (!this.options.cors) {
+        this.options.cors = {
+            origin : '*'
+        };
+    }
+
     this.sessions = {}
 }
 
 util.inherits(BOSHServer, EventEmitter)
 
-// TODO allow to set settings via options
-function sendCorsHeader(res) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader("Access-Control-Allow-Headers", "Authorization, X-Requested-With, Content-Type, Content-Length");
-    res.setHeader('Access-Control-Allow-Credentials', true);
+BOSHServer.prototype.setCorsHeader= function(res, options) {
+    res.setHeader("Access-Control-Allow-Origin", options.origin)
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    res.setHeader("Access-Control-Allow-Headers", "Authorization, X-Requested-With, Content-Type, Content-Length")
+    res.setHeader('Access-Control-Allow-Credentials', true)
 }
 
 /**
  * *YOU* need to check the path before passing to this function.
  */
 BOSHServer.prototype.handleHTTP = function(req, res) {
+    this.setCorsHeader(res, this.options.cors );
     if (req.method === 'POST') {
         this._handlePostRequest(req, res)
     //} else if (false && req.method === 'PROPFIND') {
     /* TODO: CORS preflight request */
     } else {
-        sendCorsHeader(res);
         res.writeHead(400)
         res.end()
     }
@@ -81,8 +94,7 @@ BOSHServer.prototype._handlePostRequest = function(req, res) {
     })
 }
 
-BOSHServer.prototype._sendErrorResponse = function(res, error) {
-    sendCorsHeader(res);
+BOSHServer.prototype._sendErrorResponse = function(res, error) { 
     res.writeHead(400, { 'Content-Type': 'text/plain' })
     res.end(error.message || error.stack || 'Error')
 }
@@ -94,7 +106,6 @@ BOSHServer.prototype._useExistingSession = function(req, res, bodyEl) {
             { req: req, res: res, bodyEl: bodyEl }
         )
     } else {
-        sendCorsHeader(res);
         res.writeHead(
             404, { 'Content-Type': 'text/plain' }
         )

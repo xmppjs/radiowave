@@ -17,14 +17,6 @@ function generateSid() {
     return sid
 }
 
-// TODO allow to set settings via options
-function sendCorsHeader(res) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader("Access-Control-Allow-Headers", "Authorization, X-Requested-With, Content-Type, Content-Length");
-    res.setHeader('Access-Control-Allow-Credentials', true);
-}
-
 /**
  * Gets constructed with a first HTTP request (opts.req & opts.res),
  * but receives more in method handleHTTP().
@@ -44,6 +36,11 @@ function sendCorsHeader(res) {
  * this.emit('data', string);
  * this.emit('end');
  * this.emit('close');
+ * 
+ * This implementation is based on 
+ * https://github.com/node-xmpp/node-xmpp-server/blob/master/lib/bosh/bosh_server.js
+ * 
+ * License: MIT
  */
 function BOSHServerSession(opts) {
     // socket properties
@@ -51,7 +48,6 @@ function BOSHServerSession(opts) {
     this.readable = true;
 
     // Bosh settings
-
     this.xmlnsAttrs = {
         xmlns: NS_HTTPBIND,
         'xmlns:xmpp': 'urn:xmpp:xbosh',
@@ -128,7 +124,6 @@ BOSHServerSession.prototype.handleHTTP = function(opts) {
     if (this.inQueue.hasOwnProperty(opts.bodyEl.attrs.rid)) {
         // Already queued? Replace with this request
         var oldOpts = this.inQueue[opts.bodyEl.attrs.rid]
-        sendCorsHeader(oldOpts.res);
         oldOpts.res.writeHead(
             403,
             { 'Content-Type': 'text/plain' }
@@ -184,14 +179,13 @@ BOSHServerSession.prototype.workInQueue = function() {
     if (!restart && rid && !sid) {
         // emulate stream creation
         this.sendData("<?xml version='1.0' ?>")
-        this.sendData("<stream:stream to='" + to + "' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='" + xmppv + "'>")
+        this.sendData("<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='" + to + "' version='" + xmppv + "'>")
     }
 
     // handle stream reset
     if (opts.bodyEl.attrs['xmpp:restart'] == "true") {
-        logger.debug('start new stream')
-        // start new stream
-        var stream = "<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' version='1.0' id='7298425636345943' from='example.net'>"
+        // restart new stream
+        var stream = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams'  to='" + to + "' version='" + xmppv + "'>"
         this.sendData(stream);
     }
 
@@ -280,7 +274,6 @@ BOSHServerSession.prototype.onReqTimeout = function(rid) {
 }
 
 BOSHServerSession.prototype.respond = function(res, attrs, children) {
-    sendCorsHeader(res);
     res.writeHead(
         200,
         { 'Content-Type': 'application/xml; charset=utf-8' }
