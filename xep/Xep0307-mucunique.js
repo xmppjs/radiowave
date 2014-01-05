@@ -24,9 +24,8 @@ MucUnique.prototype.name = 'XEP-0307: Unique Room Names for Multi-User Chat';
 MucUnique.prototype.version = '0.1.0';
 
 MucUnique.prototype.match = function (stanza) {
-    logger.debug("check match");
     if (stanza.is('iq') && stanza.attrs.type === 'get' && (stanza.getChild('unique', NS_MUC_UNIQUE))) {
-        logger.debug('detected muc unique request');
+        logger.debug('detected XEP-0307 request');
         return true;
     }
     return false;
