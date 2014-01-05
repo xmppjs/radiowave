@@ -69,26 +69,30 @@ function BOSHServerSession(opts) {
     this.streamAttrs = opts.streamAttrs || {}
     this.handshakeAttrs = opts.bodyEl.attrs
 
+    // generate sid
     this.sid = generateSid()
-    this.nextRid = parseInt(opts.bodyEl.attrs.rid, 10) + 1
+    // add sid to properties
+    this.xmlnsAttrs.sid = this.sid;
+
+
+    this.nextRid = parseInt(opts.bodyEl.attrs.rid, 10) 
     this.wait = parseInt(opts.bodyEl.attrs.wait || '30', 10)
     this.hold = parseInt(opts.bodyEl.attrs.hold || '1', 10)
     this.inQueue = {}
     this.outQueue = []
     this.stanzaQueue = []
 
-    this.respond(opts.res, { sid: this.sid })
-
     this.maySetConnectionTimeout()
 
     this.emit('connect');
 
-    // Let someone hook to 'connect' event before emitting 'streamStart'
-    process.nextTick(this.startParser.bind(this))
+    this.inQueue[opts.bodyEl.attrs.rid] = opts
+    process.nextTick(this.workInQueue.bind(this))
 }
 
 util.inherits(BOSHServerSession, EventEmitter)
 
+// implementation of socket interface
 BOSHServerSession.prototype.write = function (data) {
     logger.debug('write bosh socket' + data);
     logger.debug(data.toString());
@@ -117,13 +121,7 @@ BOSHServerSession.prototype.closeSocket = function (data) {
     this.emit('close')
 };
 
-/* Should cause <stream:features/> to be sent. */
-BOSHServerSession.prototype.startParser = function() {
-    // emulate stream creation
-    this.sendData("<?xml version='1.0' ?>")
-    this.sendData("<stream:stream to='example.net' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='1.0'>")
-    //this.emit('streamStart', this.handshakeAttrs)
-}
+// implmentation of BOSH Session
 
 BOSHServerSession.prototype.handleHTTP = function(opts) {
     logger.debug('handleHTTP' + opts.bodyEl.toString())
@@ -175,6 +173,20 @@ BOSHServerSession.prototype.workInQueue = function() {
     // handle message
     logger.debug(opts.bodyEl.root().toString())
 
+    // extract values
+    var rid = opts.bodyEl.attrs.rid
+    var sid = opts.bodyEl.attrs.sid
+    var to = opts.bodyEl.attrs.to
+    var restart = opts.bodyEl.attrs['xmpp:restart'];
+    var xmppv = opts.bodyEl.attrs['xmpp:version'];
+
+    // handle stream start
+    if (!restart && rid && !sid) {
+        // emulate stream creation
+        this.sendData("<?xml version='1.0' ?>")
+        this.sendData("<stream:stream to='" + to + "' xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' version='" + xmppv + "'>")
+    }
+
     // handle stream reset
     if (opts.bodyEl.attrs['xmpp:restart'] == "true") {
         logger.debug('start new stream')
@@ -210,6 +222,7 @@ BOSHServerSession.prototype.workInQueue = function() {
 
 BOSHServerSession.prototype.workOutQueue = function() {
     logger.debug('workoutqueue')
+
     if ((this.stanzaQueue.length < 1) &&
         (this.outQueue.length > 0)) {
         this.emit('drain')
@@ -217,8 +230,12 @@ BOSHServerSession.prototype.workOutQueue = function() {
     } else if (this.outQueue.length < 1) {
         return
     }
+
+    // queued stanzas
     var stanzas = this.stanzaQueue
     this.stanzaQueue = []
+
+    // available requests
     var opts = this.outQueue.shift()
 
     if (opts.timer) {
@@ -226,6 +243,7 @@ BOSHServerSession.prototype.workOutQueue = function() {
         delete opts.timer
     }
 
+    // answer
     this.respond(opts.res, {}, stanzas)
 
     this.maySetConnectionTimeout()
