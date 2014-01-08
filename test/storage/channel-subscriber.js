@@ -47,14 +47,16 @@ describe('storage', function () {
                 }
             }
 
-            var result = {
-                'romeo@shakespeare.lit': {
-                    'name': 'Romeo J.'
-                }
-            };
+            var result = [{
+                "content": {
+                    "name": "Romeo J."
+                },
+                "jid": "romeo@shakespeare.lit"
+            }];
 
             channel.subscribe(user.jid, user.content).then(function (success) {
                 channel.listSubscribers().then(function (members) {
+                    console.log(JSON.stringify(members));
                     members.should.not.be.empty;
                     assert.deepEqual(members, result);
                     done();
@@ -72,17 +74,21 @@ describe('storage', function () {
                 }
             }
 
-            var result = {
-                'romeo@shakespeare.lit': {
-                    'name': 'Romeo J.'
+            var result = [{
+                "content": {
+                    "name": "Romeo J."
                 },
-                'julia@shakespeare.lit': {
-                    'name': 'Julia J.'
-                }
-            };
+                "jid": "romeo@shakespeare.lit"
+            }, {
+                "content": {
+                    "name": "Julia J."
+                },
+                "jid": "julia@shakespeare.lit"
+            }];
 
             channel.subscribe(user.jid, user.content).then(function (success) {
                 channel.listSubscribers().then(function (members) {
+                    console.log(JSON.stringify(members));
                     members.should.not.be.empty;
                     assert.deepEqual(members, result);
                     done();
@@ -93,16 +99,20 @@ describe('storage', function () {
         });
 
         it('subscribers', function (done) {
-            var result = {
-                'romeo@shakespeare.lit': {
-                    'name': 'Romeo J.'
+            var result = [{
+                "content": {
+                    "name": "Romeo J."
                 },
-                'julia@shakespeare.lit': {
-                    'name': 'Julia J.'
-                }
-            };
+                "jid": "romeo@shakespeare.lit"
+            }, {
+                "content": {
+                    "name": "Julia J."
+                },
+                "jid": "julia@shakespeare.lit"
+            }];
 
             channel.listSubscribers().then(function (members) {
+                console.log(JSON.stringify(members));
                 members.should.not.be.empty;
                 assert.deepEqual(members, result);
                 done();
@@ -113,14 +123,16 @@ describe('storage', function () {
 
 
         it('unsubscribe', function (done) {
-            var result = {
-                'julia@shakespeare.lit': {
-                    'name': 'Julia J.'
-                }
-            };
+            var result = [{
+                "content": {
+                    "name": "Julia J."
+                },
+                "jid": "julia@shakespeare.lit"
+            }];
 
             channel.unsubscribe('romeo@shakespeare.lit').then(function (success) {
                 channel.listSubscribers().then(function (members) {
+                    console.log(JSON.stringify(members));
                     members.should.not.be.empty;
                     assert.deepEqual(members, result);
                     done();
@@ -129,13 +141,15 @@ describe('storage', function () {
         });
 
         it('subscribers', function (done) {
-            var result = {
-                'julia@shakespeare.lit': {
-                    'name': 'Julia J.'
-                }
-            };
+            var result = [{
+                "content": {
+                    "name": "Julia J."
+                },
+                "jid": "julia@shakespeare.lit"
+            }];
 
             channel.listSubscribers().then(function (members) {
+                console.log(JSON.stringify(members));
                 members.should.not.be.empty;
                 assert.deepEqual(members, result);
                 done();
