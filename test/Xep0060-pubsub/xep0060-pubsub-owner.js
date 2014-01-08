@@ -20,6 +20,11 @@ var xRocket = require('../../xrocket'),
 // Xep Components
 var Xep0060 = require('../../xep/Xep0060-pubsub');
 
+// Storage
+var UsrModule = require('../../storage/in-memory/Users');
+var Users = new UsrModule();
+
+
 // user
 var userRomeo = {
     jid: 'romeo@example.net',
@@ -91,20 +96,22 @@ describe('Xep-0060', function () {
         xR.chain(lr).chain(cr);
 
         // register pubsub component
+        cr.register(new Xep0060({
+            subdomain: 'pubsub',
+            domain: 'example.net',
+            Users: Users
+        }));
+
+        done();
+
+        /*
         var PGConn = require('../../storage/postgre/PGConn');
         var pgConnectionString = process.env.DATABASE_URL;
         var pgC = new PGConn(pgConnectionString);
         pgC.connect(function () {
-            cr.register(new Xep0060({
-                subdomain: 'pubsub',
-                domain: 'example.net',
-                storage: {
-                    client: pgC.getClient()
-                }
-            }));
-
             done();
         });
+        */
     }
 
     function createNode(jid, node) {

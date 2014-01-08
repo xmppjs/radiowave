@@ -20,6 +20,10 @@ var xRocket = require('../../xrocket'),
 // Xep Components
 var Xep0060 = require('../../xep/Xep0060-pubsub');
 
+// Storage
+var UsrModule = require('../../storage/in-memory/Users');
+var Users = new UsrModule();
+
 // user
 var userRomeo = {
     jid: 'romeo@example.net',
@@ -92,7 +96,15 @@ describe('Xep-0060', function () {
 
 
         // register pubsub component
-        var PGConn = require('../../storage/postgre/PGConn');
+        cr.register(new Xep0060({
+            subdomain: 'pubsub',
+            domain: 'example.net',
+            Users: Users
+        }));
+
+        done();
+
+        /*var PGConn = require('../../storage/postgre/PGConn');
         var pgConnectionString = process.env.DATABASE_URL;
         var pgC = new PGConn(pgConnectionString);
         pgC.connect(function () {
@@ -105,7 +117,7 @@ describe('Xep-0060', function () {
             }));
 
             done();
-        });
+        });*/
     }
 
     function sendMessageWithRomeo(stanza, done) {
@@ -348,6 +360,7 @@ describe('Xep-0060', function () {
              *     id='unsub1'/>
              */
             it('6.2. Unsubscribe from a Node', function (done) {
+                console.log('6.2. Unsubscribe from a Node');
                 var id = 'unsubscribe-r2d2';
                 var unsubscribe = new ltx.Element('iq', {
                     to: 'pubsub.example.net',

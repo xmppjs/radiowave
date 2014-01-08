@@ -94,7 +94,7 @@ User.prototype.getRoom = function (roomname) {
         var room = self.rooms[roomname];
         logger.debug(room);
         if (room !== undefined && room !== null) {
-            resolve(self.rooms[roomname]);
+            resolve(room);
         } else {
             reject('room does not exist');
         }
@@ -122,7 +122,7 @@ User.prototype.createChannel = function (channelname) {
     var promise = new Promise(function (resolve, reject) {
         if (!self.channels[channelname]) {
             logger.debug('create new channel');
-            self.channels[channelname] = new Channel(channelname);
+            self.channels[channelname] = new Channel(channelname, self);
             resolve(self.channels[channelname]);
         } else {
             reject('channel exists');
@@ -131,13 +131,32 @@ User.prototype.createChannel = function (channelname) {
     return promise;
 };
 
+// private delete method
+User.prototype._deleteChannel = function (channelname) {
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        if (self.channels[channelname]) {
+            delete self.channels[channelname];
+            resolve(true);
+        } else {
+            reject(false);
+        }
+    });
+    return promise;
+};
+
 User.prototype.getChannel = function (channelname) {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
-        if (!self.channels[channelname]) {
-            resolve(self.rooms[channelname]);
+        var channel = self.channels[channelname];
+        logger.debug(channel);
+
+        if (channel !== undefined && channel !== null) {
+            logger.debug('channel found');
+            resolve(channel);
         } else {
-            reject('room does not exist');
+            logger.debug('channel does not exists');
+            reject('channel does not exist');
         }
     });
     return promise;

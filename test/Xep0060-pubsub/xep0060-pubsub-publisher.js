@@ -21,6 +21,10 @@ var xRocket = require('../../xrocket'),
 // Xep Components
 var Xep0060 = require('../../xep/Xep0060-pubsub');
 
+// Storage
+var UsrModule = require('../../storage/in-memory/Users');
+var Users = new UsrModule();
+
 // user
 var userRomeo = {
     jid: 'romeo@example.net',
@@ -36,24 +40,30 @@ var userJulia = {
 
 var uuid = require('node-uuid');
 
-function getClientRomeo() {
+function getClientRomeo(done) {
     var cl = new Client({
         jid: userRomeo.jid,
         password: userRomeo.password,
         preferred: 'PLAIN',
         host: userRomeo.host
     });
-    return cl;
+
+    cl.on('online', function () {
+        done(cl);
+    });
 }
 
-function getClientJulia() {
+function getClientJulia(done) {
     var cl = new Client({
         jid: userJulia.jid,
         password: userJulia.password,
         preferred: 'PLAIN',
         host: userJulia.host
     });
-    return cl;
+
+    cl.on('online', function () {
+        done(cl);
+    });
 }
 
 /**
@@ -87,6 +97,15 @@ describe('Xep-0060', function () {
         xR.chain(lr).chain(cr);
 
         // register pubsub component
+        cr.register(new Xep0060({
+            subdomain: 'pubsub',
+            domain: 'example.net',
+            Users: Users
+        }));
+
+        done();
+
+        /*
         var PGConn = require('../../storage/postgre/PGConn');
         var pgConnectionString = process.env.DATABASE_URL;
         var pgC = new PGConn(pgConnectionString);
@@ -100,7 +119,7 @@ describe('Xep-0060', function () {
             }));
 
             done();
-        });
+        });*/
     }
 
     function createNode(jid, node) {
@@ -155,7 +174,6 @@ describe('Xep-0060', function () {
 
 
     // request - response messaging
-
     var eventhandler = {};
 
     function startClient(cl, done) {
@@ -172,24 +190,15 @@ describe('Xep-0060', function () {
             }
         );
 
-        cl.on('online', function () {
-            done(null);
-        });
-
         cl.on('error', function (e) {
             console.log(e);
-            done(e);
         });
+
+        done();
     }
 
     function resetEventhandler() {
         nodes = {};
-    }
-
-    function online(cl, done) {
-        cl.on('online', function () {
-            done(null);
-        });
     }
 
     function sendMessage(cl, stanza, done) {
@@ -197,7 +206,6 @@ describe('Xep-0060', function () {
         // replace id
         stanza.root().attr('id', id);
         eventhandler[id] = done;
-
 
         console.log(stanza.root().toString());
         cl.send(stanza.root());
@@ -294,19 +302,25 @@ describe('Xep-0060', function () {
     beforeEach(function (done) {
         resetEventhandler();
 
-        romeoCl = getClientRomeo();
-        juliaCl = getClientJulia();
+        getClientRomeo(function (cl) {
+            romeoCl = cl;
 
-        done();
-    })
+            getClientJulia(function (cl) {
+                console.log('JUIA ONLINE')
+                juliaCl = cl;
+                done();
+            });
+        });
+    });
 
     afterEach(function (done) {
 
+        juliaCl.on('end', function () {
+            done();
+        });
+
         romeoCl.end();
         juliaCl.end();
-
-        setTimeout(done, 200);
-
     });
 
     describe('7. Publisher Use Cases', function () {
@@ -550,41 +564,37 @@ describe('Xep-0060', function () {
                 // reset the subscriptions
                 resetSubscriptions();
 
-                // bring romeo online
-                online(romeoCl, function (err) {
+                // subscribe romeo
+                subscribe(romeoCl, node, function (err) {
+                        // subscribe julia
+                        subscribe(juliaCl, node, function (err) {
+                                // publish event
+                                sendEvent();
+                            },
+                            function (message) {
+                                console.log("julia got: " + message.toString());
 
-                    // subscribe romeo
-                    subscribe(romeoCl, node, function (err) {
-                            // subscribe julia
-                            subscribe(juliaCl, node, function (err) {
-                                    // publish event
-                                    sendEvent();
-                                },
-                                function (message) {
-                                    console.log("julia got: " + message.toString());
+                                // verify stanza
 
-                                    // verify stanza
+                                var pubsubevent = message.getChild('event', 'http://jabber.org/protocol/pubsub#event');
+                                pubsubevent.should.not.be.empty;
 
-                                    var pubsubevent = message.getChild('event', 'http://jabber.org/protocol/pubsub#event');
-                                    pubsubevent.should.not.be.empty;
+                                var itemselement = pubsubevent.getChild('items');
+                                itemselement.should.not.be.empty;
 
-                                    var itemselement = pubsubevent.getChild('items');
-                                    itemselement.should.not.be.empty;
+                                var items = itemselement.getChildren('item');
+                                items.should.not.be.empty;
+                                assert.equal(items.length, 1);
+                                assert.equal(items[0].attrs.id, 'item_01');
 
-                                    var items = itemselement.getChildren('item');
-                                    items.should.not.be.empty;
-                                    assert.equal(items.length, 1);
-                                    assert.equal(items[0].attrs.id, 'item_01');
+                                assert.equal(items[0].text(), 'abc');
 
-                                    assert.equal(items[0].text(), 'abc');
-
-                                    done();
-                                });
-                        },
-                        function (message) {
-                            //console.log("romeo got: " + message.toString());
-                        });
-                });
+                                done();
+                            });
+                    },
+                    function (message) {
+                        //console.log("romeo got: " + message.toString());
+                    });
             });
 
             it('Precondition: Create a node', function (done) {
@@ -643,36 +653,31 @@ describe('Xep-0060', function () {
                 // reset the subscriptions
                 resetSubscriptions();
 
-                // bring romeo online
-                online(romeoCl, function (err) {
+                // subscribe julia
+                subscribe(juliaCl, 'config_node', function (err) {
+                        // publish event
+                        sendEvent();
+                    },
+                    function (message) {
+                        console.log("julia got: " + message.toString());
 
-                    // subscribe julia
-                    subscribe(juliaCl, 'config_node', function (err) {
-                            // publish event
-                            sendEvent();
-                        },
-                        function (message) {
-                            console.log("julia got: " + message.toString());
+                        // verify stanza
 
-                            // verify stanza
+                        var pubsubevent = message.getChild('event', 'http://jabber.org/protocol/pubsub#event');
+                        pubsubevent.should.not.be.empty;
 
-                            var pubsubevent = message.getChild('event', 'http://jabber.org/protocol/pubsub#event');
-                            pubsubevent.should.not.be.empty;
+                        var itemselement = pubsubevent.getChild('items');
+                        itemselement.should.not.be.empty;
 
-                            var itemselement = pubsubevent.getChild('items');
-                            itemselement.should.not.be.empty;
+                        var items = itemselement.getChildren('item');
+                        items.should.not.be.empty;
+                        assert.equal(items.length, 1);
+                        assert.equal(items[0].attrs.id, 'item_01');
 
-                            var items = itemselement.getChildren('item');
-                            items.should.not.be.empty;
-                            assert.equal(items.length, 1);
-                            assert.equal(items[0].attrs.id, 'item_01');
+                        assert.equal(items[0].text(), '');
 
-                            assert.equal(items[0].text(), '');
-
-                            done();
-                        });
-
-                });
+                        done();
+                    });
             });
 
             it('Postcondition: delete node', function (done) {
@@ -757,7 +762,6 @@ describe('Xep-0060', function () {
              * </iq>
              */
             it('7.1.3.3 Node Does Not Exist', function (done) {
-
                 startClient(romeoCl, function (err) {
 
                     var jid = romeoCl.jod;
@@ -978,12 +982,16 @@ describe('Xep-0060', function () {
 
             it('Postcondition: delete node', function (done) {
                 startClient(romeoCl, function (err) {
-                    var deleteiq = deleteNode(romeoCl.jid, node);
-                    sendMessage(romeoCl, deleteiq, function (err, stanza) {
-                        done(err);
+                    startClient(juliaCl, function () {
+                        var deleteiq = deleteNode(romeoCl.jid, node);
+                        sendMessage(romeoCl, deleteiq, function (err, stanza) {
+                            console.log('test');
+                            done();
+                        });
                     });
                 });
             });
+
         });
     });
 });
