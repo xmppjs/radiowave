@@ -10,11 +10,13 @@ var ltx = require('ltx'),
     Message = require('node-xmpp-core').Stanza.Message,
     JID = require('node-xmpp-core').JID;
 
+/*
 var path = require('path'),
     PGSchema = require('../../storage/postgre/PGSchema');
 
 var PubSubNode = require('./PubSubNode'),
     Storage = require('../../storage/postgre/pubsub');
+ */
 
 // namespaces
 var NS_PUBSUB = 'http://jabber.org/protocol/pubsub',
@@ -38,29 +40,23 @@ function PubSub(options) {
 
     XepComponent.call(this);
 
-    this.Storage = {};
-    if (options.storage) {
-        this.Storage.Nodes = new Storage.Nodes(options.storage);
-        this.Storage.Items = new Storage.Items(options.storage);
-    } else {
-        logger.warn("PubSub cannot be properly initialized because options.storage is not defined");
-    }
+    this.Users = options.Users;
 }
 util.inherits(PubSub, XepComponent);
 
 PubSub.prototype.name = 'XEP-0060: Publish-Subscribe';
 
-PubSub.prototype.initialize = function() {
-    var filename = path.resolve(__dirname , '../../storage/postgre/pubsub/schema.json');
-    (new PGSchema(this.options.storage.client)).run(filename);
+PubSub.prototype.initialize = function () {
+    //var filename = path.resolve(__dirname , '../../storage/postgre/pubsub/schema.json');
+    //(new PGSchema(this.options.storage.client)).run(filename);
 };
 
-PubSub.prototype.match = function(stanza) {
+PubSub.prototype.match = function (stanza) {
     var domain = this.subdomain + '.' + this.domain;
     var jid = new JID(stanza.attrs.to);
 
     // check that the domain fits
-    if (jid.getDomain().toString().localeCompare(domain) !== 0){
+    if (jid.getDomain().toString().localeCompare(domain) !== 0) {
         // logger.debug('Pubsub ' + domain + ' does not accept ' + jid.toString());
         return false;
     }
@@ -83,43 +79,13 @@ PubSub.prototype.match = function(stanza) {
     return false;
 };
 
-PubSub.prototype.getDomain = function() {
+PubSub.prototype.getDomain = function () {
     return this.domain;
 };
 
-PubSub.prototype.getSubdomain = function() {
+PubSub.prototype.getSubdomain = function () {
     return this.subdomain;
 };
-
-/**
- * creates a new pubsub node
- * @param node name of the pubsub node
- */
-PubSub.prototype.createNode = function(name, configuration, callback) {
-    logger.debug('create new pubsub node ' + name);
-
-    // create a new pub sub node description
-    var node = new PubSubNode({
-        name: name,
-        subdomain: this.getSubdomain()
-    });
-
-    // set default parameter
-    node.setConfiguration('pubsub#deliver_payloads', 1);
-    node.setConfiguration('pubsub#deliver_notifications', 1);
-    node.setConfiguration('pubsub#persist_items', 1);
-    node.setConfiguration('pubsub#access_model', 'open');
-    node.setConfiguration('pubsub#notify_delete', 1);
-
-    // overwrite configuration
-    for (var i = 0; i < configuration.length; i++) {
-        logger.debug('set ' + name + ' key: ' + configuration[i].key + ' ' + configuration[i].value);
-        node.setConfiguration(configuration[i].key, configuration[i].value);
-    }
-
-    this.Storage.Nodes.add(node.getNodeDescription(), callback);
-};
-
 
 PubSub.prototype.sendError = function(stanza, err) {
     var response = new ltx.Element('iq', {
@@ -153,7 +119,8 @@ PubSub.prototype.sendSuccess = function(stanza, detail) {
     this.send(response);
 };
 
-PubSub.prototype.handleCreate = function(stanza) {
+PubSub.prototype.handleCreate = function (stanza) {
+    var self = this;
     var pubsub = stanza.getChild('pubsub', NS_PUBSUB);
     var create = pubsub.getChild('create');
     var nodename = create.attrs.node;
@@ -162,8 +129,6 @@ PubSub.prototype.handleCreate = function(stanza) {
     if (nodename === undefined) {
         nodename = null;
     }
-
-    var self = this;
 
     if (nodename === null) {
         // generate instant nodename
@@ -179,9 +144,10 @@ PubSub.prototype.handleCreate = function(stanza) {
     }
 
     // try to get node
-    this.getNode(nodename, function(err, node) {
+    function ch(node) {
+        logger.debug('ch' + node);
         // no node found, let's create it
-        if (node === null) {
+        if (node) {
             // extract features
             var configuration = [];
             var configure = pubsub.getChild('configure');
@@ -191,61 +157,69 @@ PubSub.prototype.handleCreate = function(stanza) {
                     var fields = x.getChildren('field');
                     for (var i = 0, l = fields.length; i < l; i++) {
                         configuration.push({
-                            key: fields[i].attrs.var,
-                            value: fields[i].getChild('value').text()
+                            key: fields[i].attrs.
+                            var,
+                                value: fields[i].getChild('value').text()
                         });
                     }
                 }
             }
 
-            // create new node
-            self.createNode(nodename, configuration, function(err) {
-                // answer with error
-                if (err) {
-                    logger.error(err);
-                    self.sendError(stanza);
-                }
-                // send success
-                else {
-                    self.sendSuccess(stanza, detail);
-                }
-                logger.debug('send pubsub create response');
-            });
-        }
-        // send error node found
-        else {
-            var errXml = ltx.parse('<error type=\'cancel\'><conflict xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-            self.sendError(stanza, errXml);
-        }
+            // set default parameter
+            node.setConfiguration('pubsub#deliver_payloads', 1);
+            node.setConfiguration('pubsub#deliver_notifications', 1);
+            node.setConfiguration('pubsub#persist_items', 1);
+            node.setConfiguration('pubsub#access_model', 'open');
+            node.setConfiguration('pubsub#notify_delete', 1);
 
-    });
+            // overwrite configuration
+            for (var j = 0; j < configuration.length; j++) {
+                logger.debug('set ' + nodename + ' key: ' + configuration[j].key + ' ' + configuration[j].value);
+                node.setConfiguration(configuration[j].key, configuration[j].value);
+            }
+
+            self.sendSuccess(stanza, detail);
+        }
+    }
+
+    // TODO verify the name is unique
+    var username = 'romeo';
+
+    // check if the room exists, if not create it
+    this.Users.user(username).then(
+        function (user) {
+            user.getChannel(nodename).then(
+                function () {
+                    // channel exists, error
+                    var errXml = ltx.parse('<error type=\'cancel\'><conflict xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+                    self.sendError(stanza, errXml);
+                },
+                function () {
+                    // channel does not exist
+                    user.createChannel(nodename).then(
+                        function (channel) {
+                            ch(channel);
+                        }
+                    );
+                });
+        });
 };
 
 
-PubSub.prototype.handleDelete = function(stanza, pubsub) {
-    logger.debug(stanza.root().toString());
-    var deleteNode = pubsub.getChild('delete', NS_PUBSUB_OWNER);
-
-    var nodename = deleteNode.attrs.node;
+PubSub.prototype.handleDelete = function (node, stanza) {
     var self = this;
-
-    // try to get node
-    this.getNode(nodename, function(err, node) {
-        // no node found, let's create it
-        if (node === null) {
-            // send error
-            var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-            self.sendError(stanza, errXml);
-        } else {
-            self.Storage.Nodes.delete(node, function(err) {
-                if (!err) {
-                    self.sendSuccess(stanza);
-                } else {
-                    self.sendError(stanza);
-                }
-            });
+    logger.debug(stanza.root().toString());
+    logger.debug(node);
+    node.remove().then(
+        function () {
+            logger.debug('node removed');
+            self.sendSuccess(stanza);
+        },
+        function () {
+            logger.debug('node could not be removed');
+            self.sendError(stanza);
         }
-    });
+    );
 };
 
 /**
@@ -254,7 +228,8 @@ PubSub.prototype.handleDelete = function(stanza, pubsub) {
  * @param pubsub already extracted pubsub child node
  * @see @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe
  */
-PubSub.prototype.handleSubscribe = function(node, stanza, pubsub) {
+PubSub.prototype.handleSubscribe = function (node, stanza, pubsub) {
+    var self = this;
     var sub = pubsub.getChild('subscribe');
     var jid = sub.attrs.jid;
 
@@ -271,55 +246,47 @@ PubSub.prototype.handleSubscribe = function(node, stanza, pubsub) {
     }
 
     // check that node exists
-    logger.debug(JSON.stringify(node.getNodeDescription()));
-    logger.debug('SUBSCRIBE: ' + jid + ' -> ' + node.name());
+    logger.debug('SUBSCRIBE: ' + jid + ' -> ' + node.getName());
 
     // store new subscriber
-    // TODO add barejid instead of full jid
-    node.subscribe(subscriber.bare().toString());
+    node.subscribe(subscriber.bare().toString()).then(
+        function () {
+            // Success Case, send confirmation
+            var msg = new Iq({
+                from: self.domain,
+                to: stanza.attrs.from,
+                id: stanza.attrs.id,
+                type: 'result'
+            });
 
-    // store change
-    var self = this;
-    this.Storage.Nodes.update(node.getNodeDescription(), function() {
+            //var humanname = node.getConfiguration(NodeConfig.PUBSUB_NODE_Title);
 
-        logger.debug(JSON.stringify(node.getNodeDescription()));
+            msg.c('pubsub', {
+                'xmlns': NS_PUBSUB
+            }).c('subscription', {
+                'node': sub.attrs.node,
+                'jid': sub.attrs.jid,
+                'subscription': 'subscribed'
+            });
 
-        // Success Case, send confirmation
-        var msg = new Iq({
-            from: self.domain,
-            to: stanza.attrs.from,
-            id: stanza.attrs.id,
-            type: 'result'
-        });
-        //var humanname = node.getConfiguration(NodeConfig.PUBSUB_NODE_Title);
+            // send subscribe response
+            self.send(msg);
 
-        msg.c('pubsub', {
-            'xmlns': NS_PUBSUB
-        }).c('subscription', {
-            'node': sub.attrs.node,
-            'jid': sub.attrs.jid,
-            'subscription': 'subscribed'
-        });
-
-        // send subscribe response
-        self.send(msg);
-
-        /*
-         * send old items to new subscriber
-         * TODO make dependend on node default
-         * @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe-last
-         */
-        /*node.eachMessage(function (el) {
+            /*
+             * send old items to new subscriber
+             * TODO make dependend on node default
+             * @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe-last
+             */
+            /*node.eachMessage(function (el) {
             el.attrs.to = sub.attrs.jid;
             // route message
             this.send(el, null);
         });*/
-
-    });
-};
-
-PubSub.prototype.getNode = function(nodename, callback) {
-    this.Storage.Nodes.get(this.getSubdomain(), nodename, callback);
+        },
+        function () {
+            // error
+        }
+    );
 };
 
 /**
@@ -328,15 +295,16 @@ PubSub.prototype.getNode = function(nodename, callback) {
  * @param pubsub already extracted pubsub child node
  * @see http://xmpp.org/extensions/xep-0060.html#subscriber-unsubscribe
  */
-PubSub.prototype.handleUnSubscribe = function(node, stanza, pubsub) {
+PubSub.prototype.handleUnsubscribe = function (node, stanza, pubsub) {
+    var self = this;
     var errorXml = null;
     var sub = pubsub.getChild('unsubscribe');
 
-    var from = new JID(stanza.attrs.from);
+    var userjid = new JID(stanza.attrs.from);
     var subscriber = new JID(sub.attrs.jid);
 
     // check that jids match
-    if (!from.bare().equals(subscriber)) {
+    if (!userjid.bare().equals(subscriber)) {
         // this is a wrong stanza
         errorXml = ltx.parse('<error type=\'modify\'><bad-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><invalid-jid xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
         this.sendError(stanza, errorXml);
@@ -344,20 +312,15 @@ PubSub.prototype.handleUnSubscribe = function(node, stanza, pubsub) {
     }
 
     // unregister subscriber
-    if (node.isSubscribed(subscriber)) {
-
-        // unsubscribe user
-        node.unsubscribe(subscriber);
-
-        // store change
-        this.Storage.Nodes.update(node.getNodeDescription());
-
-        this.sendSuccess(stanza);
-    } else {
-        errorXml = ltx.parse('<error type=\'cancel\'><unexpected-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><not-subscribed xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
-        this.sendError(stanza, errorXml);
-    }
-
+    logger.debug('user' + userjid.bare() + ' unsubscribe the node');
+    node.unsubscribe(userjid.bare().toString()).then(
+        function () {
+            self.sendSuccess(stanza);
+        },
+        function () {
+            errorXml = ltx.parse('<error type=\'cancel\'><unexpected-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><not-subscribed xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
+            self.sendError(stanza, errorXml);
+        });
 };
 
 /**
@@ -366,21 +329,21 @@ PubSub.prototype.handleUnSubscribe = function(node, stanza, pubsub) {
  * @param pubsub already extracted pubsub child node
  * @see http://xmpp.org/extensions/xep-0060.html#publisher-publish
  */
-PubSub.prototype.handlePublish = function(node, stanza, publish) {
+PubSub.prototype.handlePublish = function (node, stanza, publish) {
     var self = this;
-
+    logger.debug('handlePublish');
     logger.debug(stanza.toString());
-    logger.debug(JSON.stringify(node));
 
     // if node is available
     if (node) {
-        logger.debug('PUBLISH to ' + node.name());
+        logger.debug('PUBLISH to ' + node.getName());
+        logger.debug(stanza);
 
         var itemswithoutpayload = [];
         var itemswithpayload = [];
 
         var childs = publish.getChildren('item');
-        childs.forEach(function(item) {
+        childs.forEach(function (item) {
             // check for id
             if (!item.attrs.id) {
                 item.attrs.id = uuid.v4();
@@ -413,24 +376,15 @@ PubSub.prototype.handlePublish = function(node, stanza, publish) {
         msg.c('event', {
             'xmlns': 'http://jabber.org/protocol/pubsub#event'
         }).c('items', {
-            'node': node.name()
+            'node': node.getName()
         }).children = attachment;
 
-        // store message if this option is activated
-        /*if (item && item[0] && item[0].attrs && item[0].attrs.type) {
-
-            var type = item[0].attrs.type;
-
-            if (type === 'meeting') {
-                // we store messages
-                logger.debug('we store message');
-                node.addMessage(msg);
-            }
-        }*/
+        // store message in history
+        node.trigger(msg.root().toString());
 
         // send response to sender
         var publishDetail = new ltx.Element('publish', {
-            node: node.name()
+            node: node.getName()
         });
         publishDetail.children = itemswithoutpayload;
 
@@ -439,150 +393,116 @@ PubSub.prototype.handlePublish = function(node, stanza, publish) {
                 'xmlns': 'http://jabber.org/protocol/pubsub'
             }).cnode(publishDetail).up();
 
-
         this.sendSuccess(stanza, detail);
 
-        logger.debug('send message to ' + JSON.stringify(node.getSubscriptions()));
-
         // send notification message to subscriber
-        node.eachSubscriber(function(subscriber) {
-            var submsg = msg.clone();
-            submsg.attrs.to = subscriber;
+        node.listSubscribers().then(
+            function (subscribers) {
+                logger.debug('send events to subs ' + JSON.stringify(subscribers));
+                for (var i = 0, l = subscribers.length; i < l; i += 1) {
+                    var subscriber = subscribers[i];
 
-            logger.debug(submsg.root().toString());
-
-            self.send(submsg);
-        });
-
+                    var clientmsg = msg.clone();
+                    clientmsg.attrs.to = subscriber.jid;
+                    self.send(clientmsg);
+                }
+            },
+            function (error) {
+                logger.debug('error' + error)
+            }
+        );
     } else {
         // TODO send error that the node is not available
         logger.error('node not there');
     }
 };
 
-PubSub.prototype.handlePubSub = function(stanza, pubsub) {
+PubSub.prototype.handlePubSub = function (stanza, pubsub) {
     var self = this,
-        nodename = null,
-        sub = null,
         errorXml;
 
-    // handle create a new node
-    if (pubsub.getChild('create')) {
-        this.handleCreate(stanza);
-    }
-
-    // handle subscribe item
+    // detect what we have to do
+    var method = null;
+    var pubsubEl = null;
     if (pubsub.getChild('subscribe')) {
-
-        sub = pubsub.getChild('subscribe');
-        nodename = sub.attrs.node;
-        logger.debug(nodename);
-        self.getNode(nodename, function(err, node) {
-            if (!err) {
-                // no node found
-                if (node === null) {
-                    errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                    self.sendError(stanza, errorXml);
-                }
-                // node exists 
-                else {
-                    self.handleSubscribe(new PubSubNode(node), stanza, pubsub);
-                }
-            } else {
-                // TODO send error
-                logger.error('something went wrong');
-            }
-        });
+        method = 'subscribe';
+        pubsubEl = pubsub.getChild('subscribe');
+    } else if (pubsub.getChild('unsubscribe')) {
+        method = 'unsubscribe';
+        pubsubEl = pubsub.getChild('unsubscribe');
+    } else if (pubsub.getChild('publish')) {
+        method = 'publish';
+        pubsubEl = pubsub.getChild('publish');
+    } else if (pubsub.getChild('create')) {
+        method = 'create';
+        pubsubEl = pubsub.getChild('create');
+    } else if (pubsub.getChild('delete', NS_PUBSUB_OWNER)) {
+        method = 'delete';
+        pubsubEl = pubsub.getChild('delete');
+    } else {
+        // if we reach here, we do not understand what we should do ;-)
+        this.sendError(stanza);
     }
 
-    // handle unsubscribe
-    if (pubsub.getChild('unsubscribe')) {
-        sub = pubsub.getChild('unsubscribe');
-        nodename = sub.attrs.node;
+    // only continue if we have detected a method
+    if (method) {
+
+        // detect node name
+        var nodename = pubsubEl.attrs.node;
         logger.debug(nodename);
-        self.getNode(nodename, function(err, node) {
-            if (!err) {
-                // no node found
-                if (node === null) {
-                    errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                    self.sendError(stanza, errorXml);
-                }
-                // node exists 
-                else {
-                    self.handleUnSubscribe(new PubSubNode(node), stanza, pubsub);
-                }
-            } else {
-                // TODO send error
-                logger.error('something went wrong');
-            }
-        });
-    }
 
-    // handle publish and send items, emit event to server
-    if (pubsub.getChild('publish')) {
+        // TODO verify the name is unique
+        var username = 'romeo';
 
-        var publish = pubsub.getChild('publish');
-        nodename = publish.attrs.node;
-        self.getNode(nodename, function(err, node) {
-            if (!err) {
+        if (method === 'create') {
+            self.handleCreate(stanza, pubsubEl);
+        } else {
 
-
-                if (node === null) {
-                    var errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                    self.sendError(stanza, errorXml);
-                }
-                // node exists 
-                else {
-                    self.handlePublish(new PubSubNode(node), stanza, publish);
-                }
-            } else {
-                // TODO send error
-                logger.error('something went wrong');
-            }
-        });
-
-        /*
-                /*else {
-
-            var pubnode = null;
-            if (node) {
-                pubnode = new PubSubNode(node);
-                callback(null, pubnode);
-            }
-            else {
-                // check the default configuration if we send an error or 
-                // create a new node
-                self.createNode(nodename, function (err, node) {
-                    if (err) {
-                        callback(err, null);
-                    } else {
-                        callback(null, node);
+            // check if the channel exists, if not create it
+            this.Users.user(username).then(
+                function (user) {
+                    return user.getChannel(nodename);
+                }).then(
+                function (channel) {
+                    // okay, we have the channel
+                    switch (method) {
+                    case 'subscribe':
+                        self.handleSubscribe(channel, stanza, pubsub);
+                        break;
+                    case 'unsubscribe':
+                        self.handleUnsubscribe(channel, stanza, pubsub);
+                        break;
+                    case 'publish':
+                        self.handlePublish(channel, stanza, pubsubEl);
+                        break;
+                    case 'delete':
+                        self.handleDelete(channel, stanza, pubsubEl);
+                        break;
                     }
+                }).then(
+                function () {},
+                function (err) {
+                    logger.debug('ERROR' + err);
+                    // channel does not exist
+                    errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+                    self.sendError(stanza, errorXml);
                 });
-            }
-        }*/
+        }
     }
-    // TODO send error if we reach here
 };
 
-PubSub.prototype.handlePubSubOwner = function(stanza, pubsub) {
-    // handle delete
-    if (pubsub.getChild('delete')) {
-        this.handleDelete(stanza, pubsub);
-    }
-    // TODO send error if we reach here
-};
+PubSub.prototype.handle = function (stanza) {
 
-PubSub.prototype.handle = function(stanza) {
-
+    // handle occupant requests
     var pubsub = stanza.getChild('pubsub', NS_PUBSUB);
     if (pubsub) {
         this.handlePubSub(stanza, pubsub);
     }
 
+    // handle pubsub owner request
     pubsub = stanza.getChild('pubsub', NS_PUBSUB_OWNER);
     if (pubsub) {
-        this.handlePubSubOwner(stanza, pubsub);
+        this.handlePubSub(stanza, pubsub);
     }
 
     // TODO send error if we reach here
