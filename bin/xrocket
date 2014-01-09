@@ -1,8 +1,12 @@
 #!/usr/bin/env node
+
 'use strict';
 
 var winston = require('winston'),
     LogConfig = require('../config/LogConfig');
+
+// set log level
+LogConfig.configure('silly');
 
 var logger = winston.loggers.get('xrocket');
 
@@ -12,27 +16,27 @@ var XRocket = require('../core/XRocket'),
 
 // initialize connection manager
 var C2SServer = require('../net/C2SServer'),
+    BOSHServer = require('../net/BOSHServer'),
+    SioServer = require('../net/SioServer'),
+    WsServer = require('../net/WsServer'),
     pem = require('pem');
-
-// set log level
-LogConfig.configure('silly');
 
 // attach connection manager to xrocket
 var xR = new XRocket();
 
 // storage
-var UsrModule = require('../storage/Users');
+var UsrModule = require('../storage/in-memory/Users');
 var Users = new UsrModule();
 
-// C2S Server 
+// C2S Server with TLS encryption
 var cs2 = null;
 var tls = null;
 pem.createCertificate({
     days: 1,
     selfSigned: true,
-    organization : 'xrocket',
-    organizationUnit : 'development',
-    commonName : 'xrocket'
+    organization: 'xrocket',
+    organizationUnit: 'development',
+    commonName: 'xrocket'
 
 }, function (err, keys) {
     if (err) {
@@ -54,49 +58,58 @@ pem.createCertificate({
         xR.addConnectionManager(cs2);
     }
 });
+
+// BOSH Server
+var bosh = new BOSHServer({
+    port: 5280
+});
+xR.addConnectionManager(bosh);
+
+// Socket.io Server
+var sio = new SioServer({
+    port: 42425,
+    domain: 'example.net',
+    autostart: false
+});
+xR.addConnectionManager(sio);
+
+// Websocket Server
+var ws = new WsServer({
+    port: 42426,
+    domain: 'example.net',
+    autostart: false
+});
+xR.addConnectionManager(ws);
+
 // register users
 var simpleAuth = new Simple();
-simpleAuth.addUser('romeo','romeo');
-simpleAuth.addUser('mercutio','mercutio');
-simpleAuth.addUser('benvolio','benvolio');
+simpleAuth.addUser('romeo', 'romeo');
+simpleAuth.addUser('mercutio', 'mercutio');
+simpleAuth.addUser('benvolio', 'benvolio');
 xR.connectionRouter.addAuthMethod(simpleAuth);
 
 // base system is up and running
 var ComponentRouter = require('../router/ComponentRouter');
 var Rfc3921Roaster = require('../xep/Rfc3921-roaster');
 var Rfc3921Messaging = require('../xep/Rfc3921-messaging');
-var Xep0199 = require('../xep/Xep0199-ping');
-var Xep0092 = require('../xep/Xep0092-version');
+
+var Xep0016 = require('../xep/Xep0016-privacylist');
 var Xep0030 = require('../xep/Xep0030-disco');
 var Xep0045 = require('../xep/Xep0045-muc');
+var Xep0049 = require('../xep/Xep0049-xmlstorage');
 var Xep0060 = require('../xep/Xep0060-pubsub');
+var Xep0092 = require('../xep/Xep0092-version');
+var Xep0199 = require('../xep/Xep0199-ping');
 var Xep0307 = require('../xep/Xep0307-mucunique');
 
 var cr = new ComponentRouter({
     domain: 'example.net'
 });
 
-// start roaster
-var PGConn = require('../util/PGConn');
-var pgConnectionString = process.env.DATABASE_URL;
-var pgC = new PGConn(pgConnectionString);
-pgC.connect(function () {
-    // roaster
-    cr.register(new Rfc3921Roaster({
-        storage: {
-            client: pgC.getClient()
-        }
-    }));
-
-    // pubsub
-    cr.register(new Xep0060({
-        subdomain: 'pubsub',
-        domain: 'example.net',
-        storage: {
-            client: pgC.getClient()
-        }
-    }));
-});
+// roaster
+cr.register(new Rfc3921Roaster({
+    Users: Users
+}));
 
 // muc
 cr.register(new Xep0045({
@@ -105,8 +118,17 @@ cr.register(new Xep0045({
     Users: Users
 }));
 
+// pubsub
+cr.register(new Xep0060({
+    subdomain: 'pubsub',
+    domain: 'example.net',
+    Users: Users
+}));
+
 cr.register(new Rfc3921Messaging());
+cr.register(new Xep0016());
 cr.register(new Xep0030());
+cr.register(new Xep0049());
 cr.register(new Xep0092());
 cr.register(new Xep0199());
 cr.register(new Xep0307());
@@ -118,3 +140,21 @@ var lpr = new LogRouter();
 xR.chain(lpr).chain(cr);
 
 logger.debug('successfully started xrocket');
+
+// REST API
+var express = require('express'),
+    app = express();
+var routes = require('../api/routes');
+
+app.use(express.bodyParser());
+app.use(express.methodOverride());
+routes(app, Users);
+app.listen(3000);
+
+// web client
+var path = require('path');
+var express = require('express');
+var app = express();
+logger.debug(path.resolve(__dirname, '../web'));
+app.use(express.static(path.resolve(__dirname, '../web')));
+app.listen(8083);
