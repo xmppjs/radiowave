@@ -40,7 +40,8 @@ function PubSub(options) {
 
     XepComponent.call(this);
 
-    this.Users = options.Users;
+    this.Users = options.storage.users;
+    this.Lookup = options.storage.lookup;
 }
 util.inherits(PubSub, XepComponent);
 
@@ -87,7 +88,7 @@ PubSub.prototype.getSubdomain = function () {
     return this.subdomain;
 };
 
-PubSub.prototype.sendError = function(stanza, err) {
+PubSub.prototype.sendError = function (stanza, err) {
     var response = new ltx.Element('iq', {
         from: stanza.attrs.to,
         to: stanza.attrs.from,
@@ -103,7 +104,7 @@ PubSub.prototype.sendError = function(stanza, err) {
     this.send(response);
 };
 
-PubSub.prototype.sendSuccess = function(stanza, detail) {
+PubSub.prototype.sendSuccess = function (stanza, detail) {
     var response = new ltx.Element('iq', {
         from: stanza.attrs.to,
         to: stanza.attrs.from,
@@ -120,7 +121,9 @@ PubSub.prototype.sendSuccess = function(stanza, detail) {
 };
 
 PubSub.prototype.handleCreate = function (stanza) {
+    logger.debug('handleCreate');
     var self = this;
+    var jid = new JID(stanza.attrs.from).bare();
     var pubsub = stanza.getChild('pubsub', NS_PUBSUB);
     var create = pubsub.getChild('create');
     var nodename = create.attrs.node;
@@ -157,9 +160,8 @@ PubSub.prototype.handleCreate = function (stanza) {
                     var fields = x.getChildren('field');
                     for (var i = 0, l = fields.length; i < l; i++) {
                         configuration.push({
-                            key: fields[i].attrs.
-                            var,
-                                value: fields[i].getChild('value').text()
+                            key: fields[i].attrs['var'],
+                            value: fields[i].getChild('value').text()
                         });
                     }
                 }
@@ -182,25 +184,36 @@ PubSub.prototype.handleCreate = function (stanza) {
         }
     }
 
-    // TODO verify the name is unique
-    var username = 'romeo';
+    // if we found a node with this name, we cannot create it
+    this.Lookup.find('pubsub', nodename).then(
+        function () {
+            // channel exists, error
+            var errXml = ltx.parse('<error type=\'cancel\'><conflict xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+            self.sendError(stanza, errXml);
+        },
+        function () {
+            var username = jid.getLocal();
 
-    // check if the room exists, if not create it
-    this.Users.user(username).then(
-        function (user) {
-            user.getChannel(nodename).then(
-                function () {
-                    // channel exists, error
-                    var errXml = ltx.parse('<error type=\'cancel\'><conflict xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                    self.sendError(stanza, errXml);
-                },
-                function () {
-                    // channel does not exist
-                    user.createChannel(nodename).then(
-                        function (channel) {
-                            ch(channel);
-                        }
-                    );
+            // check if the room exists, if not create it
+            self.Users.user(username).then(
+                function (user) {
+                    user.getChannel(nodename).then(
+                        function () {
+                            // channel exists, error
+                            var errXml = ltx.parse('<error type=\'cancel\'><conflict xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+                            self.sendError(stanza, errXml);
+                        },
+                        function () {
+                            // channel does not exist
+                            user.createChannel(nodename).then(
+                                function (channel) {
+                                    // store lookup
+                                    self.Lookup.add('pubsub', username, nodename, nodename).then(function (identifier) {
+                                        ch(channel);
+                                    });
+                                }
+                            );
+                        });
                 });
         });
 };
@@ -250,42 +263,42 @@ PubSub.prototype.handleSubscribe = function (node, stanza, pubsub) {
 
     // store new subscriber
     node.subscribe(subscriber.bare().toString()).then(
-        function () {
-            // Success Case, send confirmation
-            var msg = new Iq({
-                from: self.domain,
-                to: stanza.attrs.from,
-                id: stanza.attrs.id,
-                type: 'result'
-            });
+    function () {
+        // Success Case, send confirmation
+        var msg = new Iq({
+            from: self.domain,
+            to: stanza.attrs.from,
+            id: stanza.attrs.id,
+            type: 'result'
+        });
 
-            //var humanname = node.getConfiguration(NodeConfig.PUBSUB_NODE_Title);
+        //var humanname = node.getConfiguration(NodeConfig.PUBSUB_NODE_Title);
 
-            msg.c('pubsub', {
-                'xmlns': NS_PUBSUB
-            }).c('subscription', {
-                'node': sub.attrs.node,
-                'jid': sub.attrs.jid,
-                'subscription': 'subscribed'
-            });
+        msg.c('pubsub', {
+            'xmlns': NS_PUBSUB
+        }).c('subscription', {
+            'node': sub.attrs.node,
+            'jid': sub.attrs.jid,
+            'subscription': 'subscribed'
+        });
 
-            // send subscribe response
-            self.send(msg);
+        // send subscribe response
+        self.send(msg);
 
-            /*
-             * send old items to new subscriber
-             * TODO make dependend on node default
-             * @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe-last
-             */
-            /*node.eachMessage(function (el) {
-            el.attrs.to = sub.attrs.jid;
-            // route message
-            this.send(el, null);
-        });*/
-        },
-        function () {
-            // error
-        }
+        /*
+         * send old items to new subscriber
+         * TODO make dependend on node default
+         * @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe-last
+         */
+        /*node.eachMessage(function (el) {
+        el.attrs.to = sub.attrs.jid;
+        // route message
+        this.send(el, null);
+    });*/
+    },
+    function () {
+        // error
+    }
     );
 };
 
@@ -451,42 +464,48 @@ PubSub.prototype.handlePubSub = function (stanza, pubsub) {
         var nodename = pubsubEl.attrs.node;
         logger.debug(nodename);
 
-        // TODO verify the name is unique
-        var username = 'romeo';
-
         if (method === 'create') {
             self.handleCreate(stanza, pubsubEl);
         } else {
 
-            // check if the channel exists, if not create it
-            this.Users.user(username).then(
-                function (user) {
-                    return user.getChannel(nodename);
-                }).then(
-                function (channel) {
-                    // okay, we have the channel
-                    switch (method) {
-                    case 'subscribe':
-                        self.handleSubscribe(channel, stanza, pubsub);
-                        break;
-                    case 'unsubscribe':
-                        self.handleUnsubscribe(channel, stanza, pubsub);
-                        break;
-                    case 'publish':
-                        self.handlePublish(channel, stanza, pubsubEl);
-                        break;
-                    case 'delete':
-                        self.handleDelete(channel, stanza, pubsubEl);
-                        break;
-                    }
-                }).then(
-                function () {},
-                function (err) {
-                    logger.debug('ERROR' + err);
-                    // channel does not exist
-                    errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                    self.sendError(stanza, errorXml);
-                });
+            // lookup,if we have the nodename stored
+            this.Lookup.find('pubsub', nodename).then(function (identifier) {
+
+                // check if the channel exists, if not create it
+                self.Users.user(identifier.user).then(
+                    function (user) {
+                        return user.getChannel(identifier.resource);
+                    }).then(
+                    function (channel) {
+                        // okay, we have the channel
+                        switch (method) {
+                        case 'subscribe':
+                            self.handleSubscribe(channel, stanza, pubsub);
+                            break;
+                        case 'unsubscribe':
+                            self.handleUnsubscribe(channel, stanza, pubsub);
+                            break;
+                        case 'publish':
+                            self.handlePublish(channel, stanza, pubsubEl);
+                            break;
+                        case 'delete':
+                            self.handleDelete(channel, stanza, pubsubEl);
+                            break;
+                        }
+                    }).then(
+                    function () {},
+                    function (err) {
+                        logger.error(err);
+                        // channel does not exist
+                        errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+                        self.sendError(stanza, errorXml);
+                    });
+            }, function (err) {
+                logger.error(err);
+                // channel does not exist
+                errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+                self.sendError(stanza, errorXml);
+            });
         }
     }
 };
