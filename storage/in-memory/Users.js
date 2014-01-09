@@ -6,12 +6,22 @@ var winston = require('winston'),
 var Promise = require('rsvp').Promise;
 
 var Room = require('./Room'),
-    Channel = require('./Channel');
+    Channel = require('./Channel'),
+    Contact = require('./Contact');
 
 var User = function (username) {
     this.username = username;
+
+    // all emails of a user
     this.emails = [];
+
+    // users contact
+    this.contacts = {};
+
+    // owned rooms
     this.rooms = {};
+
+    // owned channels
     this.channels = {};
 };
 
@@ -58,7 +68,7 @@ User.prototype.listEmails = function () {
 };
 
 //  Rooms
-User.prototype.rooms = function () {
+User.prototype.listRooms = function () {
     var self = this;
     var promise = new Promise(function (resolve) {
         var rooms = [];
@@ -103,7 +113,7 @@ User.prototype.getRoom = function (roomname) {
 };
 
 // Channels
-User.prototype.channels = function () {
+User.prototype.listChannels = function () {
     var self = this;
     var promise = new Promise(function (resolve) {
         var channels = [];
@@ -162,6 +172,70 @@ User.prototype.getChannel = function (channelname) {
     return promise;
 };
 
+// Contacts
+User.prototype.addContact = function (jid, options) {
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        if (!self.contacts[jid]) {
+            logger.debug('create new contact');
+            self.contacts[jid] = new Contact(jid, options);
+            resolve(self.contacts[jid]);
+        } else {
+            reject('contact exists');
+        }
+    });
+    return promise;
+};
+
+// overwrite existing flag
+User.prototype.addOrUpdateContact = function (jid, options) {
+    var self = this;
+    var promise = new Promise(function (resolve) {
+        logger.debug('update contact');
+        self.contacts[jid] = new Contact(jid, options);
+        resolve(self.contacts[jid]);
+    });
+    return promise;
+};
+
+User.prototype.removeContact = function (jid) {
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        if (self.contacts[jid]) {
+            delete self.contacts[jid];
+            resolve(true);
+        } else {
+            reject(false);
+        }
+    });
+    return promise;
+};
+
+User.prototype.getContact = function (jid) {
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        if (self.contacts[jid]) {
+            resolve(self.contacts[jid]);
+        } else {
+            reject(null);
+        }
+    });
+    return promise;
+};
+
+User.prototype.listContacts = function () {
+    var self = this;
+    var promise = new Promise(function (resolve) {
+        var contacts = [];
+        for (var contact in self.contacts) {
+            if (self.contacts.hasOwnProperty(contact)) {
+                contacts.push(self.contacts[contact]);
+            }
+        }
+        resolve(contacts);
+    });
+    return promise;
+};
 
 // Users
 var Users = function () {
