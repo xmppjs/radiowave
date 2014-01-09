@@ -27,6 +27,8 @@ var xR = new XRocket();
 // storage
 var UsrModule = require('../storage/in-memory/Users');
 var Users = new UsrModule();
+var LookupModule = require('../storage/in-memory/Lookup');
+var Lookup = new LookupModule();
 
 // C2S Server with TLS encryption
 var cs2 = null;
@@ -108,21 +110,30 @@ var cr = new ComponentRouter({
 
 // roaster
 cr.register(new Rfc3921Roaster({
-    Users: Users
+    storage: {
+        lookup: Lookup,
+        users: Users
+    }
 }));
 
 // muc
 cr.register(new Xep0045({
     subdomain: 'chat',
     domain: 'example.net',
-    Users: Users
+    storage: {
+        lookup: Lookup,
+        users: Users
+    }
 }));
 
 // pubsub
 cr.register(new Xep0060({
     subdomain: 'pubsub',
     domain: 'example.net',
-    Users: Users
+    storage: {
+        lookup: Lookup,
+        users: Users
+    }
 }));
 
 cr.register(new Rfc3921Messaging());
