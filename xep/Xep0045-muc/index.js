@@ -21,7 +21,7 @@ var NS_DISCO_ITEMS = 'http://jabber.org/protocol/disco#items',
     NS_MUC = 'http://jabber.org/protocol/muc',
     NS_MUC_UNIQUE = 'http://jabber.org/protocol/muc#unique',
 */
-    
+
 
 var MUC_ROLE_ADMIN = 'admin',
     MUC_AFFILIATION_ADMIN = 'admin';
@@ -41,23 +41,17 @@ var MUC_ROLE_ADMIN = 'admin',
  * http://xmpp.org/extensions/xep-0045.html
  */
 function Muc(options) {
-    this.options = options;
+    this.options = options ||  {};
 
     this.subdomain = options.subdomain;
     this.domain = options.domain;
 
     XepComponent.call(this);
 
-    this.autoCreateRoom = false;
+    this.autoCreateRoom = true;
 
-    this.Users = options.Users;
-
-    /*this.Storage = {};
-    if (options.storage) {
-        this.Storage.Rooms = new Storage.Rooms(options.storage);
-    } else {
-        logger.warn('Muc cannot be properly initialized because options.storage is not defined');
-    }*/
+    this.Users = options.storage.users;
+    this.Lookup = options.storage.lookup;
 }
 util.inherits(Muc, XepComponent);
 
@@ -71,19 +65,14 @@ Muc.prototype.features = function () {
     return [];
 };
 
-Muc.prototype.initialize = function () {
-    //var filename = path.resolve(__dirname, './storage/schema.json');
-    //(new PGSchema(this.options.storage.client)).run(filename);
-};
+Muc.prototype.initialize = function () {};
 
 Muc.prototype.match = function (stanza) {
-
-
     var jid = new JID(stanza.attrs.to);
     var domain = this.getDomain();
     // check that the domain fits
     if (jid.getDomain().toString().localeCompare(domain) !== 0) {
-        
+
         //logger.debug('Muc ' + domain + ' does not accept ' + jid.toString());
         return false;
     }
@@ -244,7 +233,7 @@ Muc.prototype.sendPresenceJoin = function (roomjid, userjid, usernick, room) {
                     memberroomjid.setResource(nickname);
 
                     joinermsg.attrs.from = memberroomjid.toString();
-                    joinermsg.attrs.to = userjid;
+                    joinermsg.attrs.to = userjid.toString();
                     self.send(joinermsg, null);
                 }
             } catch (err) {
@@ -259,8 +248,8 @@ Muc.prototype.sendPresenceConfirmation = function (roomjid, userjid) {
 
     // send client the confirmation
     var confirmMsg = new Presence({
-        from: roomjid,
-        to: userjid
+        from: roomjid.toString(),
+        to: userjid.toString()
     });
     var x = confirmMsg.c('x', {
         'xmlns': NS_MUC_USER
@@ -306,7 +295,7 @@ Muc.prototype.handleOccupantPresence = function (stanza) {
     // var x = stanza.getChild('x', NS_MUC);
 
     // extract data
-    var userjid = stanza.attrs.from;
+    var userjid = new JID(stanza.attrs.from);
     var roomname = roomjid.user;
     var nickname = roomjid.resource.toString();
 
@@ -358,39 +347,50 @@ Muc.prototype.handleOccupantPresence = function (stanza) {
         }
     }
 
-    // TODO verify the name is unique
-    var username = 'romeo';
-
-    // check if the room exists, if not create it
-    this.Users.user(username).then(
-        function (user) {
-
-            user.getRoom(roomname).then(
-                function (room) {
-                    ro(room);
+    this.Lookup.find('muc', roomname).then(
+        function (identifier) {
+            // room exists
+            self.Users.user(identifier.user).then(
+                function (user) {
+                    user.getRoom(identifier.resource).then(
+                        function (room) {
+                            ro(room);
+                        },
+                        function () {
+                            // we should not be able to reach this
+                            logger.error('could not find room');
+                        }
+                    );
                 },
                 function () {
-                    // if flag is not set, create a room, otherwise we send an error
-                    if (self.autoCreateRoom) {
-                        // room does not exist
-                        user.createRoom(roomname).then(
-                            function (room) {
-                                ro(room);
-                            }
-                        );
-                    } else {
-                        // room does not exists
-                        var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                        self.sendError(stanza, errXml);
-                    }
-                }
-            );
+                    // user does not exist, we close the stream;
+                    logger.error('user ' + identifier.user + 'does not exist');
+                });
         },
         function () {
-            // user does not exist, we close the stream;
-            logger.error('user ' + username + 'does not exist');
+            // room does not exist
+            // if flag is not set, create a room, otherwise we send an error
+            if (self.autoCreateRoom) {
+                // extract new owner from jid
+                self.Users.user(userjid.getLocal()).then(
+                    function (user) {
+                        // create room
+                        self.Lookup.add('muc', userjid.getLocal(), roomname, roomname).then(function (identifier) {
+                            user.createRoom(roomname).then(
+                                function (room) {
+                                    ro(room);
+                                }
+                            );
+                        });
+                    });
+            } else {
+                // room does not exists
+                var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+                self.sendError(stanza, errXml);
+            }
         });
 };
+
 
 /**
  * Implement 7.4
@@ -400,62 +400,76 @@ Muc.prototype.handleOccupantMessage = function (stanza) {
     logger.debug('muc handle message');
     var self = this;
     var roomjid = new JID(stanza.attrs.to);
+
     // route messages to room members
+    var sendmessage = function (stanza, room, member) {
+
+        logger.debug('send message to all members');
+
+        // find nickname for user
+        var nickname = member.affiliation.nickname;
+
+        // extract message body
+        var messagebody = stanza.children;
+
+        var msg = new Message({
+            'from': new JID(room.getName(), self.getDomain(), nickname),
+            'to': '',
+            'type': 'groupchat'
+        });
+        msg.children = messagebody;
+
+        logger.debug(msg.attrs.from);
+
+        logger.debug('store mesage');
+        // store message in history
+        room.createMessage(msg.root().toString());
+
+        logger.debug('send message to all members');
+        // iterate over room members and submit message
+        room.listMembers().then(
+            function (members) {
+                for (var i = 0, l = members.length; i < l; i += 1) {
+                    var member = members[i];
+
+                    var clientmsg = msg.clone();
+                    clientmsg.attrs.to = member.jid;
+                    self.send(clientmsg);
+                }
+            }
+        );
+    };
 
     // extract all data
     var userjid = stanza.attrs.from;
     var roomname = roomjid.getLocal();
 
-    var username = 'romeo';
-    this.Users.user(username).then(
-        function (user) {
-            return user.getRoom(roomname);
-        }).then(
-        function (room) {
-            // check if user is part of this room
-            room.getMember(userjid).then(
-                function (member) {
+    this.Lookup.find('muc', roomname).then(
+        function (identifier) {
 
-                    logger.debug('send message to all members');
+            self.Users.user(identifier.user).then(
+                function (user) {
+                    return user.getRoom(identifier.resource);
+                }).then(
+                function (room) {
+                    // check if user is part of this room
+                    room.getMember(userjid).then(
+                        function (member) {
+                            sendmessage(stanza, room, member);
 
-                    // find nickname for user
-                    var nickname = member.affiliation.nickname;
-
-                    // extract message body
-                    var messagebody = stanza.children;
-
-                    var msg = new Message({
-                        'from': new JID(roomname, self.getDomain(), nickname),
-                        'to': '',
-                        'type': 'groupchat'
-                    });
-                    msg.children = messagebody;
-
-                    logger.debug(msg.attrs.from);
-
-                    logger.debug('store mesage');
-                    // store message in history
-                    room.createMessage(msg.root().toString());
-
-                    logger.debug('send message to all members');
-                    // iterate over room members and submit message
-                    room.listMembers().then(
-                        function (members) {
-                            for (var i = 0, l = members.length; i < l; i += 1) {
-                                var member = members[i];
-
-                                var clientmsg = msg.clone();
-                                clientmsg.attrs.to = member.jid;
-                                self.send(clientmsg);
-                            }
-                        }
-                    );
-                }, function () {
-                    // room does not exists
-                    var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                    self.sendError(stanza, errXml);
+                        }, function () {
+                            // room does not exists
+                            var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+                            self.sendError(stanza, errXml);
+                        });
                 });
-        });
+
+        }
+    ).then(function () {}, function () {
+        // room does not exists
+        var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+        self.sendError(stanza, errXml);
+    });
 };
 
 Muc.prototype.handle = function (stanza) {
