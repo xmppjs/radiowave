@@ -6,7 +6,7 @@ var assert = require('assert'),
 
 // logging
 var LogConfig = require('../config/LogConfig');
-LogConfig.configure('error');
+LogConfig.configure('silly');
 
 // xmpp client
 var ltx = require('ltx'),
@@ -24,6 +24,10 @@ var Plain = require('node-xmpp-server/lib/authentication/plain');
 // Xep Components
 var ComponentRouter = require('../router/ComponentRouter'),
     Rfc3921Roaster = require('../xep/Rfc3921-roaster');
+
+// Storage
+var UsrModule = require('../storage/in-memory/Users');
+var Users = new UsrModule();
 
 // user
 var user = {
@@ -107,18 +111,11 @@ describe('Rfc3921', function () {
             xR.chain(cr);
 
             // start roaster
-            var PGConn = require('../storage/postgre/PGConn');
-            var pgConnectionString = process.env.DATABASE_URL;
-            var pgC = new PGConn(pgConnectionString);
-            pgC.connect(function () {
-                cr.register(new Rfc3921Roaster({
-                    storage: {
-                        client: pgC.getClient()
-                    }
-                }));
+            cr.register(new Rfc3921Roaster({
+                Users: Users
+            }));
 
-                done();
-            });
+            done();
         });
 
         after(function (done) {
@@ -198,6 +195,7 @@ describe('Rfc3921', function () {
          * <iq to='juliet@example.com/balcony' type='result' id='roster_2'/>
          *
          */
+
         it('7.4. Adding a Roster Item with empty item', function (done) {
             var el = ltx.parse("<item></item>");
             sendRoasterItem(el, 'error', done);
@@ -221,6 +219,57 @@ describe('Rfc3921', function () {
         it('7.5. Updating a Roster Item with two groups', function (done) {
             var el = ltx.parse("<item jid='julia@example.net' name='Julia'><group>Lovers</group><group>Friends</group></item>");
             sendRoasterItem(el, 'result', done);
+        });
+
+        // list roaster items
+        it('Retrieving  Roster', function (done) {
+            var cl = getClient();
+
+            var id = 'roaster_2';
+
+            cl.on('stanza',
+                function (stanza) {
+                    if (stanza.is('iq')) {
+                        assert.equal(stanza.attrs.type, 'result');
+                        assert.equal(stanza.attrs.id, id);
+
+                        // <iq from="example.net" to="romeo@example.net/4661483000366298" id="roaster_2" type="result"><query xmlns="jabber:iq:roster">
+                        // <item jid="julia@example.net" name="Julia" subscription="none"><group>Lovers</group><group>Friends</group></item></query></iq>
+                        var query = stanza.root().getChild('query', 'jabber:iq:roster');
+                        query.should.not.be.empty;
+
+                        var item = query.getChild('item');
+                        item.should.not.be.empty;
+
+                        assert.equal(item.attrs.jid, 'julia@example.net');
+                        assert.equal(item.attrs.name, 'Julia');
+
+                        var groups = item.getChildren('group');
+                        assert.equal(groups.length, 2);
+
+                        done();
+                    } else {
+                        done('wrong stanza ' + stanza.root().toString());
+                    }
+                });
+
+            cl.on('online', function () {
+                // generate 
+                var roaster = new ltx.Element('iq', {
+                    to: 'example.net',
+                    from: cl.jid,
+                    type: 'get',
+                    id: id
+                }).c('query', {
+                    'xmlns': 'jabber:iq:roster'
+                });
+                cl.send(roaster);
+            });
+
+            cl.on('error', function (e) {
+                console.error(e);
+                done(e);
+            });
         });
 
         /*
