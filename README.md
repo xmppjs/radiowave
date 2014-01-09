@@ -6,6 +6,19 @@ xRocket is a lightweight xmpp server that is made for the web:
  - fast
  - simple to configure
 
+## Installation
+
+    git clone
+    # debian
+    apt-get install libicu-dev
+    # mac
+    brew install icu4c
+    ln -s /usr/local/Cellar/icu4c/<VERSION>/bin/icu-config /usr/local/bin/icu-config
+    ln -s /usr/local/Cellar/icu4c/<VERSION>/include/* /usr/local/include
+    # install dependencies
+    npm install
+
+
 ## Setup
 
     export DATABASE_URL=postgres://postgres:password@localhost/database
