@@ -28,6 +28,8 @@ var ComponentRouter = require('../router/ComponentRouter'),
 // Storage
 var UsrModule = require('../storage/in-memory/Users');
 var Users = new UsrModule();
+var LookupModule = require('../storage/in-memory/Lookup');
+var Lookup = new LookupModule();
 
 // user
 var user = {
@@ -112,7 +114,10 @@ describe('Rfc3921', function () {
 
             // start roaster
             cr.register(new Rfc3921Roaster({
-                Users: Users
+                storage: {
+                    lookup: Lookup,
+                    users: Users
+                }
             }));
 
             done();

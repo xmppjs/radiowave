@@ -17,7 +17,10 @@ describe('Xep-0045', function () {
     before(function (done) {
         xep = new Xep0045({
             subdomain: 'chat',
-            domain: 'shakespeare.lit'
+            domain: 'shakespeare.lit',
+            storage: {
+                users : null
+            }
         })
         done();
     })

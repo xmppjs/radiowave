@@ -23,6 +23,8 @@ var Xep0060 = require('../../xep/Xep0060-pubsub');
 // Storage
 var UsrModule = require('../../storage/in-memory/Users');
 var Users = new UsrModule();
+var LookupModule = require('../../storage/in-memory/Lookup');
+var Lookup = new LookupModule();
 
 // user
 var userRomeo = {
@@ -99,7 +101,10 @@ describe('Xep-0060', function () {
         cr.register(new Xep0060({
             subdomain: 'pubsub',
             domain: 'example.net',
-            Users: Users
+            storage : {
+                lookup : Lookup,
+                users: Users
+            }
         }));
 
         done();

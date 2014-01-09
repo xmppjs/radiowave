@@ -28,7 +28,7 @@ function Roaster(options) {
 
     XepComponent.call(this);
 
-    this.Users = options.Users;
+    this.Users = options.storage.users;
 }
 util.inherits(Roaster, XepComponent);
 
@@ -112,7 +112,7 @@ Roaster.prototype.handleGetRoaster = function (stanza) {
     var self = this;
     var jid = new JID(stanza.attrs.from).bare();
 
-    var username = 'romeo';
+    var username = jid.getLocal();
     this.Users.user(username).then(
         function (user) {
             return user.listContacts();
@@ -197,7 +197,7 @@ Roaster.prototype.handleUpdateRoasterItem = function (stanza, item) {
             throw new Error('roaster item not properly set');
         }
 
-        var username = 'romeo';
+        var username = jid.getLocal();
         this.Users.user(username).then(
             function (user) {
                 return user.addOrUpdateContact(jsonitem.jid, jsonitem);
@@ -229,7 +229,7 @@ Roaster.prototype.handleDeleteRoasterItem = function (stanza, item) {
             throw new Error('roaster item not properly set');
         }
 
-        var username = 'romeo';
+        var username = jid.getLocal();
         this.Users.user(username).then(
             function (user) {
                 return user.removeContact(jsonitem.jid);
