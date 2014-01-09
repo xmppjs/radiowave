@@ -5,11 +5,7 @@ var ltx = require('ltx'),
     winston = require('winston'),
     logger = winston.loggers.get('xepcomponent'),
     XepComponent = require('../XepComponent'),
-    JID = require('node-xmpp-core').JID,
-    PostgreRoasterStore = require('../../storage/postgre/roaster/PostgreRoasterStore');
-
-var path = require('path'),
-    PGSchema = require('../../storage/postgre/PGSchema');
+    JID = require('node-xmpp-core').JID;
 
 var NS_ROASTER = 'jabber:iq:roster';
 
@@ -31,7 +27,8 @@ function Roaster(options) {
     this.options = options;
 
     XepComponent.call(this);
-    this.roasterStorage = new this.RoasterStore(options.storage);
+
+    this.Users = options.Users;
 }
 util.inherits(Roaster, XepComponent);
 
@@ -39,11 +36,7 @@ Roaster.prototype.name = 'RFC 3921: Roaster';
 
 Roaster.prototype.version = '0.1.0';
 
-Roaster.prototype.RoasterStore = PostgreRoasterStore;
-
-Roaster.prototype.initialize = function() {
-    var filename = path.resolve(__dirname , '../../storage/postgre/roaster/schema.json');
-    (new PGSchema(this.options.storage.client)).run(filename);
+Roaster.prototype.initialize = function () {
 };
 
 /*
@@ -82,9 +75,9 @@ Roaster.prototype.convertXMLtoJSON = function (xmlItem) {
     for (var i = 0; i < groups.length; i++) {
         groupItems.push(groups[i].getText());
     }
-    item.group = groupItems;
+    item.groups = groupItems;
 
-    logger.debug(JSON.stringify(item));
+    logger.debug("ITEM:" + JSON.stringify(item));
 
     return item;
 };
@@ -104,36 +97,49 @@ Roaster.prototype.convertJSONtoXML = function (jsonList) {
         });
 
         // iterate over group items
-        for (var j = 0; j < item.group; j++) {
-            xitem.c('group').t(item.group[j]);
+        for (var j = 0; j < item.groups.length; j++) {
+            console.log(item.groups[j]);
+            xitem.c('group').t(item.groups[j]);
         }
     }
-
     return query;
 };
 
 /**
  * Returns the roaster list
  */
-Roaster.prototype.handleGetRoaster  = function(stanza) {
+Roaster.prototype.handleGetRoaster = function (stanza) {
     var self = this;
     var jid = new JID(stanza.attrs.from).bare();
-    this.roasterStorage.list(jid, function (err, list) {
-        var roasterResult = new ltx.Element('iq', {
-            from: stanza.attrs.to,
-            to: stanza.attrs.from,
-            id: stanza.attrs.id,
-            type: 'result'
+
+    var username = 'romeo';
+    this.Users.user(username).then(
+        function (user) {
+            return user.listContacts();
+        }).then(
+        function (list) {
+            var roasterResult = new ltx.Element('iq', {
+                from: stanza.attrs.to,
+                to: stanza.attrs.from,
+                id: stanza.attrs.id,
+                type: 'result'
+            });
+
+            if (!list) {
+                list = [];
+            }
+            roasterResult.cnode(self.convertJSONtoXML(list));
+            logger.debug(roasterResult.toString());
+            logger.debug('send roaster to ' + stanza.attrs.from);
+            self.send(roasterResult);
+        }).then(
+        function () {},
+        function (err) {
+            logger.debug('ERROR' + err);
+            // channel does not exist
+            errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+            self.sendError(stanza, errorXml);
         });
-
-        if (!list) {
-            list = [];
-        }
-        roasterResult.cnode(self.convertJSONtoXML(list));
-
-        logger.debug('send roaster to ' + stanza.attrs.from);
-        self.send(roasterResult);
-    });
 };
 
 Roaster.prototype.sendOk = function (stanza) {
@@ -180,41 +186,31 @@ Roaster.prototype.verifyItem = function (item) {
 /**
  * Updates a roaster item
  */
-Roaster.prototype.handleUpdateRoasterItem  = function(stanza, item) {
+Roaster.prototype.handleUpdateRoasterItem = function (stanza, item) {
     try {
         var self = this;
         var jid = new JID(stanza.attrs.from).bare();
         var jsonitem = this.convertXMLtoJSON(item);
-
+        logger.debug(item.toString());
+        logger.debug(JSON.stringify(jsonitem));
         if (!this.verifyItem(jsonitem)) {
             throw new Error('roaster item not properly set');
         }
 
-        // detect if the item is already there
-        this.roasterStorage.get(jid, jsonitem.jid, function (err, result) {
+        var username = 'romeo';
+        this.Users.user(username).then(
+            function (user) {
+                return user.addOrUpdateContact(jsonitem.jid, jsonitem);
+            }).then(
+            function () {
+                self.sendOk(stanza);
+            }).then(
+            function () {},
+            function (err) {
+                logger.error(err);
+                self.sendError(stanza);
+            });
 
-            // add the item
-            if (result === null) {
-                self.roasterStorage.add(jid, jsonitem, function (err) {
-                    if (err) {
-                        self.sendError(stanza, err);
-                    } else {
-                        self.sendOk(stanza);
-                    }
-                });
-            }
-            // update the item
-            else {
-                self.roasterStorage.update(jid, jsonitem, function (err) {
-                    if (err) {
-                        self.sendError(stanza, err);
-                    } else {
-                        self.sendOk(stanza);
-                    }
-                });
-            }
-
-        });
     } catch (err) {
         self.sendError(stanza, err);
     }
@@ -223,7 +219,7 @@ Roaster.prototype.handleUpdateRoasterItem  = function(stanza, item) {
 /**
  * Deletes a roaster item
  */
-Roaster.prototype.handleDeleteRoasterItem  = function(stanza, item) {
+Roaster.prototype.handleDeleteRoasterItem = function (stanza, item) {
     try {
         var self = this;
         var jid = new JID(stanza.attrs.from).bare();
@@ -233,13 +229,19 @@ Roaster.prototype.handleDeleteRoasterItem  = function(stanza, item) {
             throw new Error('roaster item not properly set');
         }
 
-        this.roasterStorage.delete(jid, jsonitem, function (err) {
-            if (err) {
-                self.sendError(stanza, err);
-            } else {
+        var username = 'romeo';
+        this.Users.user(username).then(
+            function (user) {
+                return user.removeContact(jsonitem.jid);
+            }).then(
+            function () {
                 self.sendOk(stanza);
-            }
-        });
+            }).then(
+            function () {},
+            function (err) {
+                logger.error(err);
+                self.sendError(stanza);
+            });
     } catch (err) {
         self.sendError(stanza, err);
     }
@@ -249,7 +251,7 @@ Roaster.prototype.handleDeleteRoasterItem  = function(stanza, item) {
  * handles the component requests
  */
 Roaster.prototype.handle = function (stanza) {
-    
+
     // return roaster list
     if (stanza.attrs.type === 'get') {
         this.handleGetRoaster(stanza);
