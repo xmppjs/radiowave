@@ -4,6 +4,10 @@ var JID = require('node-xmpp-core').JID,
     winston = require('winston'),
     logger = winston.loggers.get('authentication');
 
+/**
+ * ATTENTION: This implementation is intended for development and testing.
+ * It is not prepared for use in production.
+ */
 function Simple() {
     this.users = {};
 }
