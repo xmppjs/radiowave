@@ -3,18 +3,18 @@
 var winston = require('winston'),
     logger = winston.loggers.get('xep-0060'),
     ltx = require('ltx'),
-    NS = require('./namespace'),
+    NS = require('../namespace'),
     JID = require('node-xmpp-core').JID,
     uuid = require('node-uuid');
 
-var PubSub = function (sender, Users, Lookup) {
+var NodeHandler = function (sender, Users, Lookup) {
     this.sender = sender;
 
     this.Users = Users;
     this.Lookup = Lookup;
 };
 
-PubSub.prototype.configureNode = function (node, configuration, callback) {
+NodeHandler.prototype.configureNode = function (node, configuration, callback) {
     logger.debug('configureNode' + node);
 
     // no node found
@@ -41,7 +41,7 @@ PubSub.prototype.configureNode = function (node, configuration, callback) {
     }
 };
 
-PubSub.prototype.createNode = function (user, nodename, configuration, callback) {
+NodeHandler.prototype.createNode = function (user, nodename, configuration, callback) {
     logger.debug('createNode' + user + ' ' + nodename);
     var self = this;
     // channel does not exist
@@ -59,7 +59,7 @@ PubSub.prototype.createNode = function (user, nodename, configuration, callback)
     );
 };
 
-PubSub.prototype.handleCreate = function (stanza) {
+NodeHandler.prototype.handleCreate = function (stanza) {
     logger.debug('handleCreate');
     var self = this;
     var jid = new JID(stanza.attrs.from).bare();
@@ -132,7 +132,7 @@ PubSub.prototype.handleCreate = function (stanza) {
 };
 
 
-PubSub.prototype.handleDelete = function (node, stanza) {
+NodeHandler.prototype.handleDelete = function (node, stanza) {
     logger.debug('handleDelete');
     var self = this;
     logger.debug(stanza.root().toString());
@@ -149,4 +149,4 @@ PubSub.prototype.handleDelete = function (node, stanza) {
     );
 };
 
-module.exports = PubSub;
+module.exports = NodeHandler;

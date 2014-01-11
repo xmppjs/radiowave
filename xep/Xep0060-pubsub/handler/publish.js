@@ -6,7 +6,7 @@ var winston = require('winston'),
     uuid = require('node-uuid'),
     Message = require('node-xmpp-core').Stanza.Message;
 
-var PubSub = function (sender) {
+var PublishHandler = function (sender) {
     this.sender = sender;
 };
 
@@ -16,7 +16,7 @@ var PubSub = function (sender) {
  * @param pubsub already extracted pubsub child node
  * @see http://xmpp.org/extensions/xep-0060.html#publisher-publish
  */
-PubSub.prototype.handlePublish = function (node, stanza, publish) {
+PublishHandler.prototype.handlePublish = function (node, stanza, publish) {
     logger.debug('handlePublish');
     var self = this;
     logger.debug('handlePublish');
@@ -105,4 +105,4 @@ PubSub.prototype.handlePublish = function (node, stanza, publish) {
     }
 };
 
-module.exports = PubSub;
+module.exports = PublishHandler;

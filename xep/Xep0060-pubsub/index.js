@@ -8,9 +8,9 @@ var winston = require('winston'),
     JID = require('node-xmpp-core').JID,
     NS = require('./namespace');
 
-var NodeHandler = require('./nodemgmt'),
-    PublishHandler = require('./publish'),
-    SubscriptionHandler = require('./subscription');
+var NodeHandler = require('./handler/node'),
+    PublishHandler = require('./handler/publish'),
+    SubscriptionHandler = require('./handler/subscription');
 
 /*
  * XEP-0060: Publish-Subscribe

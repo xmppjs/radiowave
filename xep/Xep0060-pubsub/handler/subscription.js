@@ -4,10 +4,10 @@ var winston = require('winston'),
     logger = winston.loggers.get('xep-0060'),
     ltx = require('ltx'),
     JID = require('node-xmpp-core').JID,
-    NS = require('./namespace'),
+    NS = require('../namespace'),
     Iq = require('node-xmpp-core').Stanza.Iq;
 
-var PubSub = function (sender) {
+var SubscriptionHandler = function (sender) {
     this.sender = sender;
 };
 
@@ -17,7 +17,7 @@ var PubSub = function (sender) {
  * @param pubsub already extracted pubsub child node
  * @see @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe
  */
-PubSub.prototype.handleSubscribe = function (node, stanza, sub) {
+SubscriptionHandler.prototype.handleSubscribe = function (node, stanza, sub) {
     logger.debug('handleSubscribe');
     var self = this;
     var jid = sub.attrs.jid;
@@ -84,7 +84,7 @@ PubSub.prototype.handleSubscribe = function (node, stanza, sub) {
  * @param pubsub already extracted pubsub child node
  * @see http://xmpp.org/extensions/xep-0060.html#subscriber-unsubscribe
  */
-PubSub.prototype.handleUnsubscribe = function (node, stanza, unsubscribe) {
+SubscriptionHandler.prototype.handleUnsubscribe = function (node, stanza, unsubscribe) {
     logger.debug('handleUnsubscribe');
     var self = this;
     var errorXml = null;
@@ -112,4 +112,4 @@ PubSub.prototype.handleUnsubscribe = function (node, stanza, unsubscribe) {
         });
 };
 
-module.exports = PubSub;
+module.exports = SubscriptionHandler;
