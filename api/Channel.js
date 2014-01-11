@@ -1,6 +1,10 @@
 'use strict';
 
-var routes = function(app) {
+var ApiError = require('./utils/ApiError'),
+    winston = require('winston'),
+    logger = winston.loggers.get('webapi');
+
+var routes = function(app, Users) {
 
     /**
      * Create a new channels for the authenticated user.
@@ -20,7 +24,22 @@ var routes = function(app) {
      * 
      */
     app.get('/api/channels/:owner/:channel', function(req, res) {
-        res.json({});
+        var username = req.params.owner;
+        var channelname = req.params.channel;
+
+        logger.debug('Get channel: ' +  username + '/' + channelname);
+        
+        Users.user(username).then(
+            function (user) {
+                return user.getChannel(channelname);
+            }).then(
+            function (channel) {
+                logger.debug('got channel' + JSON.stringify(channel));
+                res.json(channel);
+            },
+            function (error) {
+                res.json(new ApiError(error));
+            });
     });
 
     /**
