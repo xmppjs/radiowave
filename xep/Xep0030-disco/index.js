@@ -4,7 +4,7 @@ var ltx = require('ltx'),
     util = require('util'),
     winston = require('winston'),
     logger = winston.loggers.get('xepcomponent'),
-    XepComponent = require('./XepComponent');
+    XepComponent = require('../XepComponent');
 
 var NS_DISCO_INFO = 'http://jabber.org/protocol/disco#info';
 //  NS_DISCO_ITEM = 'http://jabber.org/protocol/disco#items';
