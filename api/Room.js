@@ -4,6 +4,8 @@ var ApiError = require('./utils/ApiError'),
     winston = require('winston'),
     logger = winston.loggers.get('webapi');
 
+var roomToJson = require('./utils/roomToJson');
+
 var routes = function (app, Users) {
 
     /**
@@ -20,7 +22,7 @@ var routes = function (app, Users) {
                 return user.getRoom(roomname);
             }).then(
             function (room) {
-                res.json(room);
+                res.json(roomToJson(room));
             },
             function (error) {
                 res.json(new ApiError(error));
