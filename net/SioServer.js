@@ -21,40 +21,39 @@ var util = require('util'),
  *   options.tls.certPath : path to certificate
  *
  *   options.server : http or https server
+ *   options.transports : sets the active transports
  */
 function SIOServer(options) {
-    this.options = options || {};
+    this.options = options ||  {};
 
     // reset options autostart, because we do not want to open a tcp connection
     options.autostart = false;
-    
+
     CS2Server.call(this, options);
     var self = this;
 
     var io = null;
-    if (options.server) {
+    if (options.server)  {
         io = sio.listen(options.server);
-    } else if (options.port){
+    } else if (options.port) {
         io = sio.listen(options.port);
     } else {
         throw new Error('port or server parameter is missing');
     }
 
-    // TODO make transports configurable via config
     io.configure('production', function () {
         io.enable('browser client etag');
         io.set('log level', 1);
 
-        io.set('transports', [
-            'websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling' // 
-        ]);
+
     });
 
-    io.configure('development', function () {
-        io.set('transports', [
-            'websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling' // 
-        ]);
-    });
+    var transports = options.transports ||  [
+        'websocket', 'flashsocket', 'htmlfile', 'xhr-polling', 'jsonp-polling'
+    ];
+
+    io.set('transports', transports);
+
 
     io.sockets.on('connection', function (socket) {
         var sioSocket = new SioSocket();
