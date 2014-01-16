@@ -25,6 +25,10 @@ var User = function (username) {
     this.channels = {};
 };
 
+User.prototype.getName = function () {
+    return this.username;
+};
+
 // Email
 User.prototype.addEmail = function (email) {
 

@@ -768,6 +768,10 @@ describe('Xep-0060', function () {
              */
             it('7.1.3.3 Node Does Not Exist', function (done) {
                 console.log('7.1.3.3 Node Does Not Exist');
+
+                // dependent on pubsub service configuration
+                var autocreate = true;
+
                 startClient(romeoCl, function (err) {
 
                     var jid = romeoCl.jod;
@@ -791,15 +795,28 @@ describe('Xep-0060', function () {
                         should.not.exist(err);
 
                         if (stanza.is('iq')) {
-                            assert.equal(stanza.attrs.type, 'error');
+                            if (!autocreate) {
+                                assert.equal(stanza.attrs.type, 'error');
 
-                            var error = stanza.getChild('error');
-                            assert.equal(error.attrs.type, 'cancel');
+                                var error = stanza.getChild('error');
+                                assert.equal(error.attrs.type, 'cancel');
 
-                            var itemnotfound = error.getChild('item-not-found', 'urn:ietf:params:xml:ns:xmpp-stanzas');
-                            assert.equal(itemnotfound.toString(), "<item-not-found xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/>");
+                                var itemnotfound = error.getChild('item-not-found', 'urn:ietf:params:xml:ns:xmpp-stanzas');
+                                assert.equal(itemnotfound.toString(), "<item-not-found xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/>");
+                            } else {
+                                console.log('expect item');
+                                var pubsub = stanza.getChild('pubsub', 'http://jabber.org/protocol/pubsub');
+                                pubsub.should.not.be.empty;
 
+                                var publish = pubsub.getChild('publish');
+                                publish.should.not.be.empty;
+
+                                var item = publish.getChild('item');
+                                item.should.not.be.empty;
+                            }
+                            
                             done();
+                            
                         } else {
                             done('wrong stanza ' + stanza.root().toString());
                         }

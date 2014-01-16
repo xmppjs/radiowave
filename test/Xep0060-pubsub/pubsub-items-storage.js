@@ -1,3 +1,4 @@
+/*
 // assertion
 var assert = require('assert'),
     should = require('should');
@@ -134,3 +135,4 @@ describe('Pubsub Items', function () {
         });
     });
 });
+*/
