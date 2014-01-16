@@ -9,9 +9,9 @@ var util = require('util'),
 /**
  * params:
  *   options : port on which to listen to C2S connections
- *   options.port : xmpp tcp socket port
+ *   options.port : xmpp socket io socket port
  *   options.domain : domain of xmpp server
- *   options.autostart : if we start listening at given port
+ *
  *   options.requestCert : expect a client certificate (see tls.createSecurePair for more)
  *   options.rejectUnauthorized : reject when client cert missmatches (see tls.createSecurePair for more)
  *   options.tls : wrapper object for tlc config
@@ -19,16 +19,26 @@ var util = require('util'),
  *   options.tls.cert : certificate string
  *   options.tls.keyPath : path to key
  *   options.tls.certPath : path to certificate
+ *
  *   options.server : http or https server
  */
 function SIOServer(options) {
+    this.options = options || {};
+
     // reset options autostart, because we do not want to open a tcp connection
     options.autostart = false;
     
     CS2Server.call(this, options);
     var self = this;
 
-    var io = sio.listen(options.port);
+    var io = null;
+    if (options.server) {
+        io = sio.listen(options.server);
+    } else if (options.port){
+        io = sio.listen(options.port);
+    } else {
+        throw new Error('port or server parameter is missing');
+    }
 
     // TODO make transports configurable via config
     io.configure('production', function () {
