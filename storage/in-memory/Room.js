@@ -5,7 +5,8 @@ var winston = require('winston'),
 
 var Promise = require('rsvp').Promise;
 
-var Room = function (name) {
+var Room = function (owner, name) {
+    this.owner = owner;
     this.name = name;
     this.members = {};
     this.messages = [];
@@ -13,6 +14,10 @@ var Room = function (name) {
 
 Room.prototype.getName = function () {
     return this.name;
+};
+
+Room.prototype.getOwner = function () {
+    return this.owner;
 };
 
 // Members

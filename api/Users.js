@@ -5,10 +5,12 @@ var RSVP = require('rsvp'),
     winston = require('winston'),
     logger = winston.loggers.get('webapi');
 
+var roomToJson = require('./utils/roomToJson');
+
 var routes = function (app, Users) {
 
     // need to be a registered user in xmpp
-    var user = {
+    var userDetail = {
         'login': 'romeo',
         'id': 1,
         'type': 'User',
@@ -20,7 +22,7 @@ var routes = function (app, Users) {
      * Get the authenticated user
      */
     app.get('/api/user', function (req, res) {
-        res.json(user);
+        res.json(userDetail);
     });
 
     /**
@@ -29,7 +31,7 @@ var routes = function (app, Users) {
     app.get('/api/users/:user', function (req, res) {
         var username = req.params.user;
         if (username === 'romeo') {
-            res.json(user);
+            res.json(userDetail);
         } else {
             res.json(new ApiError('user does not exist'));
         }
@@ -136,7 +138,42 @@ var routes = function (app, Users) {
      * List rooms for the authenticated user.
      */
     app.get('/api/user/rooms', function (req, res) {
-        res.json({});
+        var username = 'romeo';
+
+        var usr = null;
+
+        Users.user(username).then(
+            function (user) {
+                usr = user;
+                return user.listRooms();
+            }).then(
+            function (rooms) {
+                console.log(JSON.stringify(rooms));
+                
+                // iterate over rooms and generate json
+                var roomPromisses = rooms.map(function (roomname) {
+                    console.log(roomname);
+                    console.log(usr);
+                    return usr.getRoom(roomname);
+                });
+
+
+                console.log('wait for response');
+                RSVP.all(roomPromisses).then(function (contentRooms) {
+
+                    var data = [];
+                    contentRooms.forEach(function (ro) {
+                        data.push(roomToJson(ro));
+                    });
+                    console.log(JSON.stringify(data));
+                    res.json(data);
+                }).catch (function (reason) {
+                    res.json(new ApiError(reason));
+                });
+            },
+            function (error) {
+                res.json(new ApiError(error));
+            });
     });
 
     /**
@@ -156,7 +193,7 @@ var routes = function (app, Users) {
             function (user) {
                 return user.createRoom(data.name);
             }).then(
-            function(room) {
+            function (room) {
                 res.json(room);
             },
             function (error) {

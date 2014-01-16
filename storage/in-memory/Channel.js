@@ -54,23 +54,26 @@ Channel.prototype.unsubscribe = function (jid) {
     return promise;
 };
 
+Channel.prototype.genSubscriberArray = function () {
+    var members = [];
+                
+    for (var jid in this.members) {
+        if (this.members.hasOwnProperty(jid)) {
+            var member = this.members[jid];
+            member.jid = jid;
+            members.push(member);
+        }
+    }
+    return members;
+};
+
 // list all active subscriber
 Channel.prototype.listSubscribers = function () {
     logger.debug('list subscriber');
     var self = this;
     var promise = new Promise(function (resolve) {
         logger.debug('list members');
-        var members = [];
-                
-        for (var jid in self.members) {
-            if (self.members.hasOwnProperty(jid)) {
-                var member = self.members[jid];
-                member.jid = jid;
-                members.push(member);
-            }
-        }
-
-        resolve(members);
+        resolve(self.genSubscriberArray());
     });
     return promise;
 };
@@ -134,5 +137,15 @@ Channel.prototype.setConfiguration = function (key, value) {
 Channel.prototype.getConfiguration = function (key) {
     return this.fields[key];
 };
+
+// toJSON
+Channel.prototype.toJSON = function () {
+    return {
+        'name': this.getName(),
+        'members' : this.genSubscriberArray(),
+        'messages': this.messages
+    };
+};
+
 
 module.exports = Channel;

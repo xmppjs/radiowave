@@ -87,7 +87,7 @@ User.prototype.createRoom = function (roomname) {
     var promise = new Promise(function (resolve, reject) {
         if (!self.rooms[roomname]) {
             logger.debug('create new room');
-            self.rooms[roomname] = new Room(roomname);
+            self.rooms[roomname] = new Room(self.getName(), roomname);
             resolve(self.rooms[roomname]);
         } else {
             reject('room exists');
