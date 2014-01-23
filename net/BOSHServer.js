@@ -3,8 +3,9 @@
 var http = require('http'),
     util = require('util'),
     EventEmitter = require('events').EventEmitter,
-    XmppBOSHServer = require('./bosh/BOSHServer'), //require('node-xmpp-server').BOSHServer,
-    C2SStream = require('node-xmpp-server').C2SStream;
+    BOSHHttp = require('./bosh/BOSHHttp'),
+    C2SStream = require('node-xmpp-server').C2SStream,
+    Plain = require('node-xmpp-server').auth.Plain;
 
 var winston = require('winston'),
     logger = winston.loggers.get('bosh');
@@ -20,6 +21,7 @@ var winston = require('winston'),
  * - https://example.com:5281/http-bind
  */
 function BOSHServer(options) {
+    var self = this;
     this.options = options ||  {};
 
     if (!options.autostart) {
@@ -28,10 +30,11 @@ function BOSHServer(options) {
 
     EventEmitter.call(this);
 
-    var self = this;
     this.c2s = null;
+    this.availableSaslMechanisms = [Plain]
 
-    this.bosh = new XmppBOSHServer();
+    this.bosh = new BOSHHttp();
+
 
     // listen for connect events from bosh
     this.bosh.on('connect', function (boshsession) {
@@ -39,7 +42,8 @@ function BOSHServer(options) {
 
         // create new stream
         var stream = new C2SStream({
-            connection: boshsession
+            connection: boshsession,
+            server : self
         });
 
         // emit new stream
@@ -67,6 +71,41 @@ BOSHServer.prototype.name = 'BOSH Connection Manager';
 
 BOSHServer.prototype.C2SStream = C2SStream;
 BOSHServer.prototype.BOSH_PORT = 5280;
+
+/**
+ * returns all registered sasl mechanisms
+ */
+BOSHServer.prototype.getSaslMechanisms = function() {
+    return this.availableSaslMechanisms
+}
+
+/**
+ * removes all registered sasl mechanisms
+ */
+BOSHServer.prototype.clearSaslMechanism = function() {
+    this.availableSaslMechanisms = []
+}
+
+/**
+ * register a new sasl mechanism
+ */
+BOSHServer.prototype.registerSaslMechanism = function(method) {
+    // check if method is registered
+    if (this.availableSaslMechanisms.indexOf(method) === -1 ) {
+        this.availableSaslMechanisms.push(method)
+    }
+}
+
+/**
+ * unregister an existing sasl mechanism
+ */
+BOSHServer.prototype.unregisterSaslMechanism = function(method) {
+    // check if method is registered
+    var index = this.availableSaslMechanisms.indexOf(method)
+    if (index >= 0) {
+        this.availableSaslMechanisms = this.availableSaslMechanisms.splice(index, 1)
+    }
+}
 
 BOSHServer.prototype.shutdown = function () {
 

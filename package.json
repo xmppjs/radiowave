@@ -8,7 +8,7 @@
   "main": "xrocket.js",
   "dependencies": {
     "node-xmpp-core": "~0.3.0",
-    "node-xmpp-server": "0.3.0",
+    "node-xmpp-server": "~0.3.5",
     "ltx": ">= 0.2.0",
     "node-uuid": "1.4.1",
     "winston": "0.7.2",
