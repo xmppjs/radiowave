@@ -32,7 +32,7 @@ LDAP.prototype.match = function (method) {
 LDAP.prototype.authenticateWithLDAP = function (username, password, callback) {
     // check that we got username and password
     if (!username || !password) {
-        return callback(new Error("parameters are missing"));
+        return callback(new Error('parameters are missing'));
     }
 
     // generate unix ldap like user name

@@ -29,7 +29,7 @@ Simple.prototype.authenticate = function (opts, cb) {
     logger.debug('authenticate ' + opts.jid.toString());
 
     // extract username 
-    var username = new JID(opts.jid.toString()).user; // switch to getLocal()
+    var username = new JID(opts.jid.toString()).getLocal();
 
     // user is authenticated
     if (this.users[username] === opts.password) {
