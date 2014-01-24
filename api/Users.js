@@ -18,6 +18,10 @@ var routes = function (app, Users) {
         'company': 'xRocket Inc.'
     };
 
+    function getUsername(req) {
+        return req.user.login;
+    }
+
     /**
      * Get the authenticated user
      */
@@ -29,7 +33,7 @@ var routes = function (app, Users) {
      * Get a single user
      */
     app.get('/api/users/:user', function (req, res) {
-        var username = req.params.user;
+        var username = getUsername(req);
         if (username === 'romeo') {
             res.json(userDetail);
         } else {
@@ -45,7 +49,7 @@ var routes = function (app, Users) {
      *
      */
     app.get('/api/user/emails', function (req, res) {
-        var username = 'romeo';
+        var username = getUsername(req);
 
         Users.user(username).then(
             function (user) {
@@ -64,7 +68,7 @@ var routes = function (app, Users) {
      * ["romoe@example.com"]
      */
     app.post('/api/user/emails', function (req, res) {
-        var username = 'romeo';
+        var username = getUsername(req);
         var data = req.body;
 
         // check if we have an array
@@ -101,7 +105,7 @@ var routes = function (app, Users) {
      * ["romoe@example.com"]
      */
     app.del('/api/user/emails', function (req, res) {
-        var username = 'romeo';
+        var username = getUsername(req);
         var data = req.body;
 
         // check if we have an array
@@ -138,8 +142,7 @@ var routes = function (app, Users) {
      * List rooms for the authenticated user.
      */
     app.get('/api/user/rooms', function (req, res) {
-        var username = 'romeo';
-
+        var username = getUsername(req);
         var usr = null;
 
         Users.user(username).then(
@@ -184,7 +187,7 @@ var routes = function (app, Users) {
      *
      */
     app.post('/api/user/rooms', function (req, res) {
-        var username = 'romeo';
+        var username = getUsername(req);
         var data = req.body;
 
         // TODO check that all required parameters are properly set
@@ -200,7 +203,6 @@ var routes = function (app, Users) {
                 res.json(new ApiError(error));
             });
     });
-
 };
 
 // Expose routes
