@@ -1,7 +1,11 @@
 'use strict';
 
+var winston = require('winston'),
+    logger = winston.loggers.get('webapi');
+
 var routes = function (app, Users) {
-    
+    logger.info('register public routes');
+
     /**
      * List all public rooms
      */

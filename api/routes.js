@@ -1,5 +1,8 @@
 'use strict';
 
+var winston = require('winston'),
+    logger = winston.loggers.get('webapi');
+
 // other routes
 var channel = require('./Channel'),
     channelEvents = require('./Channel-Events'),
@@ -13,6 +16,7 @@ var channel = require('./Channel'),
     publicRoutes = require ('./Public');
 
 var routes = function (app, Users) {
+    logger.info('register routes');
 
     // register additional routes
     publicRoutes(app, Users);

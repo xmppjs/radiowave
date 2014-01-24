@@ -1,6 +1,10 @@
 'use strict';
 
+var winston = require('winston'),
+    logger = winston.loggers.get('webapi');
+
 var routes = function(app) {
+    logger.info('register room messages routes');
 
     /**
      * List messages for a room

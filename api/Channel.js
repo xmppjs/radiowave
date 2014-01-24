@@ -5,6 +5,7 @@ var ApiError = require('./utils/ApiError'),
     logger = winston.loggers.get('webapi');
 
 var routes = function(app, Users) {
+    logger.info('register channel routes');
 
     /**
      * Create a new channels for the authenticated user.
