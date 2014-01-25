@@ -2,17 +2,17 @@
 
 'use strict';
 
-var winston = require('winston'),
-    LogConfig = require('../config/LogConfig');
-
-// set log level
-LogConfig.configure('silly');
-
-var logger = winston.loggers.get('xrocket');
-
 // Xmpp Server
 var XRocket = require('../core/XRocket'),
     Simple = require('../auth/Simple');
+
+var winston = require('winston'),
+    logConfig = require('./config/LogConfig');
+
+// set log level
+logConfig(winston, 'silly');
+
+var logger = winston.loggers.get('xrocket');
 
 // initialize connection manager
 var C2SServer = require('../net/C2SServer'),

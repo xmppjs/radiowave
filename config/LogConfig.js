@@ -1,14 +1,13 @@
 'use strict';
 
-var winston = require('winston'),
-    PosixSyslog = require('winston-posix-syslog').PosixSyslog;
+var PosixSyslog = require('winston-posix-syslog').PosixSyslog;
 
 var LogConfig = function() {};
 
 var defaultConfiguration = {
     console: {
         level: 'debug',
-        colorize: 'true',
+        colorize: 'true'
     }
 };
 
@@ -26,7 +25,8 @@ function getConfiguration (label) {
     return conf;
 }
 
-LogConfig.prototype.configure = function(level) {
+function configure (winston, level) {
+    console.log('configure xrocket logging');
 
     defaultConfiguration.console.level = level;
     syslogConfiguration.PosixSyslog.level = level;
@@ -51,6 +51,6 @@ LogConfig.prototype.configure = function(level) {
     winston.loggers.add('websocket', getConfiguration('websocket'));
     winston.loggers.add('socketio', getConfiguration('socketio'));
     winston.loggers.add('bosh', getConfiguration('bosh'));
-};
+}
 
-module.exports = new LogConfig();
+module.exports = configure;
