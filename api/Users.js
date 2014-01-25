@@ -1,6 +1,6 @@
 'use strict';
 
-var RSVP = require('rsvp'),
+var Promise = require('bluebird'),
     ApiError = require('./utils/ApiError'),
     winston = require('winston'),
     logger = winston.loggers.get('webapi');
@@ -85,7 +85,7 @@ var routes = function (app, Users) {
                     }
 
                     // wait until all emails are set
-                    RSVP.all(promises).then(function () {
+                    Promise.all(promises).then(function () {
                         res.send(200);
                     }, function () {
                         res.json(new ApiError('email(s) cound not be stored'));
@@ -122,7 +122,7 @@ var routes = function (app, Users) {
                     }
 
                     // wait until all emails are set
-                    RSVP.all(promises).then(function () {
+                    Promise.all(promises).then(function () {
                         res.send(200);
                     }, function () {
                         res.json(new ApiError('email(s) cound not be stored'));
@@ -162,7 +162,7 @@ var routes = function (app, Users) {
 
 
                 console.log('wait for response');
-                RSVP.all(roomPromisses).then(function (contentRooms) {
+                Promise.all(roomPromisses).then(function (contentRooms) {
 
                     var data = [];
                     contentRooms.forEach(function (ro) {

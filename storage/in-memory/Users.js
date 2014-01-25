@@ -3,7 +3,7 @@
 var winston = require('winston'),
     logger = winston.loggers.get('storage');
 
-var Promise = require('rsvp').Promise;
+var Promise = require('bluebird');
 
 var Room = require('./Room'),
     Channel = require('./Channel'),

@@ -3,7 +3,7 @@
 var winston = require('winston'),
     logger = winston.loggers.get('storage');
 
-var Promise = require('rsvp').Promise;
+var Promise = require('bluebird');
 
 /**
  * This lookup implementations maps xmpp identifiers with our

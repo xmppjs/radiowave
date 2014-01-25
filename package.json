@@ -15,7 +15,7 @@
     "winston-posix-syslog": "git+https://github.com/chris-rock/winston-posix-syslog.git#tests",
     "pg": "2.8.2",
     "pem": ">=1.2.2",
-    "rsvp": "~3.0.1",
+    "bluebird": "~1.0.0",
     "express": "3.x",
     "socket.io": "0.9.x",
     "ws": "0.4.31",
