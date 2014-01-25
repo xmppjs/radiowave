@@ -6,14 +6,14 @@ var LogConfig = function() {};
 
 var defaultConfiguration = {
     console: {
-        level: 'debug',
+        level: 'info',
         colorize: 'true'
     }
 };
 
 var syslogConfiguration = {
     PosixSyslog: {
-        level: 'silly',
+        level: 'info',
         identity: 'xRocket Server'
     }
 };
