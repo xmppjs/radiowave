@@ -6,8 +6,9 @@ var ApiError = require('./utils/ApiError'),
 
 var roomToJson = require('./utils/roomToJson');
 
-var routes = function (app, Users) {
+var routes = function (app, storage) {
     logger.info('register room routes');
+    var Users = storage.users;
 
     /**
      * Get room

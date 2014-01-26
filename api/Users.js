@@ -7,7 +7,8 @@ var Promise = require('bluebird'),
 
 var roomToJson = require('./utils/roomToJson');
 
-var routes = function (app, Users) {
+var routes = function (app, storage) {
+    var Users = storage.users;
 
     // need to be a registered user in xmpp
     var userDetail = {

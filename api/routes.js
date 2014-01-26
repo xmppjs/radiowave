@@ -15,20 +15,20 @@ var channel = require('./Channel'),
     orgs = require('./Orgs'),
     publicRoutes = require ('./Public');
 
-var routes = function (app, Users) {
+var routes = function (app, storage) {
     logger.info('register routes');
 
     // register additional routes
-    publicRoutes(app, Users);
-    users(app, Users);
-    orgs(app, Users);
-    room(app, Users);
-    roomMessages(app, Users);
-    roomMembers(app, Users);
-    roomHooks(app, Users);
-    channel(app, Users);
-    channelEvents(app, Users);
-    channelSubscribers(app, Users);
+    publicRoutes(app, storage);
+    users(app, storage);
+    orgs(app, storage);
+    room(app, storage);
+    roomMessages(app, storage);
+    roomMembers(app, storage);
+    roomHooks(app, storage);
+    channel(app, storage);
+    channelEvents(app, storage);
+    channelSubscribers(app, storage);
 
 };
 
