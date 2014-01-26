@@ -3,14 +3,26 @@
 var winston = require('winston'),
     logger = winston.loggers.get('storage');
 
-var Promise = require('bluebird');
+var Promise = require('bluebird'),
+    uuid = require('node-uuid');
 
-var Channel = function (name, user) {
+var Channel = function (owner, name, options) {
+    this.options = options || {};
+
+    this.owner = owner;
     this.name = name;
+    this.xmppid = options.xmppid || uuid.v4();
+
     this.members = {};
     this.messages = [];
     this.fields = {};
-    this.user = user;
+
+    // set default configuration
+    this.setConfiguration('pubsub#deliver_payloads', 1);
+    this.setConfiguration('pubsub#deliver_notifications', 1);
+    this.setConfiguration('pubsub#persist_items', 1);
+    this.setConfiguration('pubsub#access_model', 'open');
+    this.setConfiguration('pubsub#notify_delete', 1);
 };
 
 Channel.prototype.getName = function () {
@@ -141,11 +153,13 @@ Channel.prototype.getConfiguration = function (key) {
 // toJSON
 Channel.prototype.toJSON = function () {
     return {
+        'owner' : this.owner,
         'name': this.getName(),
+        'xmppid' : this.xmppid,
+        'type' : 'channel',
         'members' : this.genSubscriberArray(),
         'messages': this.messages
     };
 };
-
 
 module.exports = Channel;

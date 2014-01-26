@@ -3,7 +3,7 @@
 var winston = require('winston'),
     logger = winston.loggers.get('webapi');
 
-var routes = function (app, Users) {
+var routes = function (app) {
     logger.info('register public routes');
 
     /**

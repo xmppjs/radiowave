@@ -17,10 +17,10 @@ var logger = winston.loggers.get('xrocket');
 var pem = require('pem');
 
 // storage
-var UsrModule = require('../storage/in-memory/Users');
-var Users = new UsrModule();
-var LookupModule = require('../storage/in-memory/Lookup');
-var Lookup = new LookupModule();
+var storage = {
+    'users' : new xRocket.Storage.Users(),
+    'lookup' : new xRocket.Storage.Lookup()
+};
 
 // C2S Server with TLS encryption
 var cs2 = null;
@@ -102,30 +102,21 @@ var cr = new ComponentRouter({
 
 // roaster
 cr.register(new Rfc3921Roaster({
-    storage: {
-        lookup: Lookup,
-        users: Users
-    }
+    storage: storage
 }));
 
 // muc
 cr.register(new Xep0045({
     subdomain: 'chat',
     domain: 'example.net',
-    storage: {
-        lookup: Lookup,
-        users: Users
-    }
+    storage: storage
 }));
 
 // pubsub
 cr.register(new Xep0060({
     subdomain: 'pubsub',
     domain: 'example.net',
-    storage: {
-        lookup: Lookup,
-        users: Users
-    }
+    storage: storage
 }));
 
 cr.register(new Rfc3921Messaging());
@@ -151,7 +142,7 @@ var routes = require('../api/routes');
 
 app.use(express.bodyParser());
 app.use(express.methodOverride());
-routes(app, Users);
+routes(app, storage);
 app.listen(3000);
 
 // web client

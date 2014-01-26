@@ -71,9 +71,11 @@ SubscriptionHandler.prototype.handleSubscribe = function (node, stanza, sub) {
         // route message
         this.send(el, null);
     });*/
-        },
-        function () {
+        }).
+    catch (
+        function (err) {
             // error
+            logger.error(err);
         }
     );
 };
@@ -105,7 +107,8 @@ SubscriptionHandler.prototype.handleUnsubscribe = function (node, stanza, unsubs
     node.unsubscribe(userjid.bare().toString()).then(
         function () {
             self.sender.sendSuccess(stanza);
-        },
+        }).
+    catch (
         function () {
             errorXml = ltx.parse('<error type=\'cancel\'><unexpected-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><not-subscribed xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
             self.sender.sendError(stanza, errorXml);
