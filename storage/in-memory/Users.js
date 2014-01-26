@@ -86,12 +86,12 @@ User.prototype.listRooms = function () {
     return promise;
 };
 
-User.prototype.createRoom = function (roomname) {
+User.prototype.createRoom = function (roomname, options) {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
         if (!self.rooms[roomname]) {
             logger.debug('create new room');
-            self.rooms[roomname] = new Room(self.getName(), roomname);
+            self.rooms[roomname] = new Room(self.getName(), roomname, options);
             resolve(self.rooms[roomname]);
         } else {
             reject('room exists');
@@ -131,12 +131,12 @@ User.prototype.listChannels = function () {
     return promise;
 };
 
-User.prototype.createChannel = function (channelname) {
+User.prototype.createChannel = function (channelname, options) {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
         if (!self.channels[channelname]) {
             logger.debug('create new channel');
-            self.channels[channelname] = new Channel(channelname, self);
+            self.channels[channelname] = new Channel(self.getName(), channelname, options);
             resolve(self.channels[channelname]);
         } else {
             reject('channel exists');

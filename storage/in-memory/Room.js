@@ -3,11 +3,16 @@
 var winston = require('winston'),
     logger = winston.loggers.get('storage');
 
-var Promise = require('bluebird');
+var Promise = require('bluebird'),
+    uuid = require('node-uuid');
 
-var Room = function (owner, name) {
+var Room = function (owner, name, options) {
+    this.options = options || {};
+
     this.owner = owner;
     this.name = name;
+    this.xmppid = options.xmppid || uuid.v4();
+
     this.members = {};
     this.messages = [];
 };
@@ -259,6 +264,15 @@ Room.prototype.removeMessage = function (id) {
         resolve();
     });
     return promise;
+};
+
+Room.prototype.toJSON = function () {
+    return {
+        'owner' : this.owner,
+        'name' : this.name,
+        'xmppid' : this.xmppid,
+        'type' : 'room'
+    };
 };
 
 module.exports = Room;
