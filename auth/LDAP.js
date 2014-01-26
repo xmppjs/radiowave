@@ -42,6 +42,7 @@ LDAP.prototype.authenticateWithLDAP = function (username, password, callback) {
     this.client.bind(uid, password, function (err) {
         // error
         if (err) {
+            logger.error(err);
             return callback(err);
         }
 

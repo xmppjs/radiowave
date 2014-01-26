@@ -1,6 +1,7 @@
 'use strict';
 
-var PosixSyslog = require('winston-posix-syslog').PosixSyslog;
+var winston = require('winston'),
+    PosixSyslog = require('winston-posix-syslog').PosixSyslog;
 
 var LogConfig = function() {};
 
@@ -25,7 +26,7 @@ function getConfiguration (label) {
     return conf;
 }
 
-function configure (winston, level) {
+function configure (level) {
     console.log('configure xrocket logging');
 
     defaultConfiguration.console.level = level;
