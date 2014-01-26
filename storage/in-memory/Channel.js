@@ -7,11 +7,13 @@ var Promise = require('bluebird'),
     uuid = require('node-uuid');
 
 var Channel = function (owner, name, options) {
-    this.options = options || {};
+    this.options = options || {
+        'xmppid': uuid.v4()
+    };
 
     this.owner = owner;
     this.name = name;
-    this.xmppid = options.xmppid || uuid.v4();
+    this.xmppid = this.options.xmppid;
 
     this.members = {};
     this.messages = [];

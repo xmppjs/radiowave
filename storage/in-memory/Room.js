@@ -7,11 +7,13 @@ var Promise = require('bluebird'),
     uuid = require('node-uuid');
 
 var Room = function (owner, name, options) {
-    this.options = options || {};
+    this.options = options || {
+        'xmppid': uuid.v4()
+    };
 
     this.owner = owner;
     this.name = name;
-    this.xmppid = options.xmppid || uuid.v4();
+    this.xmppid = this.options.xmppid;
 
     this.members = {};
     this.messages = [];
@@ -58,7 +60,7 @@ Room.prototype.listMembers = function () {
     var promise = new Promise(function (resolve) {
         logger.debug('list members');
         var members = [];
-                
+
         for (var jid in self.members) {
             if (self.members.hasOwnProperty(jid)) {
                 var member = self.members[jid];
@@ -149,7 +151,7 @@ Room.prototype.join = function (jid, nickname) {
     var promise = new Promise(function (resolve, reject) {
 
         // every user that joins is required to be a member
-        
+
         // okay. user exits
         var member = self.members[jid];
 
@@ -268,10 +270,10 @@ Room.prototype.removeMessage = function (id) {
 
 Room.prototype.toJSON = function () {
     return {
-        'owner' : this.owner,
-        'name' : this.name,
-        'xmppid' : this.xmppid,
-        'type' : 'room'
+        'owner': this.owner,
+        'name': this.name,
+        'xmppid': this.xmppid,
+        'type': 'room'
     };
 };
 

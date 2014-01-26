@@ -174,7 +174,7 @@ var routes = function (app, storage) {
                 }).catch (function (reason) {
                     res.json(new ApiError(reason));
                 });
-            },
+            }).catch(
             function (error) {
                 res.json(new ApiError(error));
             });
@@ -197,9 +197,11 @@ var routes = function (app, storage) {
 
         Users.user(username).then(
             function (user) {
+                logger.debug('create room');
                 return user.createRoom(data.name);
             }).then(
             function (room) {
+                logger.debug('got room');
                 res.json(room);
             }).catch(
             function (error) {
