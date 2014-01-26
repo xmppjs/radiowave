@@ -17,6 +17,12 @@ var Channel = function (owner, name, options) {
     this.messages = [];
     this.fields = {};
 
+    // set default configuration
+    this.setConfiguration('pubsub#deliver_payloads', 1);
+    this.setConfiguration('pubsub#deliver_notifications', 1);
+    this.setConfiguration('pubsub#persist_items', 1);
+    this.setConfiguration('pubsub#access_model', 'open');
+    this.setConfiguration('pubsub#notify_delete', 1);
 };
 
 Channel.prototype.getName = function () {

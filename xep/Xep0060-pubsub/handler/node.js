@@ -19,14 +19,6 @@ NodeHandler.prototype.configureNode = function (node, configuration, callback) {
 
     // no node found
     if (node) {
-        // set default parameter
-        node.setConfiguration('pubsub#deliver_payloads', 1);
-        node.setConfiguration('pubsub#deliver_notifications', 1);
-        node.setConfiguration('pubsub#persist_items', 1);
-        node.setConfiguration('pubsub#access_model', 'open');
-        node.setConfiguration('pubsub#notify_delete', 1);
-
-
         var conf = configuration || [];
 
         // overwrite configuration
