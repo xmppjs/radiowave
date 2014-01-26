@@ -5,8 +5,7 @@ var assert = require('assert'),
     should = require('should');
 
 // logging
-var LogConfig = require('../config/LogConfig');
-LogConfig.configure('silly');
+require('../config/LogConfig')('silly');
 
 // xmpp client
 var ltx = require('ltx'),

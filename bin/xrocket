@@ -6,11 +6,10 @@
 var XRocket = require('../core/XRocket'),
     Simple = require('../auth/Simple');
 
-var winston = require('winston'),
-    logConfig = require('./config/LogConfig');
+var winston = require('winston');
 
 // set log level
-logConfig(winston, 'silly');
+require('../config/LogConfig')('silly');
 
 var logger = winston.loggers.get('xrocket');
 

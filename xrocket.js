@@ -1,10 +1,9 @@
 'use strict';
 
-var winston = require('winston'),
-    logConfig = require('./config/LogConfig');
+var winston = require('winston');
 
 // set log level
-logConfig(winston, 'silly');
+require('./config/LogConfig')('silly');
 
 module.exports = {
     Api : require('./api/routes'),
