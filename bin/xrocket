@@ -168,3 +168,11 @@ var app = express();
 logger.debug(path.resolve(__dirname, '../web'));
 app.use(express.static(path.resolve(__dirname, '../web')));
 app.listen(8083);
+app.use(function (err, req, res, next) {
+    res.status(err.status || 500);
+    res.send({
+        error: 'Your request is not valid.'
+    });
+});
+
+app.listen(8083);
