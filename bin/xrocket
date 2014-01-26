@@ -3,8 +3,9 @@
 'use strict';
 
 // Xmpp Server
-var XRocket = require('../core/XRocket'),
-    Simple = require('../auth/Simple');
+var xRocket = require('../xrocket');
+
+var xR = new xRocket.XRocket();
 
 var winston = require('winston');
 
@@ -13,15 +14,7 @@ require('../config/LogConfig')('silly');
 
 var logger = winston.loggers.get('xrocket');
 
-// initialize connection manager
-var C2SServer = require('../net/C2SServer'),
-    BOSHServer = require('../net/BOSHServer'),
-    SioServer = require('../net/SioServer'),
-    WsServer = require('../net/WsServer'),
-    pem = require('pem');
-
-// attach connection manager to xrocket
-var xR = new XRocket();
+var pem = require('pem');
 
 // storage
 var UsrModule = require('../storage/in-memory/Users');
@@ -49,7 +42,7 @@ pem.createCertificate({
         };
         tls.ca = tls.cert;
 
-        cs2 = new C2SServer({
+        cs2 = new xRocket.Net.C2SServer({
             port: 5222,
             domain: 'example.net',
             requestCert: true,
@@ -61,13 +54,13 @@ pem.createCertificate({
 });
 
 // BOSH Server
-var bosh = new BOSHServer({
+var bosh = new xRocket.Net.BOSHServer({
     port: 5280
 });
 xR.addConnectionManager(bosh);
 
 // Socket.io Server
-var sio = new SioServer({
+var sio = new xRocket.Net.SioServer({
     port: 42425,
     domain: 'example.net',
     autostart: false
@@ -75,7 +68,7 @@ var sio = new SioServer({
 xR.addConnectionManager(sio);
 
 // Websocket Server
-var ws = new WsServer({
+var ws = new xRocket.Net.WsServer({
     port: 42426,
     domain: 'example.net',
     autostart: false
@@ -83,7 +76,7 @@ var ws = new WsServer({
 xR.addConnectionManager(ws);
 
 // register users
-var simpleAuth = new Simple();
+var simpleAuth = new xRocket.Auth.Simple();
 simpleAuth.addUser('romeo', 'romeo');
 simpleAuth.addUser('mercutio', 'mercutio');
 simpleAuth.addUser('benvolio', 'benvolio');
@@ -167,7 +160,7 @@ var express = require('express');
 var app = express();
 logger.debug(path.resolve(__dirname, '../web'));
 app.use(express.static(path.resolve(__dirname, '../web')));
-app.listen(8083);
+
 app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.send({
