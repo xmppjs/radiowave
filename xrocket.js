@@ -3,7 +3,7 @@
 var winston = require('winston');
 
 // set log level
-require('./config/LogConfig')('silly');
+require('./config/LogConfig')('info');
 
 module.exports = {
     Api : require('./api/routes'),

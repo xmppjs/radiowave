@@ -1,7 +1,7 @@
 'use strict';
 
-var winston = require('winston'),
-    PosixSyslog = require('winston-posix-syslog').PosixSyslog;
+var winston = require('winston');
+//PosixSyslog = require('winston-posix-syslog').PosixSyslog;
 
 var LogConfig = function() {};
 
@@ -12,17 +12,18 @@ var defaultConfiguration = {
     }
 };
 
+/*
 var syslogConfiguration = {
     PosixSyslog: {
         level: 'info',
         identity: 'xRocket Server'
     }
-};
+};*/
 
 function getConfiguration (label) {
     var conf = Object.create(defaultConfiguration);
     conf.console.label = label;
-    conf.PosixSyslog.label = label;
+    // conf.PosixSyslog.label = label;
     return conf;
 }
 
@@ -30,10 +31,10 @@ function configure (level) {
     console.log('configure xrocket logging');
 
     defaultConfiguration.console.level = level;
-    syslogConfiguration.PosixSyslog.level = level;
+    // syslogConfiguration.PosixSyslog.level = level;
 
     // activate syslog by default
-    defaultConfiguration.PosixSyslog = syslogConfiguration.PosixSyslog;
+    //defaultConfiguration.PosixSyslog = syslogConfiguration.PosixSyslog;
 
     winston.loggers.add('xrocket', getConfiguration('xrocket'));
     winston.loggers.add('cm', getConfiguration('cm'));
