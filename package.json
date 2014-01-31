@@ -1,22 +1,16 @@
 {
-  "name": "xrocket",
-  "description": "lightweight xmpp server",
-  "version": "0.2.0",
-  "bin": {
-    "xrocket": "./bin/xrocket"
-  },
+  "name": "xrocketd-core",
+  "description": "lightweight xmpp server library",
+  "version": "0.3.0",
   "main": "xrocket.js",
   "dependencies": {
-    "node-xmpp-core": "~0.3.0",
-    "node-xmpp-server": "~0.3.5",
+    "node-xmpp-core": "0.3.0",
+    "node-xmpp-server": "0.3.5",
     "ltx": ">= 0.2.0",
     "node-uuid": "1.4.1",
     "winston": "0.7.2",
-    "winston-posix-syslog": "git+https://github.com/chris-rock/winston-posix-syslog.git#tests",
     "pg": "2.8.2",
-    "pem": ">=1.2.2",
     "bluebird": "~1.0.0",
-    "express": "3.x",
     "socket.io": "0.9.x",
     "ws": "0.4.31",
     "ldapjs": "0.7.0"
