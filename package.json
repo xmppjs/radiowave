@@ -2,7 +2,9 @@
   "name": "xrocketd-core",
   "description": "lightweight xmpp server library",
   "version": "0.3.0",
+  "private": true,
   "main": "xrocket.js",
+  "author": "Christoph Hartmann <chris@lollyrock.com>",
   "dependencies": {
     "node-xmpp-core": "0.3.0",
     "node-xmpp-server": "0.3.5",
