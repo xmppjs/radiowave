@@ -13,8 +13,6 @@
     "winston": "0.7.2",
     "pg": "2.8.2",
     "bluebird": "~1.0.0",
-    "socket.io": "0.9.x",
-    "ws": "0.4.31",
     "ldapjs": "0.7.0"
   },
   "devDependencies": {
