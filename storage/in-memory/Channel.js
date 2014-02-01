@@ -138,7 +138,7 @@ Channel.prototype.getEvents = function () {
 // recieve all existing events
 Channel.prototype.remove = function () {
     var self = this;
-    var promise = new Promise(function (resolve, reject) {
+    var promise = new Promise(function (resolve) {
         console.log(self.getName());
         console.log(self.user);
         self.parent._deleteChannel(self.getName());

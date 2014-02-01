@@ -137,7 +137,7 @@ Roaster.prototype.handleGetRoaster = function (stanza) {
         function (err) {
             logger.debug('ERROR' + err);
             // channel does not exist
-            errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+            var errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
             self.sendError(stanza, errorXml);
         });
 };

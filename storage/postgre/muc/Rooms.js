@@ -81,7 +81,7 @@ Rooms.prototype = {
         var select = this.client.query({
             name: 'muc_rooms_select_item',
             text: 'SELECT room FROM muc_rooms WHERE room->>\'subdomain\' = $1 AND room->>\'name\' = $2;',
-            values: [subdomain, nodename]
+            values: [subdomain, roomname]
         });
 
         select.on('row', function(row, result) {
@@ -212,7 +212,7 @@ Rooms.prototype = {
                 }
             } else {
                 if (callback) {
-                    callback(null, node);
+                    callback(null, room);
                 }
             }
         });

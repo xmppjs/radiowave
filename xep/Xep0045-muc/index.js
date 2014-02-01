@@ -366,6 +366,7 @@ Muc.prototype.handleOccupantPresence = function (stanza) {
                     function (user) {
                         // create room
                         self.Lookup.add('muc', userjid.getLocal(), roomname, roomname).then(function (identifier) {
+                            logger.debug(JSON.stringify(identifier));
                             user.createRoom(roomname).then(
                                 function (room) {
                                     ro(room);

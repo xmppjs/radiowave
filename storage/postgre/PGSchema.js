@@ -1,3 +1,5 @@
+'use strict';
+
 /*
  *
  * var schema =   {
@@ -25,45 +27,47 @@
  */
 
 var fs = require('fs'),
-    path = require('path'),
     winston = require('winston'),
     logger = winston.loggers.get('postgresql');
 
 
-var PGSchema = function(client) {
+var PGSchema = function (client) {
     this.client = client;
 };
 
 PGSchema.prototype = {
 
     // we expect a file with a json description
-    create: function(description) {
+    create: function (description) {
         var self = this;
+
+        var resultHandler = function (err, result) {
+            logger.debug(err);
+            logger.debug(result);
+        };
+
 
         // order statements in inverse order (newest is on top)
         var version = 0;
         for (var i = description.versions.length - 1; i >= 0; i--) {
-            var version = description.versions[i];
+            version = description.versions[i];
 
-            logger.debug(description.name + ' action create: ' + version.description + '(' + version.version + ')')
+            logger.debug(description.name + ' action create: ' + version.description + '(' + version.version + ')');
+
             for (var j = 0, k = version.statements.length; j < k; j++) {
                 logger.debug(description.name + ' ' + version.statements[j]);
-                self.client.query(version.statements[j], function(err, result) {
-                    //if (err) {
-                    //logger.error(err);
-                    //}
-                });
-            };
+                self.client.query(version.statements[j], resultHandler);
+            }
 
-        };
+        }
     },
 
-    run: function(filename) {
+    run: function (filename) {
         logger.debug('Load schema from ' + filename);
         var self = this;
 
         // read schema description
-        fs.readFile(filename, function(err, data) {
+        fs.readFile(filename, function (err, data) {
             if (err) {
                 logger.error(err);
             }
@@ -71,7 +75,7 @@ PGSchema.prototype = {
                 var schema = JSON.parse(data);
                 self.create(schema);
             } catch (err) {
-                logger.error(err.message)
+                logger.error(err.message);
             }
         });
     }
