@@ -268,6 +268,54 @@ Room.prototype.removeMessage = function (id) {
     return promise;
 };
 
+// Affiliations
+Room.prototype.listAffiliations = function (affiliationtype) {
+    logger.debug('listAffiliations');
+    var self = this;
+    var promise = new Promise(function (resolve) {
+        var affiliations = [];
+
+        for (var jid in self.members) {
+            if (self.members.hasOwnProperty(jid)) {
+                var member = self.members[jid];
+                logger.debug(JSON.stringify(member));
+
+                if (member.affiliation && member.affiliation.type === affiliationtype) {
+                    var affiliation = {};
+                    affiliation.jid = jid;
+                    affiliation.affiliation = member.affiliation;
+                    delete affiliation.affiliation.nick;
+                    affiliations.push(affiliation);
+                }
+            }
+        }
+        
+        resolve(affiliations);
+    });
+    return promise;
+};
+
+Room.prototype.editAffiliations = function (jid, affiliationtype, reason) {
+    logger.debug('editAffiliations');
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        if (self.members[jid]) {
+            if (!self.members[jid].affiliation) {
+                self.members[jid].affiliation = {};
+            }
+
+            // set properties
+            self.members[jid].affiliation.type = affiliationtype;
+            self.members[jid].affiliation.reason = reason;
+
+            resolve(self.members[jid]);
+        } else {
+            reject('member does not exist');
+        }
+    });
+    return promise;
+};
+
 Room.prototype.toJSON = function () {
     return {
         'owner': this.owner,

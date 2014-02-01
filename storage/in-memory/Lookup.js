@@ -32,11 +32,12 @@ Lookup.prototype.add = function(type, user, resource, xmppIdentifier) {
             // abort
             reject();
         } else {
-            self.lookuptable[type][xmppIdentifier] = {
+            var lookupentry = {
                 'user': user,
                 'resource': resource
             };
-            resolve();
+            self.lookuptable[type][xmppIdentifier] = lookupentry;
+            resolve(lookupentry);
         }
     });
     return promise;

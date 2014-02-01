@@ -2,6 +2,8 @@
 
 var util = require('util'),
     ltx = require('ltx'),
+    winston = require('winston'),
+    logger = winston.loggers.get('xep-0045'),
     XepComponent = require('../../XepComponent'),
     Iq = require('node-xmpp-core').Stanza.Iq,
     NS = require('../namespace');
@@ -11,6 +13,7 @@ function AffiliationHandler() {}
 util.inherits(AffiliationHandler, XepComponent);
 
 AffiliationHandler.prototype.list = function (room, stanza, affiliation) {
+    var self = this;
 
     var iq = new Iq({
         from: stanza.attrs.to,
@@ -27,17 +30,23 @@ AffiliationHandler.prototype.list = function (room, stanza, affiliation) {
     });
     iq.cnode(query);
 
-    // iterate over each member
+    // read all affiliations
+    room.listAffiliations(affiliation).then(function (affiliations) {
+        // foreach item:
+        var item = new ltx.Element('item', {
+            'affiliation': affiliation,
+            'jid': stanza.attrs.from,
+            id: stanza.attrs.id,
+            type: 'result'
+        }).c('reason').t('Treason').up();
+        query.cnode(item);
+        this.send(iq);
 
-    // foreach item:
-    var item = new ltx.Element('item', {
-        'affiliation': affiliation,
-        'jid': stanza.attrs.from,
-        id: stanza.attrs.id,
-        type: 'result'
-    }).c('reason').t('Treason').up();
-    query.cnode(item);
-    this.send(iq);
+    }).
+    catch (function () {
+        self.sendError(stanza);
+    });
+
 
     /*
     <iq from='southampton@chat.shakespeare.lit'
@@ -53,6 +62,5 @@ AffiliationHandler.prototype.list = function (room, stanza, affiliation) {
           </iq>
     */
 };
-
 
 module.exports = AffiliationHandler;

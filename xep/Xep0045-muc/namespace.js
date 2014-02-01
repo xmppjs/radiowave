@@ -6,6 +6,21 @@ module.exports = {
     'MUC_USER'      : 'http://jabber.org/protocol/muc#user',
     'MUC_ADMIN'     : 'http://jabber.org/protocol/muc#admin',
     'MUC_OWNER'     : 'http://jabber.org/protocol/muc#owner',
-    'MUC_UNIQUE'    : 'http://jabber.org/protocol/muc#unique'
+    'MUC_UNIQUE'    : 'http://jabber.org/protocol/muc#unique',
+
+    // muc roles
+    'MUC_ROLE_ADMIN' : 'admin',
+    'MUC_ROLE_NONE' : 'none',
+    'MUC_ROLE_PARTICIPANT' : 'participant',
+    'MUC_ROLE_VISITOR' : 'visitor',
+
+    // affiliation
+    'MUC_AFFILIATION_ADMIN' : 'admin',
+    'MUC_AFFILIATION_OWNER' : 'owner',
+    'MUC_AFFILIATION_MEMBER' : 'member',
+    'MUC_AFFILIATION_OUTCAST' : 'outcast',
+    'MUC_AFFILIATION_NONE' : 'none'
 };
+
+
 

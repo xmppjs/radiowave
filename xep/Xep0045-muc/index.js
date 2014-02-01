@@ -6,27 +6,14 @@ var ltx = require('ltx'),
     logger = winston.loggers.get('xep-0045'),
     Promise = require('bluebird'),
     XepComponent = require('../XepComponent'),
-    Message = require('node-xmpp-core').Stanza.Message,
-    Presence = require('node-xmpp-core').Stanza.Presence,
     JID = require('node-xmpp-core').JID,
     NS = require('./namespace');
 
 // handler
-var AffiliationHandler = require('./handler/affiliation');
-
-// muc roles
-var MUC_ROLE_ADMIN = 'admin',
-    MUC_ROLE_NONE = 'none',
-    MUC_ROLE_PARTICIPANT = 'participant',
-    MUC_ROLE_VISITOR = 'visitor';
-
-// affiliation
-var MUC_AFFILIATION_ADMIN = 'admin',
-    MUC_AFFILIATION_OWNER = 'owner',
-    MUC_AFFILIATION_MEMBER = 'member',
-    MUC_AFFILIATION_OUTCAST = 'outcast',
-    MUC_AFFILIATION_NONE = 'none';
-
+var MessageHandler = require('./handler/message'),
+    PresenceHandler = require('./handler/presence'),
+    AffiliationHandler = require('./handler/affiliation'),
+    InvitationHandler = require('./handler/invitation');
 
 /*
  * XEP-0045: Multi-User Chat
@@ -45,7 +32,10 @@ function Muc(options) {
     this.Users = options.storage.users;
     this.Lookup = options.storage.lookup;
 
+    this.messageHandler = this.configureHandler(new MessageHandler());
+    this.presenceHandler = this.configureHandler(new PresenceHandler());
     this.affliationHandler = this.configureHandler(new AffiliationHandler());
+    this.invitationHandler = this.configureHandler(new InvitationHandler());
 }
 util.inherits(Muc, XepComponent);
 
@@ -106,8 +96,33 @@ Muc.prototype.configureHandler = function (handler) {
     return handler;
 };
 
-Muc.prototype.getNode = function (nodename, callback) {
-    this.Storage.Nodes.get(this.getSubdomain(), nodename, callback);
+Muc.prototype.loadRoom = function (roomname) {
+    var self = this;
+    var identifier = null;
+    return new Promise(function (resolve, reject) {
+        logger.debug('lookup room');
+        self.Lookup.find('muc', roomname)
+            .then(
+                function (ident) {
+                    identifier = ident;
+                    logger.debug(JSON.stringify(identifier));
+                    return self.Users.user(identifier.user);
+                }).then(
+                function (user) {
+                    return user.getRoom(identifier.resource);
+                }).then(
+                function (room) {
+                    resolve(room);
+                }).
+        catch (function (err) {
+            reject(err);
+        });
+    });
+};
+
+Muc.prototype.determineRoomname = function (stanza) {
+    var roomjid = new JID(stanza.attrs.to);
+    return roomjid.getLocal();
 };
 
 /**
@@ -146,155 +161,30 @@ Muc.prototype.handleOwnerDelete = function (stanza) {
 };
 */
 
-Muc.prototype.sendPresenceLeave = function (roomjid, userjid, room) {
+Muc.prototype.createRoom = function(userjid, roomname) {
     var self = this;
 
-    // send client the confirmation
-    var confirmMsg = new Presence({
-        from: roomjid,
-        to: userjid,
-        type: 'unavailable'
+    logger.debug('create new room');
+    return new Promise(function (resolve, reject) {
+        var user = null;
+        // extract new owner from jid
+        self.Users.user(userjid.getLocal())
+            .then(function (usr) {
+                user = usr;
+                logger.debug('found user' + JSON.stringify(usr) + ' ' + userjid.getLocal() + roomname);
+                // create room
+                return self.Lookup.add('muc', userjid.getLocal(), roomname, roomname);
+            })
+            .then(function (identifier) {
+                logger.debug('identifier: ' + JSON.stringify(identifier));
+                return user.createRoom(roomname);
+            }).then(function (room) {
+                logger.debug('found2 room: ' + JSON.stringify(room));
+                resolve(room);
+            }).catch(function (err) {
+                reject(err);
+            });
     });
-    var x = confirmMsg.c('x', {
-        'xmlns': NS.MUC_USER
-    });
-    x.c('item', {
-        'affiliation': MUC_AFFILIATION_ADMIN,
-        'role': MUC_ROLE_ADMIN
-    });
-    x.c('status', {
-        'code': '110'
-    });
-    self.send(confirmMsg);
-
-    // send new presense to exsting members
-    var newPresence = new Presence({
-        from: '',
-        to: '',
-        type: 'unavailable'
-    });
-    newPresence.c('x', {
-        'xmlns': NS.MUC_USER
-    }).c('item', {
-        'affiliation': MUC_AFFILIATION_ADMIN,
-        'role': MUC_ROLE_ADMIN
-    });
-
-    room.listMembers().then(
-        function (members) {
-            for (var i = 0, l = members.length; i < l; i += 1) {
-                var member = members[i];
-
-                // send existing room members the info
-                var memberMessage = newPresence.clone();
-                memberMessage.attrs.from = roomjid;
-                memberMessage.attrs.to = member.jid;
-                self.send(memberMessage);
-            }
-        }
-    );
-};
-
-Muc.prototype.generatePresence = function (affiliation, role) {
-    var presence = new Presence({
-        from: '',
-        to: ''
-    });
-    presence.c('x', {
-        'xmlns': NS.MUC_USER
-    }).c('item', {
-        'affiliation': affiliation,
-        'role': role
-    });
-
-    return presence;
-};
-
-Muc.prototype.sendPresenceJoin = function (roomjid, userjid, usernick, room) {
-    logger.debug('send join of ' + userjid + ' to all participants');
-    var self = this;
-
-    // iterate over existing members
-    room.listMembers().then(
-        function (members) {
-            try {
-                // send presence to each member
-                var newPresence = self.generatePresence(MUC_AFFILIATION_ADMIN, MUC_ROLE_ADMIN);
-                for (var i = 0, l = members.length; i < l; i++) {
-                    var member = members[i];
-
-                    // send existing room members the info about new user
-                    if (member.jid.toString() !== userjid.toString()) {
-                        var memberMessage = newPresence.clone();
-                        var newuser = roomjid.bare();
-                        newuser.setResource(usernick);
-                        memberMessage.attrs.from = newuser.toString(); // must be with nickname of user
-                        memberMessage.attrs.to = member.jid;
-                        self.send(memberMessage);
-                    }
-
-                    // send presence of existing room members to new user
-                    if (member.jid.toString() !== userjid.toString()) {
-                        // read member details
-                        var nickname = member.affiliation.nickname;
-                        var affiliation = MUC_AFFILIATION_ADMIN; // member.affiliation.type;
-                        var role = MUC_ROLE_ADMIN; // member.role.type;
-
-                        var joinermsg = self.generatePresence(affiliation, role);
-
-                        var memberroomjid = roomjid.bare();
-                        memberroomjid.setResource(nickname);
-
-                        joinermsg.attrs.from = memberroomjid.toString();
-                        joinermsg.attrs.to = userjid.toString();
-                        self.send(joinermsg, null);
-                    }
-                }
-            } catch (err) {
-                logger.error(err.toString());
-            }
-        }
-    );
-};
-
-Muc.prototype.sendPresenceConfirmation = function (roomjid, userjid) {
-    logger.debug('send presence confirmation to ' + userjid);
-
-    // send client the confirmation
-    var confirmMsg = new Presence({
-        from: roomjid.toString(),
-        to: userjid.toString()
-    });
-    var x = confirmMsg.c('x', {
-        'xmlns': NS.MUC_USER
-    });
-    x.c('item', {
-        'affiliation': MUC_AFFILIATION_ADMIN,
-        'role': MUC_ROLE_ADMIN
-    });
-    x.c('status', {
-        'code': '110'
-    });
-    this.send(confirmMsg);
-};
-
-Muc.prototype.sendRoomHistory = function (roomjid, userjid, room) {
-    logger.debug('send room ' + roomjid + ' history to ' + userjid);
-    logger.debug(room);
-    var self = this;
-    room.listMessages().then(
-        function (messages) {
-            logger.debug(JSON.stringify(messages));
-            // send room history
-            for (var i = 0, l = messages.length; i < l; i += 1) {
-                // extract message
-                var el = ltx.parse(messages[i]);
-                // el.attrs.from = roomjid;
-                el.attrs.to = userjid;
-                self.send(el);
-            }
-        }
-    );
 };
 
 /**
@@ -305,160 +195,41 @@ Muc.prototype.sendRoomHistory = function (roomjid, userjid, room) {
 Muc.prototype.handleOccupantPresence = function (stanza) {
     logger.debug('muc handle presence');
     var self = this;
-    var roomjid = new JID(stanza.attrs.to);
 
-    // extract data
-    var userjid = new JID(stanza.attrs.from);
-    var roomname = roomjid.user;
-    var nickname = roomjid.resource.toString();
+    var roomname = this.determineRoomname(stanza);
 
-    function joinMember(room, roomjid, userjid, nickname) {
-        logger.debug('user' + userjid + ' joins the room');
-
-        // join room
-        room.join(userjid, nickname).then(function () {
-            self.sendPresenceJoin(roomjid, userjid, nickname, room);
-            self.sendPresenceConfirmation(roomjid, userjid);
-            self.sendRoomHistory(roomjid, userjid, room);
-        });
-    }
-
-    function ro(room) {
-        // room is there
-        logger.debug('found room: ' + roomname);
-
-        // user leaves the room 
-        // @see http://xmpp.org/extensions/xep-0045.html#exit
-        if (room && stanza.attrs.type === 'unavailable') {
-            logger.debug('user' + userjid + ' leaves the room');
-            // leave room
-            room.leave(userjid).then(
-                function () {
-                    logger.debug('send unavailibility to all users');
-                    self.sendPresenceLeave(roomjid, userjid, room);
-                });
+    this.loadRoom(roomname)
+        .then(
+            function (room) {
+                self.presenceHandler.handlePresence(room, stanza);
+            }).
+    catch (function (err) {
+        // room does not exist
+        // if flag is not set, create a room, otherwise we send an error
+        if (self.autoCreateRoom) {
+            var userjid = new JID(stanza.attrs.from);
+            self.createRoom(userjid, roomname).then(function (room) {
+                // join the room
+                self.presenceHandler.handlePresence(room, stanza);
+            });
+        } else {
+            // room does not exists
+            var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+            self.sendError(stanza, errXml);
         }
-        // user joins the room
-        else {
-            // check if the user is already member
-            room.isMember(userjid).then(
-                function () {
-                    // user exists
-                    joinMember(room, roomjid, userjid, nickname);
-                },
-                function () {
-                    logger.debug('user is not member of the room yet');
-                    // user does not exist
-                    return room.addMember(userjid).then(
-                        function () {
-                            // user exists
-                            joinMember(room, roomjid, userjid, nickname);
-                        }
-                    );
-                }
-            );
-        }
-    }
-
-    this.Lookup.find('muc', roomname).then(
-        function (identifier) {
-            // room exists
-            self.Users.user(identifier.user).then(
-                function (user) {
-                    user.getRoom(identifier.resource).then(
-                        function (room) {
-                            ro(room);
-                        },
-                        function () {
-                            // we should not be able to reach this
-                            logger.error('could not find room');
-                        }
-                    );
-                },
-                function () {
-                    // user does not exist, we close the stream;
-                    logger.error('user ' + identifier.user + 'does not exist');
-                });
-        },
-        function () {
-            // room does not exist
-            // if flag is not set, create a room, otherwise we send an error
-            if (self.autoCreateRoom) {
-                // extract new owner from jid
-                self.Users.user(userjid.getLocal()).then(
-                    function (user) {
-                        // create room
-                        self.Lookup.add('muc', userjid.getLocal(), roomname, roomname).then(function (identifier) {
-                            logger.debug(JSON.stringify(identifier));
-                            user.createRoom(roomname).then(
-                                function (room) {
-                                    ro(room);
-                                }
-                            );
-                        });
-                    });
-            } else {
-                // room does not exists
-                var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                self.sendError(stanza, errXml);
-            }
-        });
-};
-
-/**
- * Implement 7.4
- * @see http://xmpp.org/extensions/xep-0045.html#message
- */
-Muc.prototype.sendMessage = function (stanza, room, member) {
-    var self = this;
-    logger.debug('send message to all members');
-
-    // find nickname for user
-    var nickname = member.affiliation.nickname;
-
-    // extract message body
-    var messagebody = stanza.children;
-
-    var msg = new Message({
-        'from': new JID(room.getName(), self.getDomain(), nickname),
-        'to': '',
-        'type': 'groupchat'
     });
-    msg.children = messagebody;
-
-    logger.debug(msg.attrs.from);
-
-    logger.debug('store mesage');
-    // store message in history
-    room.createMessage(msg.root().toString());
-
-    logger.debug('send message to all members');
-    // iterate over room members and submit message
-    room.listMembers().then(
-        function (members) {
-            for (var i = 0, l = members.length; i < l; i += 1) {
-                var member = members[i];
-
-                var clientmsg = msg.clone();
-                clientmsg.attrs.to = member.jid;
-                self.send(clientmsg);
-            }
-        }
-    );
 };
 
 /**
  * Implement 7.4
- * @see http://xmpp.org/extensions/xep-0045.html#message
+ * @see http: //xmpp.org/extensions/xep-0045.html#message
  */
 Muc.prototype.handleOccupantMessage = function (stanza) {
     logger.debug('muc handle message');
     var self = this;
-    var roomjid = new JID(stanza.attrs.to);
 
-    // extract all data
+    var roomname = this.determineRoomname(stanza);
     var userjid = stanza.attrs.from;
-    var roomname = roomjid.getLocal();
 
     var room = null;
     this.loadRoom(roomname)
@@ -471,7 +242,7 @@ Muc.prototype.handleOccupantMessage = function (stanza) {
         .then(
             function (member) {
                 // we found the member
-                self.sendmessage(stanza, room, member);
+                self.messageHandler.sendMessage(stanza, room, member);
             })
         .
     catch (function (err) {
@@ -484,75 +255,23 @@ Muc.prototype.handleOccupantMessage = function (stanza) {
 
 /*
  * Implement 7.8
- * @see http://xmpp.org/extensions/xep-0045.html
- * <message
- *     from=’crone1@shakespeare.lit/desktop’
- *     id=’nzd143v8’
- *     to=’coven@chat.shakespeare.lit’>
- *     <x xmlns=’http://jabber.org/protocol/muc#user’>
- *         <invite to=’hecate@shakespeare.lit’>
- *             <reason>
- *             Hey Hecate, this is the place for all good witches!
- *             </reason>
- *         </invite>
- *     </x>
- * </message>
+ * @see http://xmpp.org/extensions/xep-0045.html#invite
  */
 Muc.prototype.handleInvitations = function (stanza, x) {
-    var roomjid = new JID(stanza.attrs.to);
-    var from = new JID(stanza.attrs.from);
-
-    // extract reason
-    var invite = x.getChild('invite');
-    var member = x.attrs.to;
-    var reason = invite.getChild('reason');
-
-    // password
-
-    // send client the confirmation
-    var confirmMsg = new Message({
-        from: roomjid.toString(),
-        to: member
-    });
-    var xEl = confirmMsg.c('x', {
-        'xmlns': NS.MUC_USER
-    });
-    var inviteEl = xEl.c('invite', {
-        'from': from
-    });
-    inviteEl.cnode(reason);
-
-    this.send(confirmMsg);
-
-};
-
-Muc.prototype.loadRoom = function (roomname) {
     var self = this;
-    var identifier = null;
-    return new Promise(function (resolve, reject) {
-        logger.debug('lookup room');
-        self.Lookup.find('muc', roomname)
-            .then(
-                function (ident) {
-                    identifier = ident;
-                    logger.debug(JSON.stringify(identifier));
-                    return self.Users.user(identifier.user);
-                }).then(
-                function (user) {
-                    return user.getRoom(identifier.resource);
-                }).then(
-                function (room) {
-                    resolve(room);
-                }).
-        catch (function (err) {
-            reject(err);
-        });
-    });
-};
 
-Muc.prototype.determineRoomname = function (stanza) {
-    var roomjid = new JID(stanza.attrs.to);
-    return roomjid.getLocal();
+    var roomname = this.determineRoomname(stanza);
+
+    this.loadRoom(roomname).then(
+        function (room) {
+            // blub
+            self.invitationHandler.invite(room, stanza, x);
+        }).
+    catch (function (err) {
+        logger.error(err);
+        this.sendError(stanza);
+    });
+
 };
 
 Muc.prototype.handleAdminRequests = function (stanza) {
@@ -566,10 +285,10 @@ Muc.prototype.handleAdminRequests = function (stanza) {
     var item = query.getChild('item');
 
     if (item && (
-        (item.attrs.affiliation === MUC_AFFILIATION_ADMIN) ||
-        (item.attrs.affiliation === MUC_AFFILIATION_MEMBER) ||
-        (item.attrs.affiliation === MUC_AFFILIATION_OWNER) ||
-        (item.attrs.affiliation === MUC_AFFILIATION_OUTCAST)
+        (item.attrs.affiliation === NS.MUC_AFFILIATION_ADMIN) ||
+        (item.attrs.affiliation === NS.MUC_AFFILIATION_MEMBER) ||
+        (item.attrs.affiliation === NS.MUC_AFFILIATION_OWNER) ||
+        (item.attrs.affiliation === NS.MUC_AFFILIATION_OUTCAST)
     )) {
         method = 'affiliationlist';
     }
