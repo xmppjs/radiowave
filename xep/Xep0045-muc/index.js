@@ -7,21 +7,8 @@ var ltx = require('ltx'),
     XepComponent = require('../XepComponent'),
     Message = require('node-xmpp-core').Stanza.Message,
     Presence = require('node-xmpp-core').Stanza.Presence,
-    JID = require('node-xmpp-core').JID;
-
-//var path = require('path'),
-//    PGSchema = require('../../util/PGSchema');
-// var Storage = require('./storage');
-
-var NS_DISCO_ITEMS = 'http://jabber.org/protocol/disco#items',
-    NS_DISCO_INFO = 'http://jabber.org/protocol/disco#info',
-    NS_MUC_USER = 'http://jabber.org/protocol/muc#user';
-
-/*  
-    NS_MUC = 'http://jabber.org/protocol/muc',
-    NS_MUC_UNIQUE = 'http://jabber.org/protocol/muc#unique',
-*/
-
+    JID = require('node-xmpp-core').JID,
+    NS = require('./namespace');
 
 var MUC_ROLE_ADMIN = 'admin',
     MUC_AFFILIATION_ADMIN = 'admin';
@@ -70,18 +57,22 @@ Muc.prototype.initialize = function () {};
 Muc.prototype.match = function (stanza) {
     var jid = new JID(stanza.attrs.to);
     var domain = this.getDomain();
+
     // check that the domain fits
     if (jid.getDomain().toString().localeCompare(domain) !== 0) {
-
-        //logger.debug('Muc ' + domain + ' does not accept ' + jid.toString());
         return false;
     }
 
     if (
+        // message
         (stanza.is('message') && stanza.attrs.type === 'groupchat') ||
+        // mediated invitation
+        (stanza.is('message') && (stanza.getChild('x', NS.MUC_USER) && stanza.getChild('x', NS.MUC_USER).getChild('invite'))) ||
+        // presence
         (stanza.is('presence')) ||
-        (stanza.is('iq') && stanza.getChild('query', NS_DISCO_ITEMS)) ||
-        (stanza.is('iq') && stanza.getChild('query', NS_DISCO_INFO))
+        // discovery
+        (stanza.is('iq') && stanza.getChild('query', NS.DISCO_ITEMS)) ||
+        (stanza.is('iq') && stanza.getChild('query', NS.DISCO_INFO))
     ) {
         logger.debug('detected meesage for Xep-0045 ' + domain);
         return true;
@@ -140,7 +131,7 @@ Muc.prototype.sendPresenceLeave = function (roomjid, userjid, room) {
         type: 'unavailable'
     });
     var x = confirmMsg.c('x', {
-        'xmlns': NS_MUC_USER
+        'xmlns': NS.MUC_USER
     });
     x.c('item', {
         'affiliation': MUC_AFFILIATION_ADMIN,
@@ -158,7 +149,7 @@ Muc.prototype.sendPresenceLeave = function (roomjid, userjid, room) {
         type: 'unavailable'
     });
     newPresence.c('x', {
-        'xmlns': NS_MUC_USER
+        'xmlns': NS.MUC_USER
     }).c('item', {
         'affiliation': MUC_AFFILIATION_ADMIN,
         'role': MUC_ROLE_ADMIN
@@ -185,7 +176,7 @@ Muc.prototype.generatePresence = function (affiliation, role) {
         to: ''
     });
     presence.c('x', {
-        'xmlns': NS_MUC_USER
+        'xmlns': NS.MUC_USER
     }).c('item', {
         'affiliation': affiliation,
         'role': role
@@ -252,7 +243,7 @@ Muc.prototype.sendPresenceConfirmation = function (roomjid, userjid) {
         to: userjid.toString()
     });
     var x = confirmMsg.c('x', {
-        'xmlns': NS_MUC_USER
+        'xmlns': NS.MUC_USER
     });
     x.c('item', {
         'affiliation': MUC_AFFILIATION_ADMIN,
@@ -292,7 +283,6 @@ Muc.prototype.handleOccupantPresence = function (stanza) {
     logger.debug('muc handle presence');
     var self = this;
     var roomjid = new JID(stanza.attrs.to);
-    // var x = stanza.getChild('x', NS_MUC);
 
     // extract data
     var userjid = new JID(stanza.attrs.from);
@@ -389,10 +379,10 @@ Muc.prototype.handleOccupantPresence = function (stanza) {
                 self.sendError(stanza, errXml);
             }
         });
-};
+};/**
 
 
-/**
+
  * Implement 7.4
  * @see http://xmpp.org/extensions/xep-0045.html#message
  */
@@ -472,6 +462,50 @@ Muc.prototype.handleOccupantMessage = function (stanza) {
     });
 };
 
+/*
+ * Implement 7.8
+ * @see http://xmpp.org/extensions/xep-0045.html
+ * <message 
+ *     from=’crone1@shakespeare.lit/desktop’ 
+ *     id=’nzd143v8’ 
+ *     to=’coven@chat.shakespeare.lit’>
+ *     <x xmlns=’http://jabber.org/protocol/muc#user’> 
+ *         <invite to=’hecate@shakespeare.lit’>
+ *             <reason>
+ *             Hey Hecate, this is the place for all good witches!
+ *             </reason> 
+ *         </invite>
+ *     </x> 
+ * </message>
+ */
+Muc.prototype.handleInvitations = function (stanza, x) {
+    var roomjid = new JID(stanza.attrs.to);
+    var from = new JID(stanza.attrs.from);
+
+    // extract reason
+    var invite = x.getChild('invite');
+    var member = x.attrs.to;
+    var reason = invite.getChild('reason');
+
+    // password
+
+    // send client the confirmation
+    var confirmMsg = new Message({
+        from: roomjid.toString(),
+        to: member
+    });
+    var xEl = confirmMsg.c('x', {
+        'xmlns': NS.MUC_USER
+    });
+    var inviteEl = xEl.c('invite', {
+        'from': from
+    });
+    inviteEl.cnode(reason);
+    
+    this.send(confirmMsg);
+
+};
+
 Muc.prototype.handle = function (stanza) {
     logger.debug('muc route');
 
@@ -482,14 +516,22 @@ Muc.prototype.handle = function (stanza) {
         this.handleOccupantPresence(stanza);
     }
 
+    // handle messages
+    var msg = stanza.is('message');
+    if (msg && stanza.attrs.type === 'groupchat') {
+        this.handleOccupantMessage(stanza);
+    }
+
+    // handle invitations
+    var x = stanza.getChild('x', NS.MUC_USER);
+    if (msg && x && x.getChild('invite')) {
+        this.handleInvitations(stanza, x);
+    }
+
     // TODO handle normal presence request
     // 1. check if user is already offline
     // 2. make user offline in all active rooms
 
-    // handle messages
-    if (stanza.is('message') && stanza.attrs.type === 'groupchat') {
-        this.handleOccupantMessage(stanza);
-    }
 };
 
 module.exports = Muc;
