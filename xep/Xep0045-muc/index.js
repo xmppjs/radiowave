@@ -70,6 +70,8 @@ Muc.prototype.match = function (stanza) {
         // discovery
         (stanza.is('iq') && stanza.getChild('query', NS.DISCO_ITEMS)) ||
         (stanza.is('iq') && stanza.getChild('query', NS.DISCO_INFO)) ||
+        // owner
+        (stanza.is('iq') && stanza.getChild('query', NS.MUC_OWNER)) ||
         // membership
         (stanza.is('iq') && stanza.getChild('query', NS.MUC_ADMIN))
     ) {
@@ -125,48 +127,21 @@ Muc.prototype.determineRoomname = function (stanza) {
     return roomjid.getLocal();
 };
 
+Muc.prototype.handleOwnerRequests = function (stanza) {
+    logger.error('owner request not implemented yet' + stanza.toString());
+};
+
 /**
- * creates a new room
- * @param node name of the pubsub node
+ * @param userjid JID of the user
+ * @param roomname name of the room
  */
-/*Muc.prototype.createRoom = function (name, configuration, callback) {
-    logger.debug('create new pubsub node ' + name);
-
-    // create a new pub sub node description
-    var room = new MucRoom({
-        name: name,
-        subdomain: this.getSubdomain()
-    });
-
-    // set default parameter
-    room.setConfiguration('muc#roomconfig_roomname', 'Title');
-
-    // overwrite configuration
-    for (var i = 0; i < configuration.length; i++) {
-        logger.debug('set ' + name + ' key: ' + configuration[i].key + ' ' + configuration[i].value);
-        room.setConfiguration(configuration[i].key, configuration[i].value);
-    }
-
-    // this.Storage.Rooms.add(room.getRoomDescription(), callback);
-
-    callback(null, room);
-};
-
-Muc.prototype.handleOwnerCreate = function (stanza) {
-
-};
-
-Muc.prototype.handleOwnerDelete = function (stanza) {
-
-};
-*/
-
 Muc.prototype.createRoom = function(userjid, roomname) {
     var self = this;
 
     logger.debug('create new room');
     return new Promise(function (resolve, reject) {
         var user = null;
+
         // extract new owner from jid
         self.Users.user(userjid.getLocal())
             .then(function (usr) {
@@ -218,6 +193,8 @@ Muc.prototype.handleOccupantPresence = function (stanza) {
             self.sendError(stanza, errXml);
         }
     });
+
+    return true;
 };
 
 /**
@@ -251,6 +228,8 @@ Muc.prototype.handleOccupantMessage = function (stanza) {
         var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
         self.sendError(stanza, errXml);
     });
+
+    return true;
 };
 
 /*
@@ -272,6 +251,7 @@ Muc.prototype.handleInvitations = function (stanza, x) {
         this.sendError(stanza);
     });
 
+    return true;
 };
 
 Muc.prototype.handleAdminRequests = function (stanza) {
@@ -320,27 +300,39 @@ Muc.prototype.handle = function (stanza) {
     logger.debug('muc route');
 
     var to = new JID(stanza.attrs.to);
+    var handled = false;
 
-    // handle presence request for specific room
-    if (stanza.is('presence') && (to.getDomain().toString().localeCompare(this.getDomain) !== 0)) {
-        this.handleOccupantPresence(stanza);
+    if (stanza.is('presence')) {
+        // handle presence request for specific room
+        if (to.getDomain().toString().localeCompare(this.getDomain) !== 0) {
+            handled = this.handleOccupantPresence(stanza);
+        }
+    }
+    else if (stanza.is('message')) {
+        // handle messages
+        var msg = stanza.is('message');
+        var x = stanza.getChild('x', NS.MUC_USER);
+        if (msg && stanza.attrs.type === 'groupchat') {
+            handled = this.handleOccupantMessage(stanza);
+        }
+        // handle invitations
+        else if (msg && x && x.getChild('invite')) {
+            handled = this.handleInvitations(stanza, x);
+        }
+    }
+    else if (stanza.is('iq')) {
+        // owner request
+        if (stanza.getChild('query', NS.MUC_OWNER)) {
+            handled = this.handleOwnerRequests(stanza);
+        }
+        // admin request
+        else if (stanza.getChild('query', NS.MUC_ADMIN)) {
+            handled = this.handleAdminRequests(stanza);
+        }
     }
 
-    // handle messages
-    var msg = stanza.is('message');
-    if (msg && stanza.attrs.type === 'groupchat') {
-        this.handleOccupantMessage(stanza);
-    }
-
-    // handle invitations
-    var x = stanza.getChild('x', NS.MUC_USER);
-    if (msg && x && x.getChild('invite')) {
-        this.handleInvitations(stanza, x);
-    }
-
-    // admin request
-    if (stanza.is('iq') && stanza.getChild('query', NS.MUC_ADMIN)) {
-        this.handleAdminRequests(stanza);
+    if (!handled) {
+        logger.error('cound not process: ' + stanza.toString());
     }
 
     // TODO handle normal presence request
