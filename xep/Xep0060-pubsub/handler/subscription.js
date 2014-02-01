@@ -15,7 +15,7 @@ var SubscriptionHandler = function (sender) {
  * @description subscribes a new jiid
  * @param stanza full pubsub message stanza
  * @param pubsub already extracted pubsub child node
- * @see @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe
+ * @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe
  */
 SubscriptionHandler.prototype.handleSubscribe = function (node, stanza, sub) {
     logger.debug('handleSubscribe');
