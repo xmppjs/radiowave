@@ -199,7 +199,7 @@ Muc.prototype.sendPresenceJoin = function (roomjid, userjid, usernick, room) {
                     var member = members[i];
 
                     // send existing room members the info about new user
-                    if (member.jid !== userjid) {
+                    if (member.jid.toString() !== userjid.toString()) {
                         var memberMessage = newPresence.clone();
                         var newuser = roomjid.bare();
                         newuser.setResource(usernick);
@@ -208,24 +208,22 @@ Muc.prototype.sendPresenceJoin = function (roomjid, userjid, usernick, room) {
                         self.send(memberMessage);
                     }
 
-                    // read member details
-                    var nickname = member.affiliation.nickname;
-                    var affiliation = MUC_AFFILIATION_ADMIN; // member.affiliation.type;
-                    var role = MUC_ROLE_ADMIN; // member.role.type;
-                    //logger.debug('JID: ' + member.jid);
-                    //logger.debug('NICK: ' + nickname);
-                    //logger.debug('AFFILIATION: ' + affiliation);
-                    //logger.debug('ROLE: ' + role);
-
                     // send presence of existing room members to new user
-                    var joinermsg = self.generatePresence(affiliation, role);
+                    if (member.jid.toString() !== userjid.toString()) {
+                        // read member details
+                        var nickname = member.affiliation.nickname;
+                        var affiliation = MUC_AFFILIATION_ADMIN; // member.affiliation.type;
+                        var role = MUC_ROLE_ADMIN; // member.role.type;
 
-                    var memberroomjid = roomjid.bare();
-                    memberroomjid.setResource(nickname);
+                        var joinermsg = self.generatePresence(affiliation, role);
 
-                    joinermsg.attrs.from = memberroomjid.toString();
-                    joinermsg.attrs.to = userjid.toString();
-                    self.send(joinermsg, null);
+                        var memberroomjid = roomjid.bare();
+                        memberroomjid.setResource(nickname);
+
+                        joinermsg.attrs.from = memberroomjid.toString();
+                        joinermsg.attrs.to = userjid.toString();
+                        self.send(joinermsg, null);
+                    }
                 }
             } catch (err) {
                 logger.error(err.toString());
