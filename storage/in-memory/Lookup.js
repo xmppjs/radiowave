@@ -54,7 +54,7 @@ Lookup.prototype.find = function (type, xmppIdentifier) {
         if (self.lookuptable[type] && self.lookuptable[type][xmppIdentifier]) {
             resolve(self.lookuptable[type][xmppIdentifier]);
         } else {
-            reject();
+            reject('could not find the room');
         }
     });
     return promise;
