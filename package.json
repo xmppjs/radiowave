@@ -16,6 +16,7 @@
     "ldapjs": "0.7.0"
   },
   "devDependencies": {
+    "xrocket-cm" : "git+ssh://git@bitbucket.org:xrocketd/xrocketd-cm.git",
     "grunt": "~0.4.1",
     "grunt-contrib-jshint": "~0.6.0",
     "grunt-mocha-cli": "~1.1.0",

@@ -2,10 +2,11 @@
 
 // assertion
 var assert = require('assert'),
-    should = require('should');
+    should = require('should'),
+    helper = require('../_helper/helper');
 
 // logging
-require('../../config/LogConfig')('silly');
+helper.configureLoglevel('silly');
 
 // xmpp client
 var ltx = require('ltx'),
@@ -14,7 +15,7 @@ var ltx = require('ltx'),
 
 // x rocket server
 var xRocket = require('../../xrocket'),
-    C2SServer = xRocket.Net.C2SServer;
+    C2SServer = require('xrocketd-cm').Net.C2SServer;
 
 // Xep Components
 var Xep0060 = require('../../xep/Xep0060-pubsub');
@@ -74,7 +75,7 @@ describe('Xep-0060', function () {
 
     function setUpServer(done) {
         // C2S Server 
-        var cs2 = new xRocket.Net.C2SServer({});
+        var cs2 = new C2SServer({});
         //cs2.registerSaslMechanism(Plain);
 
         // attach connection manager to xrocket
@@ -498,6 +499,7 @@ describe('Xep-0060', function () {
                 });
 
                 sendMessageWithRomeo(deleteIQ, function (err, stanza) {
+                    console.log("Error:" + stanza.toString());
                     should.not.exist(err);
                     if (stanza.is('iq')) {
                         assert.equal(stanza.attrs.type, 'result');

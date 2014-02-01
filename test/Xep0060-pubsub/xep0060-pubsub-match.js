@@ -2,10 +2,11 @@
 
 // assertion
 var assert = require('assert'),
-    should = require('should');
+    should = require('should'),
+    helper = require('../_helper/helper');
 
 // logging
-require('../../config/LogConfig')('silly');
+helper.configureLoglevel('silly');
 
 var ltx = require('ltx'),
     Xep0060 = require('../../xep/Xep0060-pubsub');

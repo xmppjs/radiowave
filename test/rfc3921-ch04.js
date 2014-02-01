@@ -2,10 +2,11 @@
 
 // assertion
 var assert = require('assert'),
-    should = require('should');
+    should = require('should'),
+    helper = require('./_helper/helper');
 
 // logging
-require('../config/LogConfig')('error');
+helper.configureLoglevel('silly');
 
 // xmpp client
 var ltx = require('ltx'),
@@ -15,7 +16,7 @@ var ltx = require('ltx'),
 // x rocket server
 var XRocket = require('../core/XRocket'),
     Simple = require('../auth/Simple'),
-    C2SServer = require('../net/C2SServer');
+    C2SServer = require('xrocketd-cm').Net.C2SServer;
 
 // SASL Methods
 var Plain = require('node-xmpp-server/lib/authentication/plain');
@@ -23,8 +24,6 @@ var Plain = require('node-xmpp-server/lib/authentication/plain');
 // Xep Components
 var ComponentRouter = require('../router/ComponentRouter'),
     Rfc3921Messaging = require('../xep/Rfc3921-messaging');
-
-var LogConfig = require('../config/LogConfig');
 
 // user
 var userRomeo = {

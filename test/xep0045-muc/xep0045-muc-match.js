@@ -2,10 +2,11 @@
 
 // assertion
 var assert = require('assert'),
-    should = require('should');
+    should = require('should'),
+    helper = require('../_helper/helper');
 
 // logging
-require('../../config/LogConfig')('silly');
+helper.configureLoglevel('silly');
 
 var ltx = require('ltx'),
     Xep0045 = require('../../xep/Xep0045-muc');
@@ -129,6 +130,25 @@ describe('Xep-0045', function () {
                 </iq>"
 
             assert.equal(check(message), false);
+            done();
+        });
+
+        it('mediated message invitation', function (done) {
+            var message =
+            "<message \
+                from='crone1@shakespeare.lit/desktop' \
+                id='nzd143v8' \
+                to='coven@chat.shakespeare.lit'> \
+                <x xmlns='http://jabber.org/protocol/muc#user'> \
+                    <invite to='hecate@shakespeare.lit'> \
+                        <reason> \
+                        Hey Hecate, this is the place for all good witches! \
+                        </reason> \
+                    </invite> \
+                </x> \
+            </message>"
+
+            assert.equal(check(message), true);
             done();
         });
     });

@@ -2,15 +2,17 @@
 
 // assertion
 var assert = require('assert'),
-    should = require('should');
+    should = require('should'),
+    helper = require('./_helper/helper');
 
 // logging
-require('../config/LogConfig')('silly');
+helper.configureLoglevel('silly');
 
 // xmpp client
 var ltx = require('ltx'),
     Client = require('node-xmpp-client'),
-    Message = require('node-xmpp-core').Stanza.Message;
+    Message = require('node-xmpp-core').Stanza.Message,
+    C2SServer = require('xrocketd-cm').Net.C2SServer;
 
 // x rocket server
 var xRocket = require('../xrocket');
@@ -39,7 +41,7 @@ describe('XEP-0307', function () {
     var xR = null;
 
     function setUpServer(done) {
-        var cs2 = new xRocket.Net.C2SServer({});
+        var cs2 = new C2SServer({});
 
         // attach connection manager to xrocket
         xR = new xRocket.XRocket();

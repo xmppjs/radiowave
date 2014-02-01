@@ -2,10 +2,11 @@
 
 // assertion
 var assert = require('assert'),
-    should = require('should');
+    should = require('should'),
+    helper = require('../_helper/helper');
 
 // logging
-require('../../config/LogConfig')('silly');
+helper.configureLoglevel('silly');
 
 // xmpp client
 var ltx = require('ltx'),
@@ -14,17 +15,19 @@ var ltx = require('ltx'),
 
 // x rocket server
 var xRocket = require('../../xrocket'),
-    C2SServer = xRocket.Net.C2SServer;
+    C2SServer = require('xrocketd-cm').Net.C2SServer;
 
 // Xep Components
 var Xep0060 = require('../../xep/Xep0060-pubsub');
 
 // Storage
-var UsrModule = require('../../storage/in-memory/Users');
-var Users = new UsrModule();
-var LookupModule = require('../../storage/in-memory/Lookup');
-var Lookup = new LookupModule();
+var storage = {
+    'users': new xRocket.Storage.Users(),
+    'lookup': new xRocket.Storage.Lookup()
+};
 
+var Users = storage.users;
+var Lookup = storage.lookup;
 
 // user
 var userRomeo = {
@@ -75,7 +78,7 @@ describe('Xep-0060', function () {
 
     function setUpServer(done) {
         // C2S Server 
-        var cs2 = new xRocket.Net.C2SServer({});
+        var cs2 = new C2SServer({});
         //cs2.registerSaslMechanism(Plain);
 
         // attach connection manager to xrocket
@@ -107,15 +110,6 @@ describe('Xep-0060', function () {
         }));
 
         done();
-
-        /*
-        var PGConn = require('../../storage/postgre/PGConn');
-        var pgConnectionString = process.env.DATABASE_URL;
-        var pgC = new PGConn(pgConnectionString);
-        pgC.connect(function () {
-            done();
-        });
-        */
     }
 
     function createNode(jid, node) {
@@ -321,7 +315,7 @@ describe('Xep-0060', function () {
                 });
             });
 
-            it('Postcondition: delete test node princely_musings_config', function (done) {
+            it('Postcondition: delete test node with generated name', function (done) {
                 var deleteIQ = deleteNode(userRomeo.jid, generatednodename);
 
                 sendMessageWithRomeo(deleteIQ, function (err, stanza) {
