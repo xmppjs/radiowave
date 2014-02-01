@@ -6,10 +6,13 @@ var winston = require('winston'),
 var Promise = require('bluebird'),
     uuid = require('node-uuid');
 
-var Channel = function (owner, name, options) {
+var Channel = function (parent, owner, name, options) {
+
     this.options = options || {
         'xmppid': uuid.v4()
     };
+
+    this.parent = parent;
 
     this.owner = owner;
     this.name = name;
@@ -136,7 +139,9 @@ Channel.prototype.getEvents = function () {
 Channel.prototype.remove = function () {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
-        self.user._deleteChannel(self.getName());
+        console.log(self.getName());
+        console.log(self.user);
+        self.parent._deleteChannel(self.getName());
         resolve(true);
     });
     return promise;

@@ -136,7 +136,7 @@ User.prototype.createChannel = function (channelname, options) {
     var promise = new Promise(function (resolve, reject) {
         if (!self.channels[channelname]) {
             logger.debug('create new channel');
-            self.channels[channelname] = new Channel(self.getName(), channelname, options);
+            self.channels[channelname] = new Channel(self, self.getName(), channelname, options);
             resolve(self.channels[channelname]);
         } else {
             reject('channel exists');
@@ -145,7 +145,7 @@ User.prototype.createChannel = function (channelname, options) {
     return promise;
 };
 
-// private delete method
+// private delete method, do not call this directly
 User.prototype._deleteChannel = function (channelname) {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
