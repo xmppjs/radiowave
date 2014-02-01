@@ -30,24 +30,10 @@ function PubSub(options) {
     this.Users = options.storage.users;
     this.Lookup = options.storage.lookup;
 
-    // Initialize sender
-    var self = this;
-    var sender = {
-        sendError: function () {
-            self.sendError.apply(self, arguments);
-        },
-        sendSuccess: function (){
-            self.sendSuccess.apply(self, arguments);
-        },
-        send: function () {
-            self.send.apply(self, arguments);
-        }
-    };
-
     // handler for specific operations
-    this.nodeHandler = new NodeHandler(sender, this.Users, this.Lookup);
-    this.publishHandler = new PublishHandler(sender);
-    this.subscriptionHandler = new SubscriptionHandler(sender);
+    this.nodeHandler = this.configureHandler(new NodeHandler(this.Users, this.Lookup));
+    this.publishHandler = this.configureHandler(new PublishHandler());
+    this.subscriptionHandler = this.configureHandler(new SubscriptionHandler());
 }
 util.inherits(PubSub, XepComponent);
 
@@ -88,6 +74,22 @@ PubSub.prototype.match = function (stanza) {
     }
 
     return false;
+};
+
+PubSub.prototype.configureHandler = function (handler) {
+    var self = this;
+
+    handler.sendError = function ()  {
+        self.sendError.apply(self, arguments);
+    };
+    handler.sendSuccess = function () {
+        self.sendSuccess.apply(self, arguments);
+    };
+    handler.send = function () {
+        self.send.apply(self, arguments);
+    };
+
+    return handler;
 };
 
 PubSub.prototype.getDomain = function () {

@@ -1,15 +1,17 @@
 'use strict';
 
-var winston = require('winston'),
+var util = require('util'),
+    winston = require('winston'),
     logger = winston.loggers.get('xep-0060'),
+    XepComponent = require('../../XepComponent'),
     ltx = require('ltx'),
     JID = require('node-xmpp-core').JID,
     NS = require('../namespace'),
     Iq = require('node-xmpp-core').Stanza.Iq;
 
-var SubscriptionHandler = function (sender) {
-    this.sender = sender;
-};
+var SubscriptionHandler = function () {};
+
+util.inherits(SubscriptionHandler, XepComponent);
 
 /**
  * @description subscribes a new jiid
@@ -30,7 +32,7 @@ SubscriptionHandler.prototype.handleSubscribe = function (node, stanza, sub) {
         logger.error('subscriptions jids do not match : ' + from.toString() + ' != ' + subscriber.toString());
         // this is a wrong stanza
         var errorXml = ltx.parse('<error type=\'modify\'><bad-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><invalid-jid xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
-        this.sender.sendError(stanza, errorXml);
+        this.sendError(stanza, errorXml);
         return;
     }
 
@@ -59,7 +61,7 @@ SubscriptionHandler.prototype.handleSubscribe = function (node, stanza, sub) {
             });
 
             // send subscribe response
-            self.sender.send(msg);
+            self.send(msg);
 
             /*
              * send old items to new subscriber
@@ -98,7 +100,7 @@ SubscriptionHandler.prototype.handleUnsubscribe = function (node, stanza, unsubs
     if (!userjid.bare().equals(subscriber)) {
         // this is a wrong stanza
         errorXml = ltx.parse('<error type=\'modify\'><bad-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><invalid-jid xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
-        this.sender.sendError(stanza, errorXml);
+        this.sendError(stanza, errorXml);
         return;
     }
 
@@ -106,12 +108,12 @@ SubscriptionHandler.prototype.handleUnsubscribe = function (node, stanza, unsubs
     logger.debug('user' + userjid.bare() + ' unsubscribe the node');
     node.unsubscribe(userjid.bare().toString()).then(
         function () {
-            self.sender.sendSuccess(stanza);
+            self.sendSuccess(stanza);
         }).
     catch (
         function () {
             errorXml = ltx.parse('<error type=\'cancel\'><unexpected-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><not-subscribed xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
-            self.sender.sendError(stanza, errorXml);
+            self.sendError(stanza, errorXml);
         });
 };
 

@@ -1,14 +1,17 @@
 'use strict';
 
-var winston = require('winston'),
+var util = require('util'),
+    winston = require('winston'),
     logger = winston.loggers.get('xep-0060'),
+    XepComponent = require('../../XepComponent'),
     ltx = require('ltx'),
     uuid = require('node-uuid'),
     Message = require('node-xmpp-core').Stanza.Message;
 
-var PublishHandler = function (sender) {
-    this.sender = sender;
+var PublishHandler = function () {
 };
+
+util.inherits(PublishHandler, XepComponent);
 
 /**
  * @description publishes a new event
@@ -81,7 +84,7 @@ PublishHandler.prototype.handlePublish = function (node, stanza, publish) {
                 'xmlns': 'http://jabber.org/protocol/pubsub'
             }).cnode(publishDetail).up();
 
-        this.sender.sendSuccess(stanza, detail);
+        this.sendSuccess(stanza, detail);
 
         // send notification message to subscriber
         node.listSubscribers().then(
@@ -92,7 +95,7 @@ PublishHandler.prototype.handlePublish = function (node, stanza, publish) {
 
                     var clientmsg = msg.clone();
                     clientmsg.attrs.to = subscriber.jid;
-                    self.sender.send(clientmsg);
+                    self.send(clientmsg);
                 }
             },
             function (error) {

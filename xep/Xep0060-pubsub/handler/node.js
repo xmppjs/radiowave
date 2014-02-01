@@ -1,18 +1,20 @@
 'use strict';
 
-var winston = require('winston'),
+var util = require('util'),
+    winston = require('winston'),
     logger = winston.loggers.get('xep-0060'),
     ltx = require('ltx'),
+    XepComponent = require('../../XepComponent'),
     NS = require('../namespace'),
     JID = require('node-xmpp-core').JID,
     uuid = require('node-uuid');
 
-var NodeHandler = function (sender, Users, Lookup) {
-    this.sender = sender;
-
+var NodeHandler = function (Users, Lookup) {
     this.Users = Users;
     this.Lookup = Lookup;
 };
+
+util.inherits(NodeHandler, XepComponent);
 
 NodeHandler.prototype.configureNode = function (node, configuration, callback) {
     logger.debug('configureNode' + node);
@@ -82,7 +84,7 @@ NodeHandler.prototype.handleCreate = function (stanza) {
         function () {
             // channel exists, error
             var errXml = ltx.parse('<error type=\'cancel\'><conflict xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-            self.sender.sendError(stanza, errXml);
+            self.sendError(stanza, errXml);
         },
         function () {
             var username = jid.getLocal();
@@ -94,7 +96,7 @@ NodeHandler.prototype.handleCreate = function (stanza) {
                         function () {
                             // channel exists, error
                             var errXml = ltx.parse('<error type=\'cancel\'><conflict xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                            self.sender.sendError(stanza, errXml);
+                            self.sendError(stanza, errXml);
                         },
                         function () {
                             // create new node
@@ -116,7 +118,7 @@ NodeHandler.prototype.handleCreate = function (stanza) {
                             logger.debug('create node with ' + JSON.stringify(configuration));
                             self.createNode(user, nodename, configuration, function () {
                                 logger.debug('return from callback');
-                                self.sender.sendSuccess(stanza, detail);
+                                self.sendSuccess(stanza, detail);
                             });
                         });
                 });
@@ -132,11 +134,11 @@ NodeHandler.prototype.handleDelete = function (node, stanza) {
     node.remove().then(
         function () {
             logger.debug('node removed');
-            self.sender.sendSuccess(stanza);
+            self.sendSuccess(stanza);
         },
         function () {
             logger.debug('node could not be removed');
-            self.sender.sendError(stanza);
+            self.sendError(stanza);
         }
     );
 };
