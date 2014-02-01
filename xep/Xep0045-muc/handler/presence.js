@@ -1,7 +1,7 @@
 'use strict';
 
 var util = require('util'),
-ltx = require('ltx'),
+    ltx = require('ltx'),
     winston = require('winston'),
     logger = winston.loggers.get('xep-0045'),
     XepComponent = require('../../XepComponent'),
@@ -27,6 +27,31 @@ PresenceHandler.prototype.generatePresence = function (affiliation, role) {
     });
 
     return presence;
+};
+
+PresenceHandler.prototype.sendPresenceConfirmation = function (room, roomjid, userjid) {
+    logger.debug('send presence confirmation to ' + userjid);
+    var self = this;
+
+    room.getMember(userjid).then(function(member){
+        console.log('confirmation for member: ' + JSON.stringify(member));
+        // send client the confirmation
+        var confirmMsg = new Presence({
+            from: roomjid.toString(),
+            to: userjid.toString()
+        });
+        var x = confirmMsg.c('x', {
+            'xmlns': NS.MUC_USER
+        });
+        x.c('item', {
+            'affiliation': member.affiliation.type,
+            'role': member.role.type
+        });
+        x.c('status', {
+            'code': '110'
+        });
+        self.send(confirmMsg);
+    });
 };
 
 PresenceHandler.prototype.sendPresenceJoin = function (roomjid, userjid, usernick, room) {
@@ -76,27 +101,6 @@ PresenceHandler.prototype.sendPresenceJoin = function (roomjid, userjid, usernic
     );
 };
 
-PresenceHandler.prototype.sendPresenceConfirmation = function (roomjid, userjid) {
-    logger.debug('send presence confirmation to ' + userjid);
-
-    // send client the confirmation
-    var confirmMsg = new Presence({
-        from: roomjid.toString(),
-        to: userjid.toString()
-    });
-    var x = confirmMsg.c('x', {
-        'xmlns': NS.MUC_USER
-    });
-    x.c('item', {
-        'affiliation': NS.MUC_AFFILIATION_ADMIN,
-        'role': NS.MUC_ROLE_ADMIN
-    });
-    x.c('status', {
-        'code': '110'
-    });
-    this.send(confirmMsg);
-};
-
 PresenceHandler.prototype.sendRoomHistory = function (roomjid, userjid, room) {
     logger.debug('send room ' + roomjid + ' history to ' + userjid);
     logger.debug(room);
@@ -118,12 +122,18 @@ PresenceHandler.prototype.sendRoomHistory = function (roomjid, userjid, room) {
 
 PresenceHandler.prototype.joinNewMember = function (room, roomjid, userjid, nickname) {
     var self = this;
-    logger.debug('user' + userjid + ' joins the room');
+    logger.debug('user ' + userjid + ' joins the room');
 
     // join room
     room.join(userjid, nickname).then(function () {
+        // send presence confirmation to new member
+        self.sendPresenceConfirmation(room, roomjid, userjid);
+
+        // send presence of existing users to new member and 
+        // inform the existing members about the new member
         self.sendPresenceJoin(roomjid, userjid, nickname, room);
-        self.sendPresenceConfirmation(roomjid, userjid);
+
+        // send the new member the message history
         self.sendRoomHistory(roomjid, userjid, room);
     });
 };

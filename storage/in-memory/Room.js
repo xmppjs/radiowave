@@ -295,20 +295,66 @@ Room.prototype.listAffiliations = function (affiliationtype) {
     return promise;
 };
 
-Room.prototype.editAffiliations = function (jid, affiliationtype, reason) {
-    logger.debug('editAffiliations');
+Room.prototype.getAffiliation = function (jid) {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
-        if (self.members[jid]) {
-            if (!self.members[jid].affiliation) {
-                self.members[jid].affiliation = {};
+        var member = self.members[jid];
+        if (member) {
+            if (member.affiliation) {
+                var affiliation = {};
+                affiliation.jid = jid;
+                affiliation.affiliation = member.affiliation;
+                resolve(affiliation);
+            } else {
+                // This should not happen
+                logger.error('could not find affiliation for existing user');
+                reject('could not find affiliation for existing user');
+            }
+        } else {
+            reject('member does not exist');
+        }
+    });
+    return promise;
+};
+
+Room.prototype.editAffiliation = function (jid, options) {
+    logger.debug('editAffiliation');
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        var member = self.members[jid];
+        if (member) {
+            if (!member.affiliation) {
+                member.affiliation = {};
             }
 
             // set properties
-            self.members[jid].affiliation.type = affiliationtype;
-            self.members[jid].affiliation.reason = reason;
+            member.affiliation.type = options.type;
+            if (options.reason) {
+                member.affiliation.reason = options.reason;
+            }
 
-            resolve(self.members[jid]);
+            resolve(member);
+        } else {
+            reject('member does not exist');
+        }
+    });
+    return promise;
+};
+
+Room.prototype.editRole = function (jid, options) {
+    logger.debug('editRole');
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        var member = self.members[jid];
+        if (member) {
+            if (!member.role) {
+                member.role = {};
+            }
+
+            // set properties
+            member.role.type = options.type;
+
+            resolve(member);
         } else {
             reject('member does not exist');
         }

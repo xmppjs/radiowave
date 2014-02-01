@@ -9,14 +9,14 @@ module.exports = {
     'MUC_UNIQUE'    : 'http://jabber.org/protocol/muc#unique',
 
     // muc roles
-    'MUC_ROLE_ADMIN' : 'admin',
+    'MUC_ROLE_MODERATOR' : 'moderator',
     'MUC_ROLE_NONE' : 'none',
     'MUC_ROLE_PARTICIPANT' : 'participant',
     'MUC_ROLE_VISITOR' : 'visitor',
 
     // affiliation
-    'MUC_AFFILIATION_ADMIN' : 'admin',
     'MUC_AFFILIATION_OWNER' : 'owner',
+    'MUC_AFFILIATION_ADMIN' : 'admin',
     'MUC_AFFILIATION_MEMBER' : 'member',
     'MUC_AFFILIATION_OUTCAST' : 'outcast',
     'MUC_AFFILIATION_NONE' : 'none'

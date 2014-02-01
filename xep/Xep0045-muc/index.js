@@ -102,12 +102,10 @@ Muc.prototype.loadRoom = function (roomname) {
     var self = this;
     var identifier = null;
     return new Promise(function (resolve, reject) {
-        logger.debug('lookup room');
         self.Lookup.find('muc', roomname)
             .then(
                 function (ident) {
                     identifier = ident;
-                    logger.debug(JSON.stringify(identifier));
                     return self.Users.user(identifier.user);
                 }).then(
                 function (user) {
@@ -129,6 +127,7 @@ Muc.prototype.determineRoomname = function (stanza) {
 
 Muc.prototype.handleOwnerRequests = function (stanza) {
     logger.error('owner request not implemented yet' + stanza.toString());
+    return true;
 };
 
 /**
@@ -141,6 +140,7 @@ Muc.prototype.createRoom = function(userjid, roomname) {
     logger.debug('create new room');
     return new Promise(function (resolve, reject) {
         var user = null;
+        var room = null;
 
         // extract new owner from jid
         self.Users.user(userjid.getLocal())
@@ -151,12 +151,19 @@ Muc.prototype.createRoom = function(userjid, roomname) {
                 return self.Lookup.add('muc', userjid.getLocal(), roomname, roomname);
             })
             .then(function (identifier) {
-                logger.debug('identifier: ' + JSON.stringify(identifier));
                 return user.createRoom(roomname);
-            }).then(function (room) {
-                logger.debug('found2 room: ' + JSON.stringify(room));
+            }).then(function (r) {
+                room = r;
+                logger.debug('created room: ' + JSON.stringify(room));
+                // add creator as member
+                return room.addMember(userjid);
+            }).then(function () {
+                // set affiliation properly for creator
+                return self.affliationHandler.setOwner(room, userjid);
+            }).then(function(){
                 resolve(room);
-            }).catch(function (err) {
+            })
+            .catch(function (err) {
                 reject(err);
             });
     });
@@ -275,11 +282,10 @@ Muc.prototype.handleAdminRequests = function (stanza) {
 
     if (method) {
         var roomname = this.determineRoomname(stanza);
-        logger.debug(roomname);
 
         this.loadRoom(roomname).then(
             function (room) {
-                logger.debug('found: ' + room + ' and ' + method);
+                logger.debug('found room: ' + JSON.stringify(room) + ' and ' + method);
 
                 switch (method) {
                 case 'affiliationlist':
@@ -294,6 +300,8 @@ Muc.prototype.handleAdminRequests = function (stanza) {
     } else {
         this.sendError(stanza);
     }
+
+    return true;
 };
 
 Muc.prototype.handle = function (stanza) {
@@ -307,6 +315,10 @@ Muc.prototype.handle = function (stanza) {
         if (to.getDomain().toString().localeCompare(this.getDomain) !== 0) {
             handled = this.handleOccupantPresence(stanza);
         }
+
+        // TODO handle normal presence request
+        // 1. check if user is already offline
+        // 2. make user offline in all active rooms
     }
     else if (stanza.is('message')) {
         // handle messages
@@ -334,10 +346,6 @@ Muc.prototype.handle = function (stanza) {
     if (!handled) {
         logger.error('cound not process: ' + stanza.toString());
     }
-
-    // TODO handle normal presence request
-    // 1. check if user is already offline
-    // 2. make user offline in all active rooms
 
 };
 

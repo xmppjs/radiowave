@@ -18,7 +18,7 @@ var Lookup = function () {
  * Adds new entries to our lookup table
  */
 Lookup.prototype.add = function(type, user, resource, xmppIdentifier) {
-    logger.debug('Add xmpp: ' + xmppIdentifier + ' to lookuptable' + type + ':'+ user + ':' + resource);
+    logger.debug('add xmpp: ' + xmppIdentifier + ' to lookuptable ' + type + ' : '+ user + ' : ' + resource);
     var self = this;
     var promise = new Promise(function (resolve, reject) {
 

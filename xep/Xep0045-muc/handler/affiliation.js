@@ -4,6 +4,7 @@ var util = require('util'),
     ltx = require('ltx'),
     winston = require('winston'),
     logger = winston.loggers.get('xep-0045'),
+    Promise = require('bluebird'),
     XepComponent = require('../../XepComponent'),
     Iq = require('node-xmpp-core').Stanza.Iq,
     NS = require('../namespace');
@@ -11,6 +12,24 @@ var util = require('util'),
 function AffiliationHandler() {}
 
 util.inherits(AffiliationHandler, XepComponent);
+
+AffiliationHandler.prototype.setOwner = function (room, userjid) {
+    logger.debug('set owner ' + userjid);
+    return new Promise(function (resolve, reject) {
+        room.editAffiliation(userjid, {
+            'type': NS.MUC_AFFILIATION_OWNER,
+            'reason': 'Created the room.'
+        }).then(function () {
+            return room.editRole(userjid, {
+                'type': NS.MUC_ROLE_MODERATOR
+            });
+        }).then (function() {
+            resolve();
+        }).catch(function(err){
+            reject(err);
+        });
+    });
+};
 
 AffiliationHandler.prototype.list = function (room, stanza, affiliation) {
     var self = this;
