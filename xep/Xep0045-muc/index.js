@@ -4,24 +4,29 @@ var ltx = require('ltx'),
     util = require('util'),
     winston = require('winston'),
     logger = winston.loggers.get('xep-0045'),
+    Promise = require('bluebird'),
     XepComponent = require('../XepComponent'),
     Message = require('node-xmpp-core').Stanza.Message,
     Presence = require('node-xmpp-core').Stanza.Presence,
     JID = require('node-xmpp-core').JID,
     NS = require('./namespace');
 
-var MUC_ROLE_ADMIN = 'admin',
-    MUC_AFFILIATION_ADMIN = 'admin';
+// handler
+var AffiliationHandler = require('./handler/affiliation');
 
-/*
+// muc roles
+var MUC_ROLE_ADMIN = 'admin',
     MUC_ROLE_NONE = 'none',
     MUC_ROLE_PARTICIPANT = 'participant',
-    MUC_ROLE_VISITOR = 'visitor',
+    MUC_ROLE_VISITOR = 'visitor';
+
+// affiliation
+var MUC_AFFILIATION_ADMIN = 'admin',
     MUC_AFFILIATION_OWNER = 'owner',
     MUC_AFFILIATION_MEMBER = 'member',
     MUC_AFFILIATION_OUTCAST = 'outcast',
     MUC_AFFILIATION_NONE = 'none';
-*/
+
 
 /*
  * XEP-0045: Multi-User Chat
@@ -39,6 +44,8 @@ function Muc(options) {
 
     this.Users = options.storage.users;
     this.Lookup = options.storage.lookup;
+
+    this.affliationHandler = this.configureHandler(new AffiliationHandler());
 }
 util.inherits(Muc, XepComponent);
 
@@ -72,13 +79,31 @@ Muc.prototype.match = function (stanza) {
         (stanza.is('presence')) ||
         // discovery
         (stanza.is('iq') && stanza.getChild('query', NS.DISCO_ITEMS)) ||
-        (stanza.is('iq') && stanza.getChild('query', NS.DISCO_INFO))
+        (stanza.is('iq') && stanza.getChild('query', NS.DISCO_INFO)) ||
+        // membership
+        (stanza.is('iq') && stanza.getChild('query', NS.MUC_ADMIN))
     ) {
         logger.debug('detected meesage for Xep-0045 ' + domain);
         return true;
     }
 
     return false;
+};
+
+Muc.prototype.configureHandler = function (handler) {
+    var self = this;
+
+    handler.sendError = function ()  {
+        self.sendError.apply(self, arguments);
+    };
+    handler.sendSuccess = function () {
+        self.sendSuccess.apply(self, arguments);
+    };
+    handler.send = function () {
+        self.send.apply(self, arguments);
+    };
+
+    return handler;
 };
 
 Muc.prototype.getNode = function (nodename, callback) {
@@ -378,10 +403,51 @@ Muc.prototype.handleOccupantPresence = function (stanza) {
                 self.sendError(stanza, errXml);
             }
         });
-};/**
+};
 
+/**
+ * Implement 7.4
+ * @see http://xmpp.org/extensions/xep-0045.html#message
+ */
+Muc.prototype.sendMessage = function (stanza, room, member) {
+    var self = this;
+    logger.debug('send message to all members');
 
+    // find nickname for user
+    var nickname = member.affiliation.nickname;
 
+    // extract message body
+    var messagebody = stanza.children;
+
+    var msg = new Message({
+        'from': new JID(room.getName(), self.getDomain(), nickname),
+        'to': '',
+        'type': 'groupchat'
+    });
+    msg.children = messagebody;
+
+    logger.debug(msg.attrs.from);
+
+    logger.debug('store mesage');
+    // store message in history
+    room.createMessage(msg.root().toString());
+
+    logger.debug('send message to all members');
+    // iterate over room members and submit message
+    room.listMembers().then(
+        function (members) {
+            for (var i = 0, l = members.length; i < l; i += 1) {
+                var member = members[i];
+
+                var clientmsg = msg.clone();
+                clientmsg.attrs.to = member.jid;
+                self.send(clientmsg);
+            }
+        }
+    );
+};
+
+/**
  * Implement 7.4
  * @see http://xmpp.org/extensions/xep-0045.html#message
  */
@@ -390,71 +456,26 @@ Muc.prototype.handleOccupantMessage = function (stanza) {
     var self = this;
     var roomjid = new JID(stanza.attrs.to);
 
-    // route messages to room members
-    var sendmessage = function (stanza, room, member) {
-
-        logger.debug('send message to all members');
-
-        // find nickname for user
-        var nickname = member.affiliation.nickname;
-
-        // extract message body
-        var messagebody = stanza.children;
-
-        var msg = new Message({
-            'from': new JID(room.getName(), self.getDomain(), nickname),
-            'to': '',
-            'type': 'groupchat'
-        });
-        msg.children = messagebody;
-
-        logger.debug(msg.attrs.from);
-
-        logger.debug('store mesage');
-        // store message in history
-        room.createMessage(msg.root().toString());
-
-        logger.debug('send message to all members');
-        // iterate over room members and submit message
-        room.listMembers().then(
-            function (members) {
-                for (var i = 0, l = members.length; i < l; i += 1) {
-                    var member = members[i];
-
-                    var clientmsg = msg.clone();
-                    clientmsg.attrs.to = member.jid;
-                    self.send(clientmsg);
-                }
-            }
-        );
-    };
-
     // extract all data
     var userjid = stanza.attrs.from;
     var roomname = roomjid.getLocal();
 
-    this.Lookup.find('muc', roomname).then(
-        function (identifier) {
-
-            self.Users.user(identifier.user).then(
-                function (user) {
-                    return user.getRoom(identifier.resource);
-                }).then(
-                function (room) {
-                    // check if user is part of this room
-                    room.getMember(userjid).then(
-                        function (member) {
-                            sendmessage(stanza, room, member);
-
-                        }, function () {
-                            // room does not exists
-                            var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                            self.sendError(stanza, errXml);
-                        });
-                });
-
-        }
-    ).then(function () {}, function () {
+    var room = null;
+    this.loadRoom(roomname)
+        .then(
+            function (r) {
+                room = r;
+                // check if user is part of this room
+                return room.getMember(userjid);
+            })
+        .then(
+            function (member) {
+                // we found the member
+                self.sendmessage(stanza, room, member);
+            })
+        .
+    catch (function (err) {
+        logger.error(err);
         // room does not exists
         var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
         self.sendError(stanza, errXml);
@@ -464,17 +485,17 @@ Muc.prototype.handleOccupantMessage = function (stanza) {
 /*
  * Implement 7.8
  * @see http://xmpp.org/extensions/xep-0045.html
- * <message 
- *     from=’crone1@shakespeare.lit/desktop’ 
- *     id=’nzd143v8’ 
+ * <message
+ *     from=’crone1@shakespeare.lit/desktop’
+ *     id=’nzd143v8’
  *     to=’coven@chat.shakespeare.lit’>
- *     <x xmlns=’http://jabber.org/protocol/muc#user’> 
+ *     <x xmlns=’http://jabber.org/protocol/muc#user’>
  *         <invite to=’hecate@shakespeare.lit’>
  *             <reason>
  *             Hey Hecate, this is the place for all good witches!
- *             </reason> 
+ *             </reason>
  *         </invite>
- *     </x> 
+ *     </x>
  * </message>
  */
 Muc.prototype.handleInvitations = function (stanza, x) {
@@ -500,9 +521,80 @@ Muc.prototype.handleInvitations = function (stanza, x) {
         'from': from
     });
     inviteEl.cnode(reason);
-    
+
     this.send(confirmMsg);
 
+};
+
+Muc.prototype.loadRoom = function (roomname) {
+    var self = this;
+    var identifier = null;
+    return new Promise(function (resolve, reject) {
+        logger.debug('lookup room');
+        self.Lookup.find('muc', roomname)
+            .then(
+                function (ident) {
+                    identifier = ident;
+                    logger.debug(JSON.stringify(identifier));
+                    return self.Users.user(identifier.user);
+                }).then(
+                function (user) {
+                    return user.getRoom(identifier.resource);
+                }).then(
+                function (room) {
+                    resolve(room);
+                }).
+        catch (function (err) {
+            reject(err);
+        });
+    });
+};
+
+Muc.prototype.determineRoomname = function (stanza) {
+    var roomjid = new JID(stanza.attrs.to);
+    return roomjid.getLocal();
+};
+
+Muc.prototype.handleAdminRequests = function (stanza) {
+    logger.debug('handleAdminRequests');
+    var self = this;
+
+    // determine type of request
+    var method = null;
+
+    var query = stanza.getChild('query', NS.MUC_ADMIN);
+    var item = query.getChild('item');
+
+    if (item && (
+        (item.attrs.affiliation === MUC_AFFILIATION_ADMIN) ||
+        (item.attrs.affiliation === MUC_AFFILIATION_MEMBER) ||
+        (item.attrs.affiliation === MUC_AFFILIATION_OWNER) ||
+        (item.attrs.affiliation === MUC_AFFILIATION_OUTCAST)
+    )) {
+        method = 'affiliationlist';
+    }
+
+    if (method) {
+        var roomname = this.determineRoomname(stanza);
+        logger.debug(roomname);
+
+        this.loadRoom(roomname).then(
+            function (room) {
+                logger.debug('found: ' + room + ' and ' + method);
+
+                switch (method) {
+                case 'affiliationlist':
+                    self.affliationHandler.list(room, stanza, item.attrs.affiliation);
+                    break;
+                }
+            })
+            .
+        catch (function (err) {
+            logger.error(err);
+        });
+    } else {
+        this.sendError(stanza);
+    }
 };
 
 Muc.prototype.handle = function (stanza) {
@@ -525,6 +617,11 @@ Muc.prototype.handle = function (stanza) {
     var x = stanza.getChild('x', NS.MUC_USER);
     if (msg && x && x.getChild('invite')) {
         this.handleInvitations(stanza, x);
+    }
+
+    // admin request
+    if (stanza.is('iq') && stanza.getChild('query', NS.MUC_ADMIN)) {
+        this.handleAdminRequests(stanza);
     }
 
     // TODO handle normal presence request
