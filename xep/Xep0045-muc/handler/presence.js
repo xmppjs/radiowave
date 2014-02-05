@@ -33,7 +33,7 @@ PresenceHandler.prototype.sendPresenceConfirmation = function (room, roomjid, us
     logger.debug('send presence confirmation to ' + userjid);
     var self = this;
 
-    room.getMember(userjid).then(function(member){
+    room.getMember(userjid).then(function (member) {
         console.log('confirmation for member: ' + JSON.stringify(member));
         // send client the confirmation
         var confirmMsg = new Presence({
@@ -139,25 +139,34 @@ PresenceHandler.prototype.joinNewMember = function (room, roomjid, userjid, nick
 };
 
 
-PresenceHandler.prototype.joinRoom = function(room, roomjid, userjid, nickname) {
+PresenceHandler.prototype.joinRoom = function (room, roomjid, userjid, nickname) {
+    logger.debug('user joins the room');
     var self = this;
     // check if the user is already member
-    room.isMember(userjid).then(
+    room.isMember(userjid)
+    .then(
+        // user exists
         function () {
-            // user exists
-            self.joinNewMember(room, roomjid, userjid, nickname);
-        },
-        function () {
-            logger.debug('user is not member of the room yet');
-            // user does not exist
-            return room.addMember(userjid).then(
+            logger.debug('join new member');
+
+            return self.joinNewMember(room, roomjid, userjid, nickname);
+        })
+    // user is not member yet
+    .catch (function () {
+        logger.debug('user is not member of the room yet');
+        room.addMember(userjid).then(
+            function () {
+                logger.debug('set affiliation');
+                // set affiliation properly for creator
+                return room.setMember(userjid);
+            })
+            .then(
                 function () {
                     // user exists
                     self.joinNewMember(room, roomjid, userjid, nickname);
-                }
-            );
-        }
-    );
+                });
+    });
+
 };
 
 
@@ -210,7 +219,7 @@ PresenceHandler.prototype.sendPresenceLeave = function (roomjid, userjid, room) 
     );
 };
 
-PresenceHandler.prototype.leaveRoom = function(room, roomjid, userjid) {
+PresenceHandler.prototype.leaveRoom = function (room, roomjid, userjid) {
     var self = this;
     logger.debug('user' + userjid + ' leaves the room');
     // leave room
@@ -222,6 +231,7 @@ PresenceHandler.prototype.leaveRoom = function(room, roomjid, userjid) {
 };
 
 PresenceHandler.prototype.handlePresence = function (room, stanza) {
+    logger.debug('handle presence')
     var self = this;
 
     var userjid = new JID(stanza.attrs.from);

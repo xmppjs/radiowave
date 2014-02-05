@@ -6,6 +6,19 @@ var winston = require('winston'),
 var Promise = require('bluebird'),
     uuid = require('node-uuid');
 
+    // muc roles
+var MUC_ROLE_MODERATOR = 'moderator',
+    MUC_ROLE_NONE = 'none',
+    MUC_ROLE_PARTICIPANT = 'participant',
+    MUC_ROLE_VISITOR = 'visitor',
+
+    // affiliation
+    MUC_AFFILIATION_OWNER = 'owner',
+    MUC_AFFILIATION_ADMIN = 'admin',
+    MUC_AFFILIATION_MEMBER = 'member',
+    MUC_AFFILIATION_OUTCAST = 'outcast',
+    MUC_AFFILIATION_NONE = 'none';
+
 var Room = function (owner, name, options) {
     this.options = options || {
         'xmppid': uuid.v4()
@@ -281,15 +294,16 @@ Room.prototype.listAffiliations = function (affiliationtype) {
                 logger.debug(JSON.stringify(member));
 
                 if (member.affiliation && member.affiliation.type === affiliationtype) {
-                    var affiliation = {};
-                    affiliation.jid = jid;
-                    affiliation.affiliation = member.affiliation;
-                    delete affiliation.affiliation.nick;
-                    affiliations.push(affiliation);
+                    var item = {};
+                    item.jid = jid;
+                    item.affiliation = member.affiliation;
+                    if (item.affiliation && item.affiliation.nickname) {
+                        delete item.affiliation.nickname;
+                    }
+                    affiliations.push(item);
                 }
             }
         }
-        
         resolve(affiliations);
     });
     return promise;
@@ -340,6 +354,47 @@ Room.prototype.editAffiliation = function (jid, options) {
     });
     return promise;
 };
+
+Room.prototype.setOwner = function (userjid) {
+    logger.debug('set owner ' + userjid);
+    var self = this;
+    return new Promise(function (resolve, reject) {
+        self.editAffiliation(userjid, {
+            'type': MUC_AFFILIATION_OWNER,
+            'reason': 'Created the room.'
+        }).then(function () {
+            return self.editRole(userjid, {
+                'type': MUC_ROLE_MODERATOR
+            });
+        }).then(function () {
+            resolve();
+        }).
+        catch (function (err) {
+            reject(err);
+        });
+    });
+};
+
+Room.prototype.setMember = function (userjid) {
+    logger.debug('set member ' + userjid);
+    var self = this;
+    return new Promise(function (resolve, reject) {
+        self.editAffiliation(userjid, {
+            'type': MUC_AFFILIATION_MEMBER,
+            'reason': 'Created the room.'
+        }).then(function () {
+            return self.editRole(userjid, {
+                'type': MUC_ROLE_PARTICIPANT
+            });
+        }).then(function () {
+            resolve();
+        }).
+        catch (function (err) {
+            reject(err);
+        });
+    });
+};
+
 
 Room.prototype.editRole = function (jid, options) {
     logger.debug('editRole');

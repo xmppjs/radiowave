@@ -13,24 +13,6 @@ function AffiliationHandler() {}
 
 util.inherits(AffiliationHandler, XepComponent);
 
-AffiliationHandler.prototype.setOwner = function (room, userjid) {
-    logger.debug('set owner ' + userjid);
-    return new Promise(function (resolve, reject) {
-        room.editAffiliation(userjid, {
-            'type': NS.MUC_AFFILIATION_OWNER,
-            'reason': 'Created the room.'
-        }).then(function () {
-            return room.editRole(userjid, {
-                'type': NS.MUC_ROLE_MODERATOR
-            });
-        }).then (function() {
-            resolve();
-        }).catch(function(err){
-            reject(err);
-        });
-    });
-};
-
 AffiliationHandler.prototype.list = function (room, stanza, affiliation) {
     var self = this;
 
@@ -50,19 +32,31 @@ AffiliationHandler.prototype.list = function (room, stanza, affiliation) {
     iq.cnode(query);
 
     // read all affiliations
-    room.listAffiliations(affiliation).then(function (affiliations) {
-        // foreach item:
-        var item = new ltx.Element('item', {
-            'affiliation': affiliation,
-            'jid': stanza.attrs.from,
-            id: stanza.attrs.id,
-            type: 'result'
-        }).c('reason').t('Treason').up();
-        query.cnode(item);
-        this.send(iq);
+    room.listAffiliations(affiliation)
+        .then(function (affiliations) {
+            logger.debug('got here' + JSON.stringify(affiliations));
 
-    }).
-    catch (function () {
+            // iterate over items and send them to the client
+            affiliations.forEach(function(item){
+                logger.debug(item);
+                var itemEl = new ltx.Element('item', {
+                    'affiliation': item.affiliation.type,
+                    'jid': item.jid
+                });
+
+                // if we found a reason
+                if (item.affiliation && item.affiliation.reason) {
+                    itemEl.c('reason').t(item.affiliation.reason);
+                }
+
+                // add item
+                query.cnode(itemEl);
+            });
+
+            self.send(iq);
+        }).
+    catch (function (err) {
+        logger.error(err);
         self.sendError(stanza);
     });
 

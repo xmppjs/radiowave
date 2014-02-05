@@ -162,7 +162,7 @@ Muc.prototype.createRoom = function(userjid, roomname) {
                 return room.addMember(userjid);
             }).then(function () {
                 // set affiliation properly for creator
-                return self.affliationHandler.setOwner(room, userjid);
+                return room.setOwner(userjid);
             }).then(function(){
                 resolve(room);
             })
@@ -253,7 +253,6 @@ Muc.prototype.handleInvitations = function (stanza, x) {
 
     this.loadRoom(roomname).then(
         function (room) {
-            // blub
             self.invitationHandler.invite(room, stanza, x);
         }).
     catch (function (err) {
@@ -263,6 +262,25 @@ Muc.prototype.handleInvitations = function (stanza, x) {
 
     return true;
 };
+
+Muc.prototype.handleDeclinedInvitations = function (stanza, x) {
+    var self = this;
+
+    var roomname = this.determineRoomname(stanza);
+
+    this.loadRoom(roomname).then(
+        function (room) {
+            self.invitationHandler.declinedInvitation(room, stanza, x);
+        }).
+    catch (function (err) {
+        logger.error(err);
+        this.sendError(stanza);
+    });
+
+    return true;
+};
+
+
 
 Muc.prototype.handleAdminRequests = function (stanza) {
     logger.debug('handleAdminRequests');
@@ -333,6 +351,10 @@ Muc.prototype.handle = function (stanza) {
         // handle invitations
         else if (msg && x && x.getChild('invite')) {
             handled = this.handleInvitations(stanza, x);
+        }
+        // handle invitation declines
+        else if (msg && x && x.getChild('decline')) {
+            handled = this.handleDeclinedInvitations(stanza, x);
         }
     }
     else if (stanza.is('iq')) {
