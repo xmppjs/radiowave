@@ -13,7 +13,8 @@
     "winston": "0.7.2",
     "pg": "2.8.2",
     "bluebird": "~1.0.0",
-    "ldapjs": "0.7.0"
+    "ldapjs": "0.7.0",
+    "superagent" : "~0.15.7"
   },
   "devDependencies": {
     "xrocket-cm" : "git+ssh://git@bitbucket.org:xrocketd/xrocketd-cm.git",

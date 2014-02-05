@@ -38,15 +38,24 @@ ConnectionRouter.prototype.findAuthMethod = function (method) {
 
 ConnectionRouter.prototype.authenticate = function (opts, cb) {
     try {
+        /*
         for (var attr in opts) {
             if (opts.hasOwnProperty(attr)) {
                 logger.debug(attr + ' -> ' + opts[attr]);
             }
         }
-
+        */
         var auth = this.findAuthMethod(opts.saslmech);
         if (auth.length > 0) {
-            auth[0].authenticate(opts, cb);
+            auth[0].authenticate(opts).then(function(authuser){
+                logger.debug('user authenticated' + authuser);
+                cb(null, authuser);
+            }).catch(function(err){
+                logger.debug('user authentication failed');
+                logger.error(err);
+                cb('could not authenticate user');
+            });
+
         } else {
             // throw error
             logger.error('cannot handle %s', opts.saslmech);
