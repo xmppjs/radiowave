@@ -45,8 +45,8 @@ BaseRouter.prototype.chain = function (bBaseRouter) {
 
 BaseRouter.prototype.registerStream = function (stream) {
     var self = this;
-    stream.on('connect', function () {
-        self.connect();
+    stream.on('connect', function (jid) {
+        self.connect(jid);
     });
     stream.on('stanza', function (stanza) {
         self.stanza(stanza);
