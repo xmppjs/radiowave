@@ -227,6 +227,8 @@ PresenceHandler.prototype.leaveRoom = function (room, roomjid, userjid) {
         function () {
             logger.debug('send unavailibility to all users');
             self.sendPresenceLeave(roomjid, userjid, room);
+        }).catch(function (err) {
+            logger.error(err);
         });
 };
 

@@ -6,7 +6,7 @@ var winston = require('winston'),
 var Promise = require('bluebird'),
     uuid = require('node-uuid');
 
-    // muc roles
+// muc roles
 var MUC_ROLE_MODERATOR = 'moderator',
     MUC_ROLE_NONE = 'none',
     MUC_ROLE_PARTICIPANT = 'participant',
@@ -193,7 +193,7 @@ Room.prototype.leave = function (jid) {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
 
-        this.isMember(jid).then(
+        self.isMember(jid).then(
             function () {
                 // okay. user exits
                 var member = self.members[jid];
@@ -203,9 +203,12 @@ Room.prototype.leave = function (jid) {
                     member.status = {};
                 }
                 member.status = 'unavailable';
-            }, function (err) {
-                reject(err);
-            });
+
+                resolve(member);
+            }).
+        catch (function (err) {
+            reject(err);
+        });
     });
     return promise;
 };
