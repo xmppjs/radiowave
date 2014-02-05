@@ -86,13 +86,16 @@ Muc.prototype.configureHandler = function (handler) {
     var self = this;
 
     handler.sendError = function ()  {
-        self.sendError.apply(self, arguments);
+        return self.sendError.apply(self, arguments);
     };
     handler.sendSuccess = function () {
-        self.sendSuccess.apply(self, arguments);
+        return self.sendSuccess.apply(self, arguments);
     };
     handler.send = function () {
-        self.send.apply(self, arguments);
+        return self.send.apply(self, arguments);
+    };
+    handler.getDomain =  function () {
+        return self.getDomain.apply(self, arguments);
     };
 
     return handler;

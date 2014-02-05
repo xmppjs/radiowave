@@ -17,14 +17,14 @@ util.inherits(MessageHandler, XepComponent);
  */
 MessageHandler.prototype.sendMessage = function (stanza, room, member) {
     var self = this;
-    logger.debug('send message to all members');
+    logger.debug('send message to all members' + JSON.stringify(member));
 
     // find nickname for user
     var nickname = member.affiliation.nickname;
+    logger.debug(nickname);
 
     // extract message body
     var messagebody = stanza.children;
-
     var msg = new Message({
         'from': new JID(room.getName(), self.getDomain(), nickname),
         'to': '',
@@ -32,9 +32,6 @@ MessageHandler.prototype.sendMessage = function (stanza, room, member) {
     });
     msg.children = messagebody;
 
-    logger.debug(msg.attrs.from);
-
-    logger.debug('store mesage');
     // store message in history
     room.createMessage(msg.root().toString());
 
