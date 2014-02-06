@@ -27,6 +27,8 @@ OAUTH2.prototype.match = function (method) {
 OAUTH2.prototype.verifyToken = function (oauthToken, cb) {
     var self = this;
 
+    logger.debug('oauth2 call: ' + this.settings.url);
+
     // load user details
     superagent
         .post(this.settings.url)
@@ -34,10 +36,8 @@ OAUTH2.prototype.verifyToken = function (oauthToken, cb) {
         .set('content-type', 'application/json')
         .set('Authorization', 'Bearer ' + oauthToken)
         .end(function (error, res) {
-            console.log(res.status);
-            logger.debug(JSON.stringify(res.body));
-
             if (error ||  res.status !== 200) {
+                logger.error(error);
                 cb('oauth authentication failed');
             } else {
                 cb(null, self.extractUser(res.body));
@@ -46,6 +46,7 @@ OAUTH2.prototype.verifyToken = function (oauthToken, cb) {
 };
 
 OAUTH2.prototype.extractUser = function(content) {
+    logger.debug(JSON.stringify(content));
     return content;
 };
 
