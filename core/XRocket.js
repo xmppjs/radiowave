@@ -1,7 +1,7 @@
 'use strict';
 
 var winston = require('winston'),
-    logger = winston.loggers.get('xrocket'),
+    logger = winston.loggers.get('xrocketd'),
     ConnectionRouter = require('../router/ConnectionRouter');
 
 var XRocket = function () {
@@ -13,7 +13,7 @@ var XRocket = function () {
 XRocket.prototype = {
     // add multiple connection manager
     addConnectionManager: function (connMgr) {
-        logger.debug('load connection manager ' + connMgr.name);
+        logger.debug('load connection manager: ' + connMgr.name);
 
         // store connection manager
         this.connectionManagers.push(connMgr);
