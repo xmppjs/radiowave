@@ -48,7 +48,7 @@ ConnectionRouter.prototype.authenticate = function (opts, cb) {
         var auth = this.findAuthMethod(opts.saslmech);
         if (auth.length > 0) {
             auth[0].authenticate(opts).then(function(user){
-                logger.debug('user authenticated' + user);
+                logger.debug('xmpp user authenticated' + JSON.stringify(user));
 
                 // merge properties
                 for (var property in user) {
@@ -60,9 +60,9 @@ ConnectionRouter.prototype.authenticate = function (opts, cb) {
                 // call callback
                 cb(null, opts);
             }).catch(function(err){
-                logger.debug('user authentication failed');
+                logger.debug('xmpp user authentication failed');
                 logger.error(err);
-                cb('could not authenticate user');
+                cb('xmpp could not authenticate user');
             });
 
         } else {

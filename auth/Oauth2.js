@@ -38,6 +38,7 @@ OAUTH2.prototype.verifyToken = function (oauthToken, cb) {
         .end(function (error, res) {
             if (error ||  res.status !== 200) {
                 logger.error(error);
+                console.log(error);
                 cb('oauth authentication failed');
             } else {
                 cb(null, self.extractUser(res.body));
@@ -46,7 +47,6 @@ OAUTH2.prototype.verifyToken = function (oauthToken, cb) {
 };
 
 OAUTH2.prototype.extractUser = function(content) {
-    logger.debug(JSON.stringify(content));
     return content;
 };
 
@@ -56,8 +56,9 @@ OAUTH2.prototype.authenticate = function (opts) {
         logger.info("OAUTH2 authenticate ", opts.oauth_token);
         self.verifyToken(opts.oauth_token, function (err, user){
             if (err) {
-                reject('could not authenticate user');
+                reject('OAUTH2 could not authenticate user: ' + opts.username);
             } else {
+                logger.debug('OAUTH2: token ' + opts.oauth_token + ' is valid ' + JSON.stringify(user));
                 resolve(user);
             }
         });
