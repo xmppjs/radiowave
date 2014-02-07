@@ -33,28 +33,33 @@ LDAP.prototype.match = function (method) {
     }
 };
 
-LDAP.prototype.authenticateWithLDAP = function (username, password, callback) {
+LDAP.prototype.authenticateWithLDAP = function (username, password) {
+    var self = this;
     return new Promise(function (resolve, reject) {
+
         // check that we got username and password
         if (!username || !password) {
-            return callback(new Error('parameters are missing'));
+            reject(new Error('parameters are missing'));
+        } else {
+
+            // generate unix ldap like user name
+            var uid = self.uidTag + '=' + username + ',' + self.suffix;
+
+            logger.debug('uid: ' + uid);
+
+            // bind for authentication
+            self.client.bind(uid, password, function (err) {
+                // error
+                if (err) {
+                    logger.error(err);
+                    reject(err);
+                } else {
+                    resolve({
+                        uid: uid
+                    });
+                }
+            });
         }
-
-        // generate unix ldap like user name
-        var uid = this.uidTag + '=' + username + ',' + this.suffix;
-
-        // bind for authentication
-        this.client.bind(uid, password, function (err) {
-            // error
-            if (err) {
-                logger.error(err);
-                reject(err);
-            } else {
-                resolve({
-                    uid: uid
-                });
-            }
-        });
     });
 };
 
@@ -68,8 +73,6 @@ LDAP.prototype.authenticate = function (opts) {
     } else if (opts.username) {
         username = opts.username;
     }
-
-    logger.info('LDAP authenticate ' + opts.jid.toString());
 
     // authenticate with LDAP bind
     return this.authenticateWithLDAP(username, opts.password);

@@ -47,9 +47,18 @@ ConnectionRouter.prototype.authenticate = function (opts, cb) {
         */
         var auth = this.findAuthMethod(opts.saslmech);
         if (auth.length > 0) {
-            auth[0].authenticate(opts).then(function(authuser){
-                logger.debug('user authenticated' + authuser);
-                cb(null, authuser);
+            auth[0].authenticate(opts).then(function(user){
+                logger.debug('user authenticated' + user);
+
+                // merge properties
+                for (var property in user) {
+                    if (user.hasOwnProperty(property)) {
+                        opts[property] = user[property];
+                    }
+                }
+                
+                // call callback
+                cb(null, opts);
             }).catch(function(err){
                 logger.debug('user authentication failed');
                 logger.error(err);
@@ -171,8 +180,10 @@ ConnectionRouter.prototype.connectedClientsForJid = function (jid) {
 
 ConnectionRouter.prototype.connect = function (jid, stream) {
     try {
-        this.registerRoute(jid, stream);
-        BaseRouter.prototype.connect.call(this, jid);
+        if (jid) {
+            this.registerRoute(jid, stream);
+            BaseRouter.prototype.connect.call(this, jid);
+        }
     } catch (err) {
         logger.error(err);
     }
@@ -210,6 +221,8 @@ ConnectionRouter.prototype.verifyStanza = function (stream, stanza) {
  * @param   stream node-xmpp stream
  */
 ConnectionRouter.prototype.registerStream = function (stream) {
+    console.log('register new stream');
+
     var self = this;
 
     // Allows the developer to authenticate users against anything they
@@ -231,6 +244,7 @@ ConnectionRouter.prototype.registerStream = function (stream) {
     });
 
     stream.on('online', function () {
+        console.log('ONLINE: ' + stream.jid.toString());
         // forward event to router
         self.connect(stream.jid, stream);
     });
