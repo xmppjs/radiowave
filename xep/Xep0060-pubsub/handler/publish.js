@@ -28,7 +28,7 @@ PublishHandler.prototype.handlePublish = function (node, stanza, publish) {
     // if node is available
     if (node) {
         logger.debug('PUBLISH to ' + node.getName());
-        logger.debug(stanza);
+        logger.debug(stanza.toString());
 
         var itemswithoutpayload = [];
         var itemswithpayload = [];

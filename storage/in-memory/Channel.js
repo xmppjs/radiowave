@@ -89,7 +89,6 @@ Channel.prototype.listSubscribers = function () {
     logger.debug('list subscriber');
     var self = this;
     var promise = new Promise(function (resolve) {
-        logger.debug('list members');
         resolve(self.genSubscriberArray());
     });
     return promise;
