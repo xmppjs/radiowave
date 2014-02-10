@@ -110,7 +110,8 @@ User.prototype.getRoom = function (roomname) {
         if (room !== undefined && room !== null) {
             resolve(room);
         } else {
-            reject('room does not exist');
+            logger.debug('room ' + roomname + ' does not exists');
+            reject('room ' + roomname + ' does not exist');
         }
     });
     return promise;
@@ -163,14 +164,12 @@ User.prototype.getChannel = function (channelname) {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
         var channel = self.channels[channelname];
-        logger.debug(channel);
-
         if (channel !== undefined && channel !== null) {
-            logger.debug('channel found');
+            logger.debug('channel found: ' + channelname);
             resolve(channel);
         } else {
-            logger.debug('channel does not exists');
-            reject('channel does not exist');
+            logger.debug('channel ' + channelname + ' does not exists');
+            reject('channel ' + channelname + ' does not exist');
         }
     });
     return promise;
