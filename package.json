@@ -7,7 +7,7 @@
   "author": "Christoph Hartmann <chris@lollyrock.com>",
   "dependencies": {
     "node-xmpp-core": "git+https://github.com/node-xmpp/node-xmpp-core.git",
-    "node-xmpp-server": "~0.5.2",
+    "node-xmpp-server": "git+https://github.com/node-xmpp/node-xmpp-server.git",
     "ltx": ">= 0.2.0",
     "node-uuid": "1.4.1",
     "winston": "0.7.2",
