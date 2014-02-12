@@ -6,7 +6,7 @@
   "main": "xrocket.js",
   "author": "Christoph Hartmann <chris@lollyrock.com>",
   "dependencies": {
-    "node-xmpp-core": "git+https://github.com/chris-rock/node-xmpp-core.git#xep0106v1",
+    "node-xmpp-core": "git+https://github.com/node-xmpp/node-xmpp-core.git",
     "node-xmpp-server": "~0.5.2",
     "ltx": ">= 0.2.0",
     "node-uuid": "1.4.1",

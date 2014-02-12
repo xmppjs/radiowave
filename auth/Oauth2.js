@@ -5,7 +5,6 @@ var util = require('util'),
     winston = require('winston'),
     Promise = require('bluebird'),
     JID = require('node-xmpp-core').JID,
-    Escape = require('node-xmpp-core').Escape,
     superagent = require('superagent'),
     logger = winston.loggers.get('authentication');
 
@@ -83,7 +82,8 @@ OAUTH2.prototype.authenticate = function (opts) {
 
     // generate ldap username 
     if (opts.jid) {
-        username = Escape.unescapeLocal(new JID(opts.jid.toString()).getLocal());
+        username = new JID(opts.jid.toString().getLocal());
+        logger.debug(username);
     } else if (opts.username) {
         username = opts.username;
     }
