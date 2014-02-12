@@ -82,12 +82,12 @@ OAUTH2.prototype.authenticate = function (opts) {
 
     // generate ldap username 
     if (opts.jid) {
-        username = new JID(opts.jid.toString().getLocal());
         logger.debug(username);
+        username = new JID(opts.jid.toString(), false).getLocal(true);
     } else if (opts.username) {
         username = opts.username;
     }
-
+    
     opts.username = username;
 
     var self = this;
