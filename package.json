@@ -1,7 +1,7 @@
 {
-  "name": "xrocketd-core",
+  "name": "xrocketd",
   "description": "lightweight xmpp server library",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "main": "xrocket.js",
   "bin": {
@@ -30,7 +30,6 @@
     "ws": "0.4.31"
   },
   "devDependencies": {
-    "xrocket-cm" : "git+ssh://git@bitbucket.org:xrocketd/xrocketd-cm.git",
     "grunt": "~0.4.1",
     "grunt-contrib-jshint": "~0.6.0",
     "grunt-mocha-cli": "~1.1.0",
