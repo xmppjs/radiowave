@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+
+'use strict';
+
+require('./lib/logger')('silly');
+
+var util = require('util'),
+    Starter = require('./lib/starter');
+
+// read arguments
+var argv = process.argv;
+
+if (argv.length !== 3) {
+    util.puts('Usage: node zrocket settings.json');
+    process.exit(1);
+}
+
+var server = new Starter();
+server.start(argv[2]);

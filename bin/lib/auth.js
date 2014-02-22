@@ -1,0 +1,71 @@
+'use strict';
+
+var winston = require('winston'),
+    logger = winston.loggers.get('zrocketd'),
+    xRocket = require('../../xrocket'),
+    Promise = require('bluebird');
+
+function Auth() {}
+
+Auth.prototype.oauth2 = function (settings) {
+
+    var oauth2Auth = new xRocket.Auth.OAuth2({
+        'url' : settings.server
+    });
+
+    return oauth2Auth;
+};
+
+Auth.prototype.ldap = function (settings) {
+
+    var ldapConfig = {
+        'suffix': settings.suffix,
+        'url'   : settings.url,
+        'uidTag': settings.uidTag
+    };
+
+    return new xRocket.Auth.LDAP(ldapConfig);
+
+};
+
+Auth.prototype.simple = function (settings) {
+    
+    var simpleAuth = new xRocket.Auth.Simple();
+
+    // register users
+    if (settings.users) {
+        settings.users.forEach(function(user){
+            simpleAuth.addUser(user.user, user.password);
+        });
+    }
+
+    return simpleAuth;
+};
+
+Auth.prototype.load = function (xR, API, settings) {
+    var self = this;
+    return new Promise(function (resolve, reject) {
+        logger.debug('auth');
+        var auth = settings.get('auth');
+
+        if (auth && auth.length > 0) {
+            auth.forEach(function (module){
+                logger.debug('load auth module ' + module.type );
+                var m = self[module.type](module);
+
+                // add auth to xRocket
+                xR.connectionRouter.addAuthMethod(m);
+
+                // add auth to API
+                if (API) {
+                    API.addAuthMethod(m);
+                }
+            });
+            resolve();
+        } else {
+            reject();
+        }
+    });
+};
+
+module.exports = Auth;

@@ -4,6 +4,9 @@
   "version": "0.4.0",
   "private": true,
   "main": "xrocket.js",
+  "bin": {
+    "xrocket": "./bin/xrocketd"
+  },
   "author": "Christoph Hartmann <chris@lollyrock.com>",
   "dependencies": {
     "node-xmpp-core": "git+https://github.com/node-xmpp/node-xmpp-core.git",
@@ -11,10 +14,13 @@
     "ltx": ">= 0.2.0",
     "node-uuid": "1.4.1",
     "winston": "0.7.2",
+    "winston-posix-syslog": "git+https://github.com/chris-rock/winston-posix-syslog.git#tests",
+    "strip-json-comments" : "~0.1.1",
     "pg": "2.8.2",
     "bluebird": "~1.0.0",
     "ldapjs": "0.7.0",
-    "superagent" : "~0.15.7"
+    "superagent" : "~0.15.7",
+    "nconf": "~0.6.8",
     "express" : "3.x.x",
     "passport": "~0.2.0",
     "passport-http-bearer": "~1.0.1",
