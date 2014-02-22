@@ -6,6 +6,19 @@ var winston = require('winston'),
 var Promise = require('bluebird'),
     uuid = require('node-uuid');
 
+// muc roles
+var MUC_ROLE_MODERATOR = 'moderator',
+    MUC_ROLE_NONE = 'none',
+    MUC_ROLE_PARTICIPANT = 'participant',
+    MUC_ROLE_VISITOR = 'visitor',
+
+    // affiliation
+    MUC_AFFILIATION_OWNER = 'owner',
+    MUC_AFFILIATION_ADMIN = 'admin',
+    MUC_AFFILIATION_MEMBER = 'member',
+    MUC_AFFILIATION_OUTCAST = 'outcast',
+    MUC_AFFILIATION_NONE = 'none';
+
 var Room = function (owner, name, options) {
     this.options = options || {
         'xmppid': uuid.v4()
@@ -180,7 +193,7 @@ Room.prototype.leave = function (jid) {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
 
-        this.isMember(jid).then(
+        self.isMember(jid).then(
             function () {
                 // okay. user exits
                 var member = self.members[jid];
@@ -190,9 +203,12 @@ Room.prototype.leave = function (jid) {
                     member.status = {};
                 }
                 member.status = 'unavailable';
-            }, function (err) {
-                reject(err);
-            });
+
+                resolve(member);
+            }).
+        catch (function (err) {
+            reject(err);
+        });
     });
     return promise;
 };
@@ -264,6 +280,142 @@ Room.prototype.removeMessage = function (id) {
         // would not work anymore
         self.messages[id] = null;
         resolve();
+    });
+    return promise;
+};
+
+// Affiliations
+Room.prototype.listAffiliations = function (affiliationtype) {
+    logger.debug('listAffiliations');
+    var self = this;
+    var promise = new Promise(function (resolve) {
+        var affiliations = [];
+
+        for (var jid in self.members) {
+            if (self.members.hasOwnProperty(jid)) {
+                var member = self.members[jid];
+                logger.debug(JSON.stringify(member));
+
+                if (member.affiliation && member.affiliation.type === affiliationtype) {
+                    var item = {};
+                    item.jid = jid;
+                    item.affiliation = member.affiliation;
+                    if (item.affiliation && item.affiliation.nickname) {
+                        delete item.affiliation.nickname;
+                    }
+                    affiliations.push(item);
+                }
+            }
+        }
+        resolve(affiliations);
+    });
+    return promise;
+};
+
+Room.prototype.getAffiliation = function (jid) {
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        var member = self.members[jid];
+        if (member) {
+            if (member.affiliation) {
+                var affiliation = {};
+                affiliation.jid = jid;
+                affiliation.affiliation = member.affiliation;
+                resolve(affiliation);
+            } else {
+                // This should not happen
+                logger.error('could not find affiliation for existing user');
+                reject('could not find affiliation for existing user');
+            }
+        } else {
+            reject('member does not exist');
+        }
+    });
+    return promise;
+};
+
+Room.prototype.editAffiliation = function (jid, options) {
+    logger.debug('editAffiliation');
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        var member = self.members[jid];
+        if (member) {
+            if (!member.affiliation) {
+                member.affiliation = {};
+            }
+
+            // set properties
+            member.affiliation.type = options.type;
+            if (options.reason) {
+                member.affiliation.reason = options.reason;
+            }
+
+            resolve(member);
+        } else {
+            reject('member does not exist');
+        }
+    });
+    return promise;
+};
+
+Room.prototype.setOwner = function (userjid) {
+    logger.debug('set owner ' + userjid);
+    var self = this;
+    return new Promise(function (resolve, reject) {
+        self.editAffiliation(userjid, {
+            'type': MUC_AFFILIATION_OWNER,
+            'reason': 'Created the room.'
+        }).then(function () {
+            return self.editRole(userjid, {
+                'type': MUC_ROLE_MODERATOR
+            });
+        }).then(function () {
+            resolve();
+        }).
+        catch (function (err) {
+            reject(err);
+        });
+    });
+};
+
+Room.prototype.setMember = function (userjid) {
+    logger.debug('set member ' + userjid);
+    var self = this;
+    return new Promise(function (resolve, reject) {
+        self.editAffiliation(userjid, {
+            'type': MUC_AFFILIATION_MEMBER,
+            'reason': 'Created the room.'
+        }).then(function () {
+            return self.editRole(userjid, {
+                'type': MUC_ROLE_PARTICIPANT
+            });
+        }).then(function () {
+            resolve();
+        }).
+        catch (function (err) {
+            reject(err);
+        });
+    });
+};
+
+
+Room.prototype.editRole = function (jid, options) {
+    logger.debug('editRole');
+    var self = this;
+    var promise = new Promise(function (resolve, reject) {
+        var member = self.members[jid];
+        if (member) {
+            if (!member.role) {
+                member.role = {};
+            }
+
+            // set properties
+            member.role.type = options.type;
+
+            resolve(member);
+        } else {
+            reject('member does not exist');
+        }
     });
     return promise;
 };

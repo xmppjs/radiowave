@@ -90,7 +90,6 @@ User.prototype.createRoom = function (roomname, options) {
     var self = this;
     var promise = new Promise(function (resolve, reject) {
         if (!self.rooms[roomname]) {
-            logger.debug('create new room');
             self.rooms[roomname] = new Room(self.getName(), roomname, options);
             resolve(self.rooms[roomname]);
         } else {
@@ -102,9 +101,7 @@ User.prototype.createRoom = function (roomname, options) {
 
 User.prototype.getRoom = function (roomname) {
     var self = this;
-    var promise = new Promise(function (resolve, reject) {
-        logger.debug('search ' + roomname);
-        
+    var promise = new Promise(function (resolve, reject) {     
         var room = self.rooms[roomname];
         logger.debug(room);
         if (room !== undefined && room !== null) {

@@ -18,7 +18,7 @@ var Lookup = function () {
  * Adds new entries to our lookup table
  */
 Lookup.prototype.add = function(type, user, resource, xmppIdentifier) {
-    logger.debug('Add xmpp: ' + xmppIdentifier + ' to lookuptable' + type + ':'+ user + ':' + resource);
+    logger.debug('add xmpp: ' + xmppIdentifier + ' to lookuptable ' + type + ' : '+ user + ' : ' + resource);
     var self = this;
     var promise = new Promise(function (resolve, reject) {
 
@@ -32,11 +32,12 @@ Lookup.prototype.add = function(type, user, resource, xmppIdentifier) {
             // abort
             reject();
         } else {
-            self.lookuptable[type][xmppIdentifier] = {
+            var lookupentry = {
                 'user': user,
                 'resource': resource
             };
-            resolve();
+            self.lookuptable[type][xmppIdentifier] = lookupentry;
+            resolve(lookupentry);
         }
     });
     return promise;
@@ -54,7 +55,7 @@ Lookup.prototype.find = function (type, xmppIdentifier) {
         if (self.lookuptable[type] && self.lookuptable[type][xmppIdentifier]) {
             resolve(self.lookuptable[type][xmppIdentifier]);
         } else {
-            reject();
+            reject('could not find the room');
         }
     });
     return promise;
