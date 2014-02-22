@@ -19,6 +19,9 @@
     "passport": "~0.2.0",
     "passport-http-bearer": "~1.0.1",
     "passport-http": "~0.2.2",
+    "pem": "1.2.2",
+    "socket.io": "0.9.x",
+    "ws": "0.4.31"
   },
   "devDependencies": {
     "xrocket-cm" : "git+ssh://git@bitbucket.org:xrocketd/xrocketd-cm.git",
