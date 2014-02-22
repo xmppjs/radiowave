@@ -15,6 +15,10 @@
     "bluebird": "~1.0.0",
     "ldapjs": "0.7.0",
     "superagent" : "~0.15.7"
+    "express" : "3.x.x",
+    "passport": "~0.2.0",
+    "passport-http-bearer": "~1.0.1",
+    "passport-http": "~0.2.2",
   },
   "devDependencies": {
     "xrocket-cm" : "git+ssh://git@bitbucket.org:xrocketd/xrocketd-cm.git",
