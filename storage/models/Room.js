@@ -41,7 +41,7 @@ module.exports = function (sequelize, DataTypes) {
                 return new Promise(function(resolve, reject) {
 
                     // verify parameters
-                    if (!options || !options.role || !options.affiliation || !options.nickname) {
+                    if (!user || !options || !options.role || !options.affiliation || !options.nickname) {
                         reject('wrong parameters');
                     } else {
                         // checkout if the current user is member
@@ -50,6 +50,8 @@ module.exports = function (sequelize, DataTypes) {
                                 userid : user.id
                             }
                         }).success(function(users){
+                            console.log('found users: '+ JSON.stringify(users));
+
                             // user is already part of this room
                             if (users && users.length > 0) {
                                 var roomUser = users[0];
@@ -58,11 +60,17 @@ module.exports = function (sequelize, DataTypes) {
                                 roomUser.RoomMembers.role = options.role;
                                 roomUser.RoomMembers.affiliation = options.affiliation;
                                 roomUser.RoomMembers.nickname = options.nickname;
+                                roomUser.RoomMembers.save();
+
                                 resolve(roomUser);
                             } else {
+                                console.log('add user as new member ' + user.jid);
                                 // add user to room
-                                user.addRoom(options);
-                                resolve(user);
+                                self.addMember(user, options).success(function (member) {
+                                    resolve(member);
+                                }).error(function(err){
+                                    reject(err);
+                                });
                             }
                         }).error(function(err){
                             reject(err);
@@ -93,7 +101,7 @@ module.exports = function (sequelize, DataTypes) {
                             userid : user.id
                         }
                     }).success(function(users){
-
+                        console.log('found users: ' + JSON.stringify(users));
                         if (users && users.length > 0) {
                             var user = users[0];
                             if (user) {

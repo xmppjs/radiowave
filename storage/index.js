@@ -4,6 +4,9 @@ var Sequelize = require('sequelize'),
     Promise = require('bluebird'),
     models = require('./models');
 
+var winston = require('winston'),
+    logger = winston.loggers.get('storage');
+
 /**
  * Manage the database abstraction for xrocket
  */
@@ -12,7 +15,6 @@ var Storage = function (options) {
         throw Error('no database options set');
     }
     this.opt = options;
-    console.log('storage: ' + JSON.stringify(options));
 };
 
 /**
@@ -20,7 +22,7 @@ var Storage = function (options) {
  * already there.
  */
 Storage.prototype.initialize = function () {
-    console.log('initialize');
+    logger.debug('initialize');
     var self = this;
     return new Promise(function (resolve, reject) {
 
@@ -59,15 +61,13 @@ Storage.prototype.initialize = function () {
             self.opt.password, options);
         self.sequelize = sequelize;
 
-        console.log(JSON.stringify(options));
-
         // load all models as own properties
         models(sequelize, self);
 
         // sync models with database
         sequelize.sync()
             .complete(function (err) {
-                console.log(err);
+                logger.error(err);
                 if (err) {
                     reject(err);
                 } else {

@@ -17,7 +17,6 @@ module.exports = function (sequelize, db)  {
         // import model
         .forEach(function (file) {
             var model = sequelize.import(path.join(__dirname, file));
-            console.log(model.name);
             
             // add model to object
             db[model.name] = model;
