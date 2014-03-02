@@ -29,17 +29,21 @@ function Muc(options) {
 
     this.autoCreateRoom = true;
 
-    this.Users = options.storage.users;
-    this.Lookup = options.storage.lookup;
+    this.storage = options.storage;
 
-    this.messageHandler = this.configureHandler(new MessageHandler());
-    this.presenceHandler = this.configureHandler(new PresenceHandler());
-    this.affliationHandler = this.configureHandler(new AffiliationHandler());
-    this.invitationHandler = this.configureHandler(new InvitationHandler());
+    this.messageHandler = this.configureHandler(new MessageHandler(this.storage));
+    this.presenceHandler = this.configureHandler(new PresenceHandler(this.storage));
+    this.affliationHandler = this.configureHandler(new AffiliationHandler(this.storage));
+    this.invitationHandler = this.configureHandler(new InvitationHandler(this.storage));
 }
 util.inherits(Muc, XepComponent);
 
 Muc.prototype.name = 'XEP-0045: Multi-User Chat';
+
+
+Muc.prototype.Error = {};
+Muc.prototype.Error.NotFound = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+
 
 Muc.prototype.getDomain = function ()  {
     return this.subdomain + '.' + this.domain;
@@ -101,25 +105,42 @@ Muc.prototype.configureHandler = function (handler) {
     return handler;
 };
 
-Muc.prototype.loadRoom = function (roomname) {
+Muc.prototype.findRoom = function (roomname) {
     var self = this;
-    var identifier = null;
     return new Promise(function (resolve, reject) {
-        self.Lookup.find('muc', roomname)
-            .then(
-                function (ident) {
-                    identifier = ident;
-                    return self.Users.user(identifier.user);
-                }).then(
-                function (user) {
-                    return user.getRoom(identifier.resource);
-                }).then(
-                function (room) {
-                    resolve(room);
-                }).
-        catch (function (err) {
-            reject(err);
-        });
+        self.storage.Room.find({
+                where: {
+                    name: roomname
+                }
+            }).success(function (room) {
+                resolve(room);
+            }).error(function(err){
+                reject(err);
+            });
+    });
+};
+
+Muc.prototype.findUser = function (jid) {
+
+    var userjid = null;
+    if (jid instanceof JID) {
+        userjid = jid;
+    } else {
+        userjid = new JID(jid.toString());
+    }
+
+    var self = this;
+    return new Promise(function (resolve, reject) {
+        self.storage.User.find({
+                where: {
+                    jid: userjid.bare().toString()
+                }
+            }).success(function (user) {
+                logger.debug('findUser: ' + JSON.stringify(user));
+                resolve(user);
+            }).error(function(err){
+                reject(err);
+            });
     });
 };
 
@@ -137,38 +158,28 @@ Muc.prototype.handleOwnerRequests = function (stanza) {
  * @param userjid JID of the user
  * @param roomname name of the room
  */
-Muc.prototype.createRoom = function(userjid, roomname) {
+Muc.prototype.createRoom = function(user, roomname) {
     var self = this;
 
     logger.debug('create new room');
     return new Promise(function (resolve, reject) {
-        var user = null;
-        var room = null;
-
-        // extract new owner from jid
-        self.Users.user(userjid.getLocal())
-            .then(function (usr) {
-                user = usr;
-                logger.debug('found user' + JSON.stringify(usr) + ' ' + userjid.getLocal() + roomname);
-                // create room
-                return self.Lookup.add('muc', userjid.getLocal(), roomname, roomname);
-            })
-            .then(function (identifier) {
-                return user.createRoom(roomname);
-            }).then(function (r) {
-                room = r;
-                logger.debug('created room: ' + JSON.stringify(room));
-                // add creator as member
-                return room.addMember(userjid);
-            }).then(function () {
-                // set affiliation properly for creator
-                return room.setOwner(userjid);
-            }).then(function(){
+        // create new room
+        self.storage.Room.create({
+            name: roomname
+        }).success(function (room) {
+            // add assiciation between room and user
+            user.addRoom(room, {
+                role: 'moderator',
+                affiliation: 'owner',
+                nickname: ''
+            }).success(function () {
                 resolve(room);
-            })
-            .catch(function (err) {
+            }).error(function (err) {
                 reject(err);
             });
+        }).error(function (err) {
+            reject(err);
+        });
     });
 };
 
@@ -182,26 +193,37 @@ Muc.prototype.handleOccupantPresence = function (stanza) {
     var self = this;
 
     var roomname = this.determineRoomname(stanza);
+    var userjid = stanza.attrs.from;
 
-    this.loadRoom(roomname)
-        .then(
-            function (room) {
-                self.presenceHandler.handlePresence(room, stanza);
-            }).
-    catch (function (err) {
+    var user = null;
+    var room = null;
+
+    this.findUser(userjid).then(function(u){
+        user = u;
+
+        // find room
+        self.findRoom(roomname)
+        .then(function (room) {
+            // room exists
+            self.presenceHandler.handlePresence(room, user, stanza);
+        }).catch (function (err) {
+
+            if (self.autoCreateRoom) {
+                self.createRoom(user, roomname).then(function (room) {
+                     // join the room
+                    self.presenceHandler.handlePresence(room, user, stanza);
+                });
+            } else {
+                logger.error(err);
+                // room does not exist
+                self.sendError(stanza, self.Error.NotFound);
+            }
+        });
+
+    }).catch (function (err) {
+        logger.error(err);
         // room does not exist
-        // if flag is not set, create a room, otherwise we send an error
-        if (self.autoCreateRoom) {
-            var userjid = new JID(stanza.attrs.from);
-            self.createRoom(userjid, roomname).then(function (room) {
-                // join the room
-                self.presenceHandler.handlePresence(room, stanza);
-            });
-        } else {
-            // room does not exists
-            var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-            self.sendError(stanza, errXml);
-        }
+        self.sendError(stanza, self.Error.NotFound);
     });
 
     return true;
@@ -218,25 +240,25 @@ Muc.prototype.handleOccupantMessage = function (stanza) {
     var roomname = this.determineRoomname(stanza);
     var userjid = stanza.attrs.from;
 
+    var user = null;
     var room = null;
-    this.loadRoom(roomname)
-        .then(
-            function (r) {
-                room = r;
-                // check if user is part of this room
-                return room.getMember(userjid);
-            })
-        .then(
-            function (member) {
-                // we found the member
-                self.messageHandler.sendMessage(stanza, room, member);
-            })
-        .
-    catch (function (err) {
+
+    // find user (may not be a member of the room)
+    this.findUser(userjid).then(function(u){
+        user = u;
+        // find a room
+        return self.findRoom(roomname);
+    }).then(function(r){
+        room = r;
+        // found room, check that the user is a member of the room
+        return room.isMember(user);
+    }).then(function (member) {
+        // we found the member
+        self.messageHandler.sendMessage(room, member, stanza);
+    }).catch (function (err) {
         logger.error(err);
         // room does not exists
-        var errXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-        self.sendError(stanza, errXml);
+        self.sendError(stanza, self.Error.NotFound);
     });
 
     return true;
@@ -247,34 +269,54 @@ Muc.prototype.handleOccupantMessage = function (stanza) {
  * @see http://xmpp.org/extensions/xep-0045.html#invite
  */
 Muc.prototype.handleInvitations = function (stanza, x) {
+    logger.debug('handle invitations');
     var self = this;
 
+    var userjid = stanza.attrs.to;
     var roomname = this.determineRoomname(stanza);
 
-    this.loadRoom(roomname).then(
-        function (room) {
-            self.invitationHandler.invite(room, stanza, x);
-        }).
+    var user = null;
+    var room = null;
+
+    // find user (may not be a member of the room)
+    this.findUser(userjid).then(function(u){
+        logger.debug('found user');
+        user = u;
+        // find a room
+        return self.findRoom(roomname);
+    }).then(function(r){
+        room = r;
+        logger.debug('found room');
+        room.isMember(user).then(function() {
+            logger.error('cannot invite because the user is already a member');
+        }).catch(function(err){
+            // user should not be a member already
+            self.invitationHandler.invite(room, user, stanza, x);
+        });
+    }).
     catch (function (err) {
+        console.error(err);
         logger.error(err);
-        this.sendError(stanza);
+        self.sendError(stanza);
     });
 
     return true;
 };
 
 Muc.prototype.handleDeclinedInvitations = function (stanza, x) {
+    logger.debug('handle declined invitations');
     var self = this;
 
+    var userjid = stanza.attrs.from;
     var roomname = this.determineRoomname(stanza);
 
-    this.loadRoom(roomname).then(
+    this.findRoom(roomname).then(
         function (room) {
             self.invitationHandler.declinedInvitation(room, stanza, x);
         }).
     catch (function (err) {
         logger.error(err);
-        this.sendError(stanza);
+        self.sendError(stanza);
     });
 
     return true;
@@ -304,7 +346,7 @@ Muc.prototype.handleAdminRequests = function (stanza) {
     if (method) {
         var roomname = this.determineRoomname(stanza);
 
-        this.loadRoom(roomname).then(
+        this.findRoom(roomname).then(
             function (room) {
                 logger.debug('found room: ' + JSON.stringify(room) + ' and ' + method);
 
