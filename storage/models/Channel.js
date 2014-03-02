@@ -23,7 +23,7 @@ module.exports = function (sequelize, DataTypes) {
         }
     }, {
         associate: function (models) {
-            models.Channel.hasMany(models.User, { through: models.ChannelSubscribers });
+            models.Channel.hasMany(models.User, { through: models.ChannelSubsription });
             models.Channel.hasMany(models.Event);
             models.Channel.hasMany(models.ChannelConfiguration, {as: 'Configuration' });
         }

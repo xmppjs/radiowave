@@ -2,7 +2,7 @@
 
 module.exports = function (sequelize, DataTypes) {
 
-    var ChannelSubscribers = sequelize.define('ChannelSubscribers', {
+    var ChannelSubscription = sequelize.define('ChannelSubscription', {
         affiliation: {
             type: DataTypes.STRING,
         }
@@ -12,5 +12,5 @@ module.exports = function (sequelize, DataTypes) {
         }
     });
 
-    return ChannelSubscribers;
+    return ChannelSubscription;
 };

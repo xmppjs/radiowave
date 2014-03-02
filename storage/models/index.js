@@ -3,8 +3,8 @@
 var fs = require('fs'),
     path = require('path');
 
-module.exports = function (sequelize)  {
-    var db = {};
+module.exports = function (sequelize, db)  {
+    db = db || {};
 
     // load current folder
     fs

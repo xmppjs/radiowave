@@ -68,7 +68,8 @@ describe('Model', function () {
 
                     user.addRoom(room, {
                         role: 'moderator',
-                        affiliation: 'owner'
+                        affiliation: 'owner',
+                        nickname: 'jj'
                     }).success(function () {
                         console.log('got here');
                         // added room as member
@@ -100,7 +101,8 @@ describe('Model', function () {
 
                     user.addRoom(room, {
                         role: 'moderator',
-                        affiliation: 'owner'
+                        affiliation: 'owner',
+                        nickname: 'bb'
                     }).success(function () {
                         console.log('got here');
                         // added room as member
@@ -132,7 +134,8 @@ describe('Model', function () {
 
                     user.addRoom(room, {
                         role: 'moderator',
-                        affiliation: 'owner'
+                        affiliation: 'owner',
+                        nickname: 'aa'
                     }).success(function () {
                         console.log('got here');
                         // added room as member
@@ -164,7 +167,8 @@ describe('Model', function () {
 
                     room.addUser(user, {
                         role: 'participant',
-                        affiliation: 'member'
+                        affiliation: 'member',
+                        nickname: 'ar1'
                     }).success(function () {
                         done();
                     });
@@ -191,7 +195,8 @@ describe('Model', function () {
 
                     room.addUser(user, {
                         role: 'participant',
-                        affiliation: 'member'
+                        affiliation: 'member',
+                        nickname: 'ar2'
                     }).success(function () {
                         done();
                     });
@@ -254,6 +259,29 @@ describe('Model', function () {
                     assert.equal(rooms.length, 3);
                     done();
                 });
+            });
+        });
+
+        it('get the nickname of alice for room2', function (done) {
+
+            // find all rooms where I participate
+            db.User.find({
+                where: {
+                    jid: 'alice@example.net'
+                }
+            }).success(function (alice) {
+
+                db.Room.find({
+                    where: {
+                        name: 'room2'
+                    }
+                }).success(function (room2) {
+                    room2.nickname(alice).then(function(nickname){
+                        assert.equal(nickname, 'ar2');
+                        done();
+                    });
+                });
+                
             });
         });
 
