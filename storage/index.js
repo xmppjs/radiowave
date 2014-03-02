@@ -2,22 +2,17 @@
 
 var Sequelize = require('sequelize'),
     Promise = require('bluebird'),
-    models = require('../../storage/models');
+    models = require('./models');
 
 /**
  * Manage the database abstraction for xrocket
  */
 var Storage = function (options) {
-
+    if (!options) {
+        throw Error('no database options set');
+    }
     this.opt = options;
-
-    this.database = options.database;
-    this.dbuser = options.databaseuser;
-    this.dbpassword = options.databasepassword;
-    this.dialect = options.dialect;
-    this.dbhost = options.host;
-    this.dbport = options.port;
-
+    console.log('storage: ' + JSON.stringify(options));
 };
 
 /**
@@ -25,7 +20,8 @@ var Storage = function (options) {
  * already there.
  */
 Storage.prototype.initialize = function () {
-    var self;
+    console.log('initialize');
+    var self = this;
     return new Promise(function (resolve, reject) {
 
         // base options
@@ -39,41 +35,47 @@ Storage.prototype.initialize = function () {
         };
 
         // could be sqlite, postgres, mysql
-        if (self.dialect) {
-            options.dialect = self.dialect;
+        if (self.opt.dialect) {
+            options.dialect = self.opt.dialect;
         }
 
-        if (self.host) {
-            options.host = self.host;
+        if (self.opt.host) {
+            options.host = self.opt.host;
         }
 
-        if (self.port) {
-            options.port = self.port;
+        if (self.opt.port) {
+            options.port = self.opt.port;
         }
 
         // path of the db file for sqlite 
-        if (self.storage) {
-            options.storage = self.storage;
+        if (self.opt.storage) {
+            options.storage = self.opt.storage;
         }
 
         // initialize db connection
-        self.sequelize = new Sequelize(
-            self.options.database,
-            self.options.databaseuser,
-            self.options.databasepassword, options);
+        var sequelize = new Sequelize(
+            self.opt.database,
+            self.opt.username,
+            self.opt.password, options);
+        self.sequelize = sequelize;
+
+        console.log(JSON.stringify(options));
 
         // load all models as own properties
-        models(self.sequelize, self);
+        models(sequelize, self);
 
         // sync models with database
-        self.sequelize.sync()
+        sequelize.sync()
             .complete(function (err) {
+                console.log(err);
                 if (err) {
                     reject(err);
                 } else {
                     resolve(self);
                 }
             });
+
+
     });
 };
 
