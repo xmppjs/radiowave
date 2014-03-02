@@ -5,14 +5,6 @@ var Promise = require('bluebird');
 module.exports = function (sequelize, DataTypes) {
 
     var Room = sequelize.define('Room', {
-        // room identifier
-        uuid: {
-            type: DataTypes.UUID,
-            unique: true,
-            validate: {
-                isUUID: 4
-            }
-        },
         // xmpp room name
         name: {
             type: DataTypes.STRING,
@@ -26,7 +18,8 @@ module.exports = function (sequelize, DataTypes) {
     }, {
         associate: function (models) {
             models.Room.hasMany(models.User, {
-                through: models.RoomMembers
+                through: models.RoomMembers,
+                as: 'Members'
             });
             models.Room.hasMany(models.Message);
             models.Room.hasMany(models.RoomConfiguration, {
@@ -44,36 +37,37 @@ module.exports = function (sequelize, DataTypes) {
              */
             join: function (user, options) {
 
-                var options = {
-                    role: 'moderator',
-                    affiliation: 'owner',
-                    nickname: 'jj'
-                };
-
                 var self = this;
                 return new Promise(function(resolve, reject) {
 
-                    // checkout if the current user is member
-                    self.getUsers({
-                        where: {
-                            userid : user.id
-                        }
-                    }).success(function(users){
+                    // verify parameters
+                    if (!options || !options.role || !options.affiliation || !options.nickname) {
+                        reject('wrong parameters');
+                    } else {
+                        // checkout if the current user is member
+                        self.getMembers({
+                            where: {
+                                userid : user.id
+                            }
+                        }).success(function(users){
+                            // user is already part of this room
+                            if (users && users.length > 0) {
+                                var roomUser = users[0];
 
-                        if (users && users.length > 0) {
-                            var user = users[0];
-
-                            // update data
-                            user.RoomMembers.role = options.role;
-                            user.RoomMembers.affiliation = options.affiliation;
-                            user.RoomMembers.nickname = options.nickname;
-                        } else {
-                            // add user to room
-                            user.addRoom(options);
-                        }
-                    }).error(function(err){
-                        reject(err);
-                    });
+                                // update data
+                                roomUser.RoomMembers.role = options.role;
+                                roomUser.RoomMembers.affiliation = options.affiliation;
+                                roomUser.RoomMembers.nickname = options.nickname;
+                                resolve(roomUser);
+                            } else {
+                                // add user to room
+                                user.addRoom(options);
+                                resolve(user);
+                            }
+                        }).error(function(err){
+                            reject(err);
+                        });
+                    }
                 });
             },
 
@@ -94,7 +88,7 @@ module.exports = function (sequelize, DataTypes) {
                 var self = this;
                 return new Promise(function(resolve, reject) {
                     // checkout if the current user is member
-                    self.getUsers({
+                    self.getMembers({
                         where: {
                             userid : user.id
                         }
@@ -103,7 +97,7 @@ module.exports = function (sequelize, DataTypes) {
                         if (users && users.length > 0) {
                             var user = users[0];
                             if (user) {
-                                resolve();
+                                resolve(user);
                             } else {
                                 reject();
                             }
@@ -124,7 +118,7 @@ module.exports = function (sequelize, DataTypes) {
                 var self = this;
                 return new Promise(function(resolve, reject) {
                     // checkout if the current user is member
-                    self.getUsers({
+                    self.getMembers({
                         where: {
                             userid : user.id
                         }

@@ -5,6 +5,7 @@ var fs = require('fs'),
 
 module.exports = function (sequelize, db)  {
     db = db || {};
+    var models = [];
 
     // load current folder
     fs
@@ -16,13 +17,17 @@ module.exports = function (sequelize, db)  {
         // import model
         .forEach(function (file) {
             var model = sequelize.import(path.join(__dirname, file));
+            console.log(model.name);
+            
+            // add model to object
             db[model.name] = model;
+            models.push(model);
         });
 
     // once the model are defined, lets load the associations
-    Object.keys(db).forEach(function (modelName) {
-        if (db[modelName].options.hasOwnProperty('associate')) {
-            db[modelName].options.associate(db);
+    models.forEach(function (model) {
+        if (model.options.hasOwnProperty('associate')) {
+            model.options.associate(db);
         }
     });
 
