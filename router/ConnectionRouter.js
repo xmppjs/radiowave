@@ -40,20 +40,23 @@ ConnectionRouter.prototype.findAuthMethod = function (method) {
     return found;
 };
 
+
 ConnectionRouter.prototype.verifyUser = function (opts) {
-
-    var userJid = new JID(opts.jid);
-
+    logger.debug('verify user');
+    
     this.storage.User
         .findOrCreate({
-            jid: userJid.bare().toString()
+            jid: opts.jid.bare().toString()
         })
         .success(function (user, created) {
             console.log('USER created %s', user.jid);
         });
 };
 
+
 ConnectionRouter.prototype.authenticate = function (opts, cb) {
+    var self = this;
+
     try {
         
         for (var attr in opts) {
@@ -63,10 +66,12 @@ ConnectionRouter.prototype.authenticate = function (opts, cb) {
         }
         
         logger.debug('start authentication process');
+        console.log('start authentication process');
         var auth = this.findAuthMethod(opts.saslmech);
         if (auth.length > 0) {
             auth[0].authenticate(opts).then(function(user){
                 logger.debug('xmpp user authenticated');
+                console.log('xmpp user authenticated');
 
                 // merge properties
                 for (var property in user) {
@@ -75,10 +80,13 @@ ConnectionRouter.prototype.authenticate = function (opts, cb) {
                     }
                 }
                 
+                self.verifyUser(opts);
+
                 // call callback
                 cb(null, opts);
             }).catch(function(err){
                 logger.debug('xmpp user authentication failed');
+                console.log('xmpp user authentication failed');
                 logger.error(err);
                 cb('xmpp could not authenticate user');
             });
