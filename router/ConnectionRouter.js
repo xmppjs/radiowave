@@ -13,12 +13,16 @@ var JID = require('node-xmpp-core').JID,
  *
  * TODO: check that to and from values fit to stream, reject messages where the from value does not fit
  */
-function ConnectionRouter() {
+function ConnectionRouter(storage) {
     BaseRouter.call(this);
+
+    this.storage = storage;
 
     this.authMethods = [];
 
     this.sessions = {};
+
+    this.count = 0;
 }
 util.inherits(ConnectionRouter, BaseRouter);
 
@@ -36,19 +40,33 @@ ConnectionRouter.prototype.findAuthMethod = function (method) {
     return found;
 };
 
+ConnectionRouter.prototype.verifyUser = function (opts) {
+
+    var userJid = new JID(opts.jid);
+
+    this.storage.User
+        .findOrCreate({
+            jid: userJid.bare().toString()
+        })
+        .success(function (user, created) {
+            console.log('USER created %s', user.jid);
+        });
+};
+
 ConnectionRouter.prototype.authenticate = function (opts, cb) {
     try {
-        /*
+        
         for (var attr in opts) {
             if (opts.hasOwnProperty(attr)) {
                 logger.debug(attr + ' -> ' + opts[attr]);
             }
         }
-        */
+        
+        logger.debug('start authentication process');
         var auth = this.findAuthMethod(opts.saslmech);
         if (auth.length > 0) {
             auth[0].authenticate(opts).then(function(user){
-                logger.debug('xmpp user authenticated' + JSON.stringify(user));
+                logger.debug('xmpp user authenticated');
 
                 // merge properties
                 for (var property in user) {
@@ -222,6 +240,8 @@ ConnectionRouter.prototype.verifyStanza = function (stream, stanza) {
  */
 ConnectionRouter.prototype.registerStream = function (stream) {
     console.log('register new stream');
+    this.count++;
+    console.log(this.count);
 
     var self = this;
 
@@ -260,6 +280,7 @@ ConnectionRouter.prototype.registerStream = function (stream) {
 
     // base router events
     stream.on('connect', function () {
+        self.count--;
         self.connect(stream.jid, stream);
     });
 

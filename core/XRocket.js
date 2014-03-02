@@ -6,11 +6,21 @@ var winston = require('winston'),
 
 var XRocket = function () {
     this.connectionManagers = [];
-    this.connectionRouter = new ConnectionRouter();
+    this.connectionRouter = null;
     logger.info('start XRocket server');
 };
 
 XRocket.prototype = {
+
+    // add a new instance of a connection router
+    addConnectionRouter : function (connRouter) {
+        this.connectionRouter = connRouter;
+    },
+
+    getConnectionRouter : function () {
+        return this.connectionRouter;
+    },
+
     // add multiple connection manager
     addConnectionManager: function (connMgr) {
         logger.debug('load connection manager: ' + connMgr.name);
@@ -20,7 +30,9 @@ XRocket.prototype = {
 
         // attach to events from connection and forward them 
         // to the connection router
-        connMgr.on('connect', this.connectionRouter.messageHandler());
+        if (this.connectionRouter) {
+            connMgr.on('connect', this.connectionRouter.messageHandler());
+        }
     },
 
     // shutdown the connection manger
@@ -34,7 +46,11 @@ XRocket.prototype = {
 
     // chain router events
     chain: function (router) {
-        return this.connectionRouter.chain(router);
+        if (this.connectionRouter) {
+            return this.connectionRouter.chain(router);
+        } else {
+            throw Error('no connection router set');
+        }
     }
 };
 

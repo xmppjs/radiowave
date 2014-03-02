@@ -1,38 +1,21 @@
 'use strict';
 
 var xRocket = require('../../xrocket'),
-    Promise = require('bluebird');
+    Storage = xRocket.Storage;
 
-function Storage() {}
+function StorageLoader() {}
 
+StorageLoader.prototype.load = function (settings) {
 
-Storage.prototype.inmemory = function () {
-    // storage
-    var mem = {
-        'users': new xRocket.Storage.Users(),
-        'lookup': new xRocket.Storage.Lookup()
-    };
-    return mem;
+    // load settings
+    var storageSettings = settings.get('storage');
+
+    // inistanciate storage module
+    var s = new Storage(storageSettings);
+
+    // return promise
+    return s.initialize();
+
 };
 
-
-Storage.prototype.load = function (settings) {
-    var self = this;
-    return new Promise(function (resolve, reject) {
-        var storage = settings.get('storage');
-
-        if (storage && storage.type) {
-            var mem = self[storage.type](storage);
-
-            if (mem) {
-                resolve(mem);
-            } else {
-                reject('Could not find storage engine');
-            }
-        } else {
-            reject('Could not find storage engine');
-        }
-    });
-};
-
-module.exports = Storage;
+module.exports = StorageLoader;
