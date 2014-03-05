@@ -4,6 +4,7 @@ var winston = require('winston'),
     logger = winston.loggers.get('xep-0060'),
     ltx = require('ltx'),
     util = require('util'),
+    Promise = require('bluebird'),
     XepComponent = require('../XepComponent'),
     JID = require('node-xmpp-core').JID,
     NS = require('./namespace');
@@ -27,21 +28,22 @@ function PubSub(options) {
 
     this.autoCreateChannel = true;
 
-    this.Users = options.storage.users;
-    this.Lookup = options.storage.lookup;
+    this.storage = options.storage;
 
     // handler for specific operations
-    this.nodeHandler = this.configureHandler(new NodeHandler(this.Users, this.Lookup));
-    this.publishHandler = this.configureHandler(new PublishHandler());
-    this.subscriptionHandler = this.configureHandler(new SubscriptionHandler());
+    this.nodeHandler = this.configureHandler(new NodeHandler(this.storage));
+    this.publishHandler = this.configureHandler(new PublishHandler(this.storage));
+    this.subscriptionHandler = this.configureHandler(new SubscriptionHandler(this.storage));
 }
 util.inherits(PubSub, XepComponent);
 
 PubSub.prototype.name = 'XEP-0060: Publish-Subscribe';
 
+PubSub.prototype.Error = {};
+PubSub.prototype.Error.NotFound = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+
 PubSub.prototype.initialize = function () {
-    //var filename = path.resolve(__dirname , '../../storage/postgre/pubsub/schema.json');
-    //(new PGSchema(this.options.storage.client)).run(filename);
+
 };
 
 PubSub.prototype.features = function () {
@@ -122,7 +124,7 @@ PubSub.prototype.sendError = function (stanza, err) {
 // overwrite XepComponent sendSuccess() method
 PubSub.prototype.sendSuccess = function (stanza, detail) {
     logger.debug('sendSucces');
-    console.log(stanza + ' ' +detail);
+    console.log(stanza + ' ' + detail);
     var response = new ltx.Element('iq', {
         from: stanza.attrs.to,
         to: stanza.attrs.from,
@@ -138,39 +140,97 @@ PubSub.prototype.sendSuccess = function (stanza, detail) {
     this.send(response);
 };
 
-PubSub.prototype.handlePubSub = function (method, identifier, stanza, pubsubEl) {
-    logger.debug('handlePubSub');
+PubSub.prototype.findUser = function (jid) {
 
-    var errorXml = null;
+    var userjid = null;
+    if (jid instanceof JID) {
+        userjid = jid;
+    } else {
+        userjid = new JID(jid.toString());
+    }
+
     var self = this;
-    self.Users.user(identifier.user).then(
-        function (user) {
-            return user.getChannel(identifier.resource);
-        }).then(
-        function (channel) {
-            // okay, we have the channel
-            switch (method) {
-            case 'subscribe':
-                self.subscriptionHandler.handleSubscribe(channel, stanza, pubsubEl);
-                break;
-            case 'unsubscribe':
-                self.subscriptionHandler.handleUnsubscribe(channel, stanza, pubsubEl);
-                break;
-            case 'publish':
-                self.publishHandler.handlePublish(channel, stanza, pubsubEl);
-                break;
-            case 'delete':
-                self.nodeHandler.handleDelete(channel, stanza, pubsubEl);
-                break;
+    return new Promise(function (resolve, reject) {
+        self.storage.User.find({
+            where: {
+                jid: userjid.bare().toString()
             }
-        }).then(
-        function () {},
-        function (err) {
-            logger.error(err);
-            // channel does not exist
-            errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-            self.sendError(stanza, errorXml);
+        }).success(function (user) {
+            logger.debug('findUser: ' + JSON.stringify(user));
+            resolve(user);
+        }).error(function (err) {
+            reject(err);
         });
+    });
+};
+
+PubSub.prototype.findNode = function (nodename, user, doNotCreate) {
+    console.log('search for node: ' + nodename);
+    if (this.autoCreateChannel && !doNotCreate) {
+        return this.nodeHandler.findOrCreateNode(nodename, user);
+    } else {
+        return this.nodeHandler.findNode(nodename);
+    }
+};
+
+
+PubSub.prototype.handlePubSub = function (method, stanza, pubsubEl) {
+    logger.debug('handlePubSub: ' + method + ' stanza: ' + stanza.toString() + ' pubsub: ' + pubsubEl.toString());
+    var self = this;
+
+    var fromJid = new JID(stanza.attrs.from);
+    this.findUser(fromJid).then(function(user){
+        // detect node name
+        var nodename = pubsubEl.attrs.node;
+        logger.debug('nodename: ' + nodename);
+
+
+        // okay, we have the user
+        switch (method) {
+        case 'create' :
+            self.nodeHandler.handleCreate(user, stanza, pubsubEl);
+            break;
+        case 'subscribe':
+            self.findNode(nodename, user).then(function(node){
+                if (node) {
+                    self.subscriptionHandler.handleSubscribe(user, node, stanza, pubsubEl);
+                } else {
+                    self.sendError(stanza, self.Error.NotFound);
+                }
+            });
+            
+            break;
+        case 'unsubscribe':
+            self.findNode(nodename, user, true).then(function(node){
+                if (node) {
+                    self.subscriptionHandler.handleUnsubscribe(user, node, stanza, pubsubEl);
+                } else {
+                    self.sendError(stanza, self.Error.NotFound);
+                }
+            });
+            break;
+        case 'publish':
+            self.findNode(nodename, user).then(function(node){
+                if (node) {
+                    self.publishHandler.handlePublish(user, node, stanza, pubsubEl);
+                } else {
+                    self.sendError(stanza, self.Error.NotFound);
+                }
+            });
+            break;
+        case 'delete':
+            self.findNode(nodename, user, true).then(function(node){
+                if (node) {
+                    self.nodeHandler.handleDelete(user, node, stanza, pubsubEl);
+                } else {
+                    self.sendError(stanza, self.Error.NotFound);
+                }
+            });
+            break;
+        default:
+            this.sendError(stanza, this.Error.NotFound);
+        }
+    });
 };
 
 /**
@@ -180,8 +240,7 @@ PubSub.prototype.handlePubSub = function (method, identifier, stanza, pubsubEl) 
 PubSub.prototype.detectMethod = function (stanza, pubsub) {
     logger.debug('detectMethod');
 
-    var self = this,
-        errorXml = null;
+    var self = this;
 
     // detect what we have to do
     var method = null;
@@ -208,48 +267,10 @@ PubSub.prototype.detectMethod = function (stanza, pubsub) {
 
     // only continue if we have detected a method
     if (method) {
-
-        // detect node name
-        var nodename = pubsubEl.attrs.node;
-        logger.debug(nodename);
-
-        if (method === 'create') {
-            // TODO do not forward Users and Lookup
-            self.nodeHandler.handleCreate(stanza, pubsubEl, self.Users, self.Lookup);
-        } else {
-
-            // lookup,if we have the nodename stored otherwise the execution does not make sense
-            this.Lookup.find('pubsub', nodename).then(function (identifier) {
-                self.handlePubSub(method, identifier, stanza, pubsubEl);
-            }, function (err) {
-                logger.error(err);
-
-                // create node and handle the original message
-                if (self.autoCreateChannel && method === 'publish') {
-                    logger.debug('auto-create channel');
-                    var jid = new JID(stanza.attrs.from).bare();
-                    var username = jid.getLocal();
-                    logger.debug(username + '->' + nodename);
-                    self.Users.user(username).then(function (user) {
-                        self.nodeHandler.createNode(user, nodename, [], function () {
-                            logger.debug('handle original request');
-                            self.handlePubSub(method, {
-                                'user': username,
-                                'resource': nodename
-                            }, stanza, pubsubEl);
-                        }, function () {
-                            self.sendError(stanza);
-                        });
-                    });
-                }
-                // send error
-                else {
-                    // channel does not exist
-                    errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                    self.sendError(stanza, errorXml);
-                }
-            });
-        }
+        self.handlePubSub(method, stanza, pubsubEl);
+    } else {
+        logger.error('invalid method');
+        self.sendError(stanza, self.Error.NotFound);
     }
 };
 

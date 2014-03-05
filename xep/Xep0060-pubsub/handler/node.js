@@ -4,71 +4,174 @@ var util = require('util'),
     winston = require('winston'),
     logger = winston.loggers.get('xep-0060'),
     ltx = require('ltx'),
+    Promise = require('bluebird'),
     XepComponent = require('../../XepComponent'),
     NS = require('../namespace'),
-    JID = require('node-xmpp-core').JID,
     uuid = require('node-uuid');
 
-var NodeHandler = function (Users, Lookup) {
-    this.Users = Users;
-    this.Lookup = Lookup;
+var NodeHandler = function (storage) {
+    this.storage = storage;
 };
 
 util.inherits(NodeHandler, XepComponent);
 
-NodeHandler.prototype.configureNode = function (node, configuration, callback) {
+NodeHandler.prototype.Error = {};
+NodeHandler.prototype.Error.Conflict = ltx.parse('<error type=\'cancel\'><conflict xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
+
+/**
+ * set the configuration into the node
+ */
+NodeHandler.prototype.configureNode = function (node, configuration) {
     logger.debug('configureNode' + node);
+    return new Promise(function(resolve, reject) {
+        // no node found
+        if (node) {
+            var conf = configuration || [];
 
-    // no node found
-    if (node) {
-        var conf = configuration || [];
+            // overwrite configuration
+            for (var j = 0; j < conf.length; j++) {
+                logger.debug('set ' + node.name + ' key: ' + conf[j].key + ' ' + conf[j].value);
+                // node.setConfiguration(conf[j].key, conf[j].value);
+            }
 
-        // overwrite configuration
-        for (var j = 0; j < conf.length; j++) {
-            logger.debug('set ' + node.getName() + ' key: ' + conf[j].key + ' ' + conf[j].value);
-            node.setConfiguration(conf[j].key, conf[j].value);
+            resolve();
+        } else {
+            reject('node parameter is missing');
         }
+    });
+};
 
-        callback();
-    } else {
-        callback('node parameter is missing');
+/**
+ * extracts the configuration from a xml stanza
+ */
+NodeHandler.prototype.extractConfiguration = function (pubsubEl) {
+    var configuration = [];
+    try {
+        // extract configuration
+        var configure = pubsubEl.getChild('configure');
+        if (configure) {
+            var x = configure.getChild('x', 'jabber:x:data');
+            if (x) {
+                var fields = x.getChildren('field');
+                for (var i = 0, l = fields.length; i < l; i++) {
+                    configuration.push({
+                        key: fields[i].attrs['var'],
+                        value: fields[i].getChild('value').text()
+                    });
+                }
+            }
+        }
+    } catch(err){
+        logger.error(err);
     }
+    return configuration;
 };
 
-NodeHandler.prototype.createNode = function (user, nodename, configuration, callback) {
-    logger.debug('createNode' + user + ' ' + nodename);
+
+NodeHandler.prototype.findNode = function (nodename) {
     var self = this;
-    // channel does not exist
-    user.createChannel(nodename).then(
-        function (channel) {
-            // store lookup
-            self.Lookup.add('pubsub', user.getName(), nodename, nodename).then(function () {
-                self.configureNode(channel, configuration, function () {
-                    callback();
-                });
-            });
-        }, function () {
-            callback('could not create channel');
-        }
-    );
+    return new Promise(function (resolve, reject) {
+        self.storage.Channel.find({
+            where: {
+                name: nodename
+            }
+        }).success(function (channel) {
+            console.log('Found channel: ' + channel);
+            resolve(channel);
+        }).error(function (err) {
+            reject(err);
+        });
+    });
 };
 
-NodeHandler.prototype.handleCreate = function (stanza) {
+/**
+ * finds or creates a node
+ */
+NodeHandler.prototype.findOrCreateNode = function (nodename, user) {
+    var self = this;
+    return new Promise(function (resolve, reject) {
+        self.storage.Channel.findOrCreate({ name: nodename })
+        .success(function(channel, created) {
+            if (created) {
+                self.associateUser(channel, user, []).then(function(){
+                    console.log('Found channel: ' + channel);
+                    resolve(channel);
+                }).catch(function(err){
+                    reject(err);
+                });
+            }
+        }).error(function (err) {
+            reject(err);
+        });
+    });
+};
+
+/**
+ * assign a user to channel
+ */
+NodeHandler.prototype.associateUser = function (channel, user, configuration) {
+    var self = this;
+    return new Promise(function(resolve, reject) {
+        // add assiciation between room and user
+        user.addChannel(channel, {
+            affiliation: 'owner',
+        }).success(function () {
+            self.configureNode(channel, configuration).then(function(){
+                resolve(channel);
+            }).catch(function(err){
+                reject(err);
+            });
+        }).error(function (err) {
+            reject(err);
+        });
+    });
+};
+
+/**
+ * create a new node in our database
+ */
+NodeHandler.prototype.createNewNode = function (user, nodename, configuration) {
+    logger.debug('create node ' + nodename +' with ' + JSON.stringify(configuration));
+    var self = this;
+
+    return new Promise(function(resolve, reject) {
+        // create new room
+        self.storage.Channel.create({
+            name: nodename
+        }).success(function (channel) {
+            self.associateUser(channel, user, configuration).then(function(){
+                resolve(channel);
+            }).catch(function(err){
+                reject(err);
+            });
+        }).error(function (err) {
+            reject(err);
+        });
+    });
+};
+
+/**
+ * handle xmpp create stanza for a user
+ */
+NodeHandler.prototype.handleCreate = function (user, stanza) {
     logger.debug('handleCreate');
     var self = this;
-    var jid = new JID(stanza.attrs.from).bare();
+    var detail = null;
+
+    // extract nodename
     var pubsub = stanza.getChild('pubsub', NS.PUBSUB);
     var create = pubsub.getChild('create');
     var nodename = create.attrs.node;
-    var detail = null;
-
+    
     if (nodename === undefined) {
         nodename = null;
     }
 
+    // generate instant nodename
     if (nodename === null) {
-        // generate instant nodename
         nodename = uuid.v4();
+
+        // generate response message
         detail = new ltx.Element(
             'pubsub', {
                 'xmlns': 'http://jabber.org/protocol/pubsub'
@@ -79,68 +182,37 @@ NodeHandler.prototype.handleCreate = function (stanza) {
             }).up();
     }
 
-    // if we found a node with this name, we cannot create it
-    self.Lookup.find('pubsub', nodename).then(
-        function () {
-            // channel exists, error
-            var errXml = ltx.parse('<error type=\'cancel\'><conflict xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-            self.sendError(stanza, errXml);
-        },
-        function () {
-            var username = jid.getLocal();
+    console.log('nodename: ' + nodename);
 
-            // check if the room exists, if not create it
-            self.Users.user(username).then(
-                function (user) {
-                    user.getChannel(nodename).then(
-                        function () {
-                            // channel exists, error
-                            var errXml = ltx.parse('<error type=\'cancel\'><conflict xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-                            self.sendError(stanza, errXml);
-                        },
-                        function () {
-                            // create new node
-                            // extract features
-                            var configuration = [];
-                            var configure = pubsub.getChild('configure');
-                            if (configure) {
-                                var x = configure.getChild('x', 'jabber:x:data');
-                                if (x) {
-                                    var fields = x.getChildren('field');
-                                    for (var i = 0, l = fields.length; i < l; i++) {
-                                        configuration.push({
-                                            key: fields[i].attrs['var'],
-                                            value: fields[i].getChild('value').text()
-                                        });
-                                    }
-                                }
-                            }
-                            logger.debug('create node with ' + JSON.stringify(configuration));
-                            self.createNode(user, nodename, configuration, function () {
-                                logger.debug('return from callback');
-                                self.sendSuccess(stanza, detail);
-                            });
-                        });
-                });
-        });
+    var configuration = this.extractConfiguration(pubsub);
+    console.log('configuration: ' + JSON.stringify(configuration));
+
+    this.createNewNode(user, nodename, configuration).then(function(){
+        self.sendSuccess(stanza, detail);
+    }).catch(function(err){
+        logger.error(err);
+        console.error(err);
+        self.sendError(stanza, self.Error.Conflict);
+    });
 };
 
-
-NodeHandler.prototype.handleDelete = function (node, stanza) {
+/**
+ * handle xmpp delete stanza
+ */
+NodeHandler.prototype.handleDelete = function (user, node, stanza) {
     logger.debug('handleDelete');
+
+    // TODO verify that delete request is from owner
+
     var self = this;
-    logger.debug(stanza.root().toString());
-    logger.debug(node);
-    node.remove().then(
-        function () {
-            logger.debug('node removed');
-            self.sendSuccess(stanza);
-        },
-        function () {
-            logger.debug('node could not be removed');
-            self.sendError(stanza);
-        }
-    );
+
+    node.destroy().success(function() {
+        logger.debug('node removed');
+        self.sendSuccess(stanza);
+    }).error(function(err){
+        logger.debug('node could not be removed', err);
+        self.sendError(stanza);
+    });
 };
 
 module.exports = NodeHandler;

@@ -3,154 +3,47 @@
 // assertion
 var assert = require('assert'),
     should = require('should'),
-    helper = require('../_helper/helper');
+    helper = require('../_helper/helper'),
+    pub_helper = require('../_helper/pubsub');
 
 // logging
 helper.configureLoglevel('silly');
 
-// xmpp client
 var ltx = require('ltx'),
-    Client = require('node-xmpp-client'),
-    Message = require('node-xmpp-core').Stanza.Message;
+    Xep0060 = require('../../xep/Xep0060-pubsub');
 
-// x rocket server
-var xRocket = require('../../xrocket'),
-    C2SServer = require('xrocketd-cm').Net.C2SServer;
-
-// Xep Components
-var Xep0060 = require('../../xep/Xep0060-pubsub');
-
-// Storage
-var UsrModule = require('../../storage/in-memory/Users');
-var Users = new UsrModule();
-var LookupModule = require('../../storage/in-memory/Lookup');
-var Lookup = new LookupModule();
-
-// user
-var userRomeo = {
-    jid: 'romeo@example.net',
-    password: 'romeo',
-    host: 'localhost'
-};
-
-var userJulia = {
-    jid: 'julia@example.net',
-    password: 'julia',
-    host: 'localhost'
-};
-
-function getClientRomeo() {
-    var cl = new Client({
-        jid: userRomeo.jid,
-        password: userRomeo.password,
-        preferred: 'PLAIN',
-        host: userRomeo.host
-    });
-    return cl;
+function configureXEP(server) {
+    // register pubsub component
+    server.cr.register(new Xep0060({
+        subdomain: 'pubsub',
+        domain: 'example.net',
+        storage: server.storage
+    }));
 }
-
-function getClientJulia() {
-    var cl = new Client({
-        jid: userJulia.jid,
-        password: userJulia.password,
-        preferred: 'PLAIN',
-        host: userJulia.host
-    });
-    return cl;
-}
-
-/*
-    var clJulia = null;
-    var clRomeo = null;
-clJulia = getClientJulia();
-clRomeo = getClientRomeo();
-*/
 
 /**
  * @see http://xmpp.org/extensions/xep-0060.html
  */
 describe('Xep-0060', function () {
 
-    var xR = null;
-
-    function setUpServer(done) {
-        // C2S Server 
-        var cs2 = new C2SServer({});
-        //cs2.registerSaslMechanism(Plain);
-
-        // attach connection manager to xrocket
-        xR = new xRocket.XRocket();
-        xR.addConnectionManager(cs2);
-
-        // register users
-        var simpleAuth = new xRocket.Auth.Simple();
-        simpleAuth.addUser('romeo', 'romeo');
-        simpleAuth.addUser('julia', 'julia');
-        xR.connectionRouter.authMethods.push(simpleAuth);
-
-        // register xep component
-        var cr = new xRocket.Router.ComponentRouter({
-            domain: 'example.net'
-        });
-        var lr = new xRocket.Router.LogRouter();
-        // chain XRocket to ComponentRouter
-        xR.chain(lr).chain(cr);
-
-
-        // register pubsub component
-        cr.register(new Xep0060({
-            subdomain: 'pubsub',
-            domain: 'example.net',
-            storage : {
-                lookup : Lookup,
-                users: Users
-            }
-        }));
-
-        done();
-
-        /*var PGConn = require('../../storage/postgre/PGConn');
-        var pgConnectionString = process.env.DATABASE_URL;
-        var pgC = new PGConn(pgConnectionString);
-        pgC.connect(function () {
-            cr.register(new Xep0060({
-                subdomain: 'pubsub',
-                domain: 'example.net',
-                storage: {
-                    client: pgC.getClient()
-                }
-            }));
-
-            done();
-        });*/
-    }
-
-    function sendMessageWithRomeo(stanza, done) {
-        var cl = getClientRomeo();
-
-        cl.on('stanza',
-            function (stanza) {
-                done(null, stanza);
-            });
-
-        cl.on('online', function () {
-            cl.send(stanza);
-        });
-
-        cl.on('error', function (e) {
-            console.log(e);
-            done(e);
-        });
-    }
+    var srv = null;
 
     before(function (done) {
-        setUpServer(function (err) {
+        helper.startServer()
+        // configure muc module
+        .then(function (server) {
+            srv = server;
+            configureXEP(server);
+            done();
+        })
+            .
+        catch (function (err) {
             done(err);
         });
     });
 
     after(function (done) {
-        xR.shutdown();
+        srv.xR.shutdown();
         done();
     });
 
@@ -159,27 +52,21 @@ describe('Xep-0060', function () {
         describe('6.1 Subscribe to a Node', function () {
 
             it('Precondition: Create a node', function (done) {
-                var id = 'newnode-r2d2';
-                var create = new ltx.Element('iq', {
-                    to: 'pubsub.example.net',
-                    from: userRomeo.jid,
-                    type: 'set',
-                    id: id
-                }).c('pubsub', {
-                    'xmlns': 'http://jabber.org/protocol/pubsub'
-                }).c('create', {
-                    'node': 'princely_musings'
-                });
 
-                sendMessageWithRomeo(create, function (err, stanza) {
-                    should.not.exist(err);
-                    if (stanza.is('iq')) {
+                var id = 'newnode-r2d2';
+                var stanza = pub_helper.createNodeStanza(helper.userRomeo.jid, 'princely_musings', id );
+
+                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                    try {
+                        assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
                         assert.equal(stanza.attrs.type, 'result');
                         assert.equal(stanza.attrs.id, id);
                         done();
-                    } else {
-                        done('wrong stanza ' + stanza.root().toString());
+                    } catch(err) {
+                        done(err);
                     }
+                }).catch(function(err){
+                    done(err);
                 });
             });
 
@@ -195,22 +82,25 @@ describe('Xep-0060', function () {
              * </iq>
              */
             it('6.1.3.1 JIDs Do Not Match', function (done) {
+
                 var id = 'subscribe-r2d2';
-                var subscribe = new ltx.Element('iq', {
+                
+                var stanza = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
-                    from: userRomeo.jid,
+                    from: helper.userRomeo.jid,
                     type: 'set',
                     id: id
                 }).c('pubsub', {
                     'xmlns': 'http://jabber.org/protocol/pubsub'
                 }).c('subscribe', {
                     'node': 'princely_musings',
-                    'jid': userJulia.jid
+                    'jid': helper.userJulia.jid
                 });
 
-                sendMessageWithRomeo(subscribe, function (err, stanza) {
-                    should.not.exist(err);
-                    if (stanza.is('iq')) {
+                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                    try {
+                        assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
+
                         assert.equal(stanza.attrs.type, 'error');
                         assert.equal(stanza.attrs.id, id);
 
@@ -226,10 +116,13 @@ describe('Xep-0060', function () {
                         invalid.should.not.be.empty;
 
                         done();
-                    } else {
-                        done('wrong stanza ' + stanza.root().toString());
+                    } catch(err) {
+                        done(err);
                     }
+                }).catch(function(err){
+                    done(err);
                 });
+
             });
 
             /*
@@ -244,21 +137,22 @@ describe('Xep-0060', function () {
              */
             it('6.1.3.12 Node Does Not Exist', function (done) {
                 var id = 'subscribe-r2d2';
-                var subscribe = new ltx.Element('iq', {
+                var stanza = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
-                    from: userRomeo.jid,
+                    from: helper.userRomeo.jid,
                     type: 'set',
                     id: id
                 }).c('pubsub', {
                     'xmlns': 'http://jabber.org/protocol/pubsub'
                 }).c('subscribe', {
                     'node': 'princely_musings2',
-                    'jid': userRomeo.jid
+                    'jid': helper.userRomeo.jid
                 });
 
-                sendMessageWithRomeo(subscribe, function (err, stanza) {
-                    should.not.exist(err);
-                    if (stanza.is('iq')) {
+                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                    try {
+                        assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
+
                         assert.equal(stanza.attrs.type, 'error');
                         assert.equal(stanza.attrs.id, id);
 
@@ -271,10 +165,13 @@ describe('Xep-0060', function () {
                         badrequest.should.not.be.empty;
 
                         done();
-                    } else {
-                        done('wrong stanza ' + stanza.root().toString());
+                    } catch(err) {
+                        done(err);
                     }
+                }).catch(function(err){
+                    done(err);
                 });
+
             });
 
             /**
@@ -306,22 +203,22 @@ describe('Xep-0060', function () {
              */
             it('6.1 Subscribe to a Node', function (done) {
                 var id = 'subscribe-r2d2';
-                var subscribe = new ltx.Element('iq', {
+                var stanza = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
-                    from: userRomeo.jid,
+                    from: helper.userRomeo.jid,
                     type: 'set',
                     id: id
                 }).c('pubsub', {
                     'xmlns': 'http://jabber.org/protocol/pubsub'
                 }).c('subscribe', {
                     'node': 'princely_musings',
-                    'jid': userRomeo.jid
+                    'jid': helper.userRomeo.jid
                 });
 
-                sendMessageWithRomeo(subscribe, function (err, stanza) {
-                    console.log(stanza.toString());
-                    should.not.exist(err);
-                    if (stanza.is('iq')) {
+                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                    try {
+                        assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
+                        
                         assert.equal(stanza.attrs.type, 'result');
                         assert.equal(stanza.attrs.id, id);
 
@@ -336,10 +233,13 @@ describe('Xep-0060', function () {
                         assert.equal(subscription.attrs.subscription, 'subscribed');
 
                         done();
-                    } else {
-                        done('wrong stanza ' + stanza.root().toString());
+                    } catch(err) {
+                        done(err);
                     }
+                }).catch(function(err){
+                    done(err);
                 });
+
             });
         });
 
@@ -367,28 +267,31 @@ describe('Xep-0060', function () {
             it('6.2. Unsubscribe from a Node', function (done) {
                 console.log('6.2. Unsubscribe from a Node');
                 var id = 'unsubscribe-r2d2';
-                var unsubscribe = new ltx.Element('iq', {
+                var stanza = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
-                    from: userRomeo.jid,
+                    from: helper.userRomeo.jid,
                     type: 'set',
                     id: id
                 }).c('pubsub', {
                     'xmlns': 'http://jabber.org/protocol/pubsub'
                 }).c('unsubscribe', {
                     'node': 'princely_musings',
-                    'jid': userRomeo.jid
+                    'jid': helper.userRomeo.jid
                 });
 
-                sendMessageWithRomeo(unsubscribe, function (err, stanza) {
-                    should.not.exist(err);
-                    if (stanza.is('iq')) {
+                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                    try {
+                        assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
                         assert.equal(stanza.attrs.type, 'result');
                         assert.equal(stanza.attrs.id, id);
                         done();
-                    } else {
-                        done('wrong stanza ' + stanza.root().toString());
+                    } catch(err) {
+                        done(err);
                     }
+                }).catch(function(err){
+                    done(err);
                 });
+
             });
 
             /*
@@ -404,21 +307,22 @@ describe('Xep-0060', function () {
              */
             it('6.2.3.2 No Such Subscriber', function (done) {
                 var id = 'unsubscribe-r2d2';
-                var unsubscribe = new ltx.Element('iq', {
+                var stanza = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
-                    from: userRomeo.jid,
+                    from: helper.userRomeo.jid,
                     type: 'set',
                     id: id
                 }).c('pubsub', {
                     'xmlns': 'http://jabber.org/protocol/pubsub'
                 }).c('unsubscribe', {
                     'node': 'princely_musings',
-                    'jid': userRomeo.jid
+                    'jid': helper.userRomeo.jid
                 });
 
-                sendMessageWithRomeo(unsubscribe, function (err, stanza) {
-                    should.not.exist(err);
-                    if (stanza.is('iq')) {
+                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                    try {
+                        assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
+
                         assert.equal(stanza.attrs.type, 'error');
                         assert.equal(stanza.attrs.id, id);
 
@@ -434,10 +338,13 @@ describe('Xep-0060', function () {
                         notsubscribed.should.not.be.empty;
 
                         done();
-                    } else {
-                        done('wrong stanza ' + stanza.root().toString());
+                    } catch(err) {
+                        done(err);
                     }
+                }).catch(function(err){
+                    done(err);
                 });
+
             });
 
             /*
@@ -452,21 +359,22 @@ describe('Xep-0060', function () {
              */
             it('6.2.3.4 Node Does Not Exist', function (done) {
                 var id = 'unsubscribe-r2d2';
-                var unsubscribe = new ltx.Element('iq', {
+                var stanza = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
-                    from: userRomeo.jid,
+                    from: helper.userRomeo.jid,
                     type: 'set',
                     id: id
                 }).c('pubsub', {
                     'xmlns': 'http://jabber.org/protocol/pubsub'
                 }).c('unsubscribe', {
                     'node': 'princely_musings_2',
-                    'jid': userRomeo.jid
+                    'jid': helper.userRomeo.jid
                 });
 
-                sendMessageWithRomeo(unsubscribe, function (err, stanza) {
-                    should.not.exist(err);
-                    if (stanza.is('iq')) {
+                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                    try {
+                        assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
+
                         assert.equal(stanza.attrs.type, 'error');
                         assert.equal(stanza.attrs.id, id);
 
@@ -479,17 +387,20 @@ describe('Xep-0060', function () {
                         itemnotfound.should.not.be.empty;
 
                         done();
-                    } else {
-                        done('wrong stanza ' + stanza.root().toString());
+                    } catch(err) {
+                        done(err);
                     }
+                }).catch(function(err){
+                    done(err);
                 });
+
             });
 
             it('Postcondition: delete node', function (done) {
                 var id = 'delete-r2d2';
-                var deleteIQ = new ltx.Element('iq', {
+                var stanza = new ltx.Element('iq', {
                     to: 'pubsub.example.net',
-                    from: userRomeo.jid,
+                    from: helper.userRomeo.jid,
                     type: 'set',
                     id: id
                 }).c('pubsub', {
@@ -498,16 +409,17 @@ describe('Xep-0060', function () {
                     'node': 'princely_musings'
                 });
 
-                sendMessageWithRomeo(deleteIQ, function (err, stanza) {
-                    console.log("Error:" + stanza.toString());
-                    should.not.exist(err);
-                    if (stanza.is('iq')) {
+                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                    try {
+                        assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
                         assert.equal(stanza.attrs.type, 'result');
                         assert.equal(stanza.attrs.id, id);
                         done();
-                    } else {
-                        done('wrong stanza ' + stanza.root().toString());
+                    } catch(err) {
+                        done(err);
                     }
+                }).catch(function(err){
+                    done(err);
                 });
             });
         });

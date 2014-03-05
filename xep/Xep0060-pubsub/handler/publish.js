@@ -8,7 +8,8 @@ var util = require('util'),
     uuid = require('node-uuid'),
     Message = require('node-xmpp-core').Stanza.Message;
 
-var PublishHandler = function () {
+var PublishHandler = function (storage) {
+    this.storage = storage;
 };
 
 util.inherits(PublishHandler, XepComponent);
@@ -19,7 +20,7 @@ util.inherits(PublishHandler, XepComponent);
  * @param pubsub already extracted pubsub child node
  * @see http://xmpp.org/extensions/xep-0060.html#publisher-publish
  */
-PublishHandler.prototype.handlePublish = function (node, stanza, publish) {
+PublishHandler.prototype.handlePublish = function (user, node, stanza, publish) {
     logger.debug('handlePublish');
     var self = this;
     logger.debug('handlePublish');
@@ -27,7 +28,7 @@ PublishHandler.prototype.handlePublish = function (node, stanza, publish) {
 
     // if node is available
     if (node) {
-        logger.debug('PUBLISH to ' + node.getName());
+        logger.debug('PUBLISH to ' + node.name);
         logger.debug(stanza.toString());
 
         var itemswithoutpayload = [];
@@ -54,11 +55,12 @@ PublishHandler.prototype.handlePublish = function (node, stanza, publish) {
 
         // generate notification message
         var attachment = [];
-        if (node.getConfiguration('pubsub#deliver_payloads') === 1) {
+        /*if (node.getConfiguration('pubsub#deliver_payloads') === 1) {
             attachment = itemswithpayload;
         } else {
             attachment = itemswithoutpayload;
-        }
+        }*/
+        attachment = itemswithpayload;
 
         var msg = new Message({
             from: this.domain,
@@ -67,15 +69,21 @@ PublishHandler.prototype.handlePublish = function (node, stanza, publish) {
         msg.c('event', {
             'xmlns': 'http://jabber.org/protocol/pubsub#event'
         }).c('items', {
-            'node': node.getName()
+            'node': node.name
         }).children = attachment;
 
         // store message in history
-        node.trigger(msg.root().toString());
+        this.storage.Event.create({
+            content: msg.toString()
+        }).success(function (message) {
+            node.addEvent(message).success(function () {
+                // message is added
+            });
+        });
 
         // send response to sender
         var publishDetail = new ltx.Element('publish', {
-            node: node.getName()
+            node: node.name
         });
         publishDetail.children = itemswithoutpayload;
 
@@ -87,7 +95,7 @@ PublishHandler.prototype.handlePublish = function (node, stanza, publish) {
         this.sendSuccess(stanza, detail);
 
         // send notification message to subscriber
-        node.listSubscribers().then(
+        node.getSubscribers().then(
             function (subscribers) {
                 logger.debug('send events to subs ' + JSON.stringify(subscribers));
                 for (var i = 0, l = subscribers.length; i < l; i += 1) {
