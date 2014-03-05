@@ -21,8 +21,10 @@ var Storage = function (options) {
  * Initialize the datababe and sync the tables if they are not
  * already there.
  */
-Storage.prototype.initialize = function () {
+Storage.prototype.initialize = function (syncOpts) {
     logger.debug('initialize');
+
+    syncOpts = syncOpts || {};
     var self = this;
     return new Promise(function (resolve, reject) {
 
@@ -65,7 +67,7 @@ Storage.prototype.initialize = function () {
         models(sequelize, self);
 
         // sync models with database
-        sequelize.sync()
+        sequelize.sync(syncOpts)
             .complete(function (err) {
                 logger.error(err);
                 if (err) {
