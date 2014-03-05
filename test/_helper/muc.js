@@ -3,7 +3,7 @@
 var Promise = require('bluebird'),
     ltx = require('ltx');
 
-var helper = require('./helper')
+var helper = require('./helper');
 
 function juliaCreateRoom (room, nick, done) {
     console.log('julia creates a new room');

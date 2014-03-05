@@ -69,7 +69,9 @@ function startServer() {
             dialect: 'sqlite',
             storage: './test.sqlite'
         });
-        s.initialize().then(function(storage){
+        s.initialize({
+            force: true
+        }).then(function(storage){
 
             // C2S Server 
             var cs2 = new C2SServer({});
@@ -144,6 +146,9 @@ function configureLoglevel(level) {
 }
 
 module.exports = {
+    'userRomeo':userRomeo,
+    'userBenvolio': userBenvolio,
+    'userJulia': userJulia,
     'configureLoglevel' : configureLoglevel,
     'startRomeo': startRomeo,
     'startJulia': startJulia,
