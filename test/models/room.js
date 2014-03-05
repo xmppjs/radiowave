@@ -165,7 +165,7 @@ describe('Model', function () {
                     }
                 }).success(function (user) {
 
-                    room.addUser(user, {
+                    room.addMember(user, {
                         role: 'participant',
                         affiliation: 'member',
                         nickname: 'ar1'
@@ -193,7 +193,7 @@ describe('Model', function () {
                     }
                 }).success(function (user) {
 
-                    room.addUser(user, {
+                    room.addMember(user, {
                         role: 'participant',
                         affiliation: 'member',
                         nickname: 'ar2'
@@ -328,6 +328,22 @@ describe('Model', function () {
 
         // should include own rooms as well
         it('room 1 should contain 1 message', function (done) {
+
+            // find all rooms where I participate
+            db.Room.find({
+                where: {
+                    name: 'room1'
+                }
+            }).success(function (room) {
+                room.getMessages().success(function (messages) {
+                    assert.equal(messages.length, 1);
+                    done();
+                });
+            });
+        });
+
+        // get all members of room 1
+        it('get all members of room 1', function (done) {
 
             // find all rooms where I participate
             db.Room.find({
