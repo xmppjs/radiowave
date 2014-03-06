@@ -4,6 +4,25 @@ var Promise = require('bluebird');
 
 module.exports = function (sequelize, DataTypes) {
 
+    /**
+     * @see http://xmpp.org/extensions/xep-0060.html#nodetypes
+     */
+    var NodeType = {
+        'Leaf' : 'leaf',
+        'Collection' : 'collection'
+    };
+
+    /**
+     * @see http://xmpp.org/extensions/xep-0060.html#accessmodels
+     */
+    var AccessModel = {
+        'Open' : 'open',
+        'Presence' : 'presence',
+        'Roaster' : 'roaster',
+        'Authorize' : 'authorize',
+        'Whitelist' : 'whitelist'
+    };
+
     var Channel = sequelize.define('Channel', {
         // name must be globally unique
         name: {
@@ -12,17 +31,37 @@ module.exports = function (sequelize, DataTypes) {
             validate: {
                 notNull: true
             }
+        },
+        nodetype: {
+            type: DataTypes.ENUM(
+                NodeType.Leaf,
+                NodeType.Collection
+            )
+        },
+        accessmodel : {
+            type: DataTypes.ENUM(
+                AccessModel.Open,
+                AccessModel.Presence,
+                AccessModel.Roaster,
+                AccessModel.Authorize,
+                AccessModel.Whitelist
+            )
         }
     }, {
         associate: function (models) {
+
             models.Channel.hasMany(models.User, {
-                through: models.ChannelSubsription,
+                through: models.ChannelSub,
                 as: 'Subscribers'
             });
             models.Channel.hasMany(models.Event);
-            models.Channel.hasMany(models.ChannelConfiguration, {
+            models.Channel.hasMany(models.ChannelConf, {
                 as: 'Configuration'
             });
+        },
+        classMethods: {
+            NodeType: NodeType,
+            AccessModel: AccessModel
         },
         instanceMethods: {
             subscribe: function (user, options) {

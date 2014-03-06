@@ -28,7 +28,7 @@ module.exports = function (sequelize, DataTypes) {
             models.User.hasMany(models.Room, { through: models.RoomMembers });
 
             // channels where a user is subscriber
-            models.User.hasMany(models.Channel, { through: models.ChannelSubscribers });
+            models.User.hasMany(models.Channel, { through: models.ChannelSub });
 
             // roaster
             models.User.hasMany(models.User, {as: 'Roaster' , through: models.Roaster});
