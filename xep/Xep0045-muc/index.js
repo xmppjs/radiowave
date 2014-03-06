@@ -40,10 +40,8 @@ util.inherits(Muc, XepComponent);
 
 Muc.prototype.name = 'XEP-0045: Multi-User Chat';
 
-
 Muc.prototype.Error = {};
 Muc.prototype.Error.NotFound = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-
 
 Muc.prototype.getDomain = function ()  {
     return this.subdomain + '.' + this.domain;
