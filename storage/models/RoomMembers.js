@@ -31,7 +31,7 @@ module.exports = function (sequelize, DataTypes) {
             type: DataTypes.ENUM(
                 Role.Moderator,
                 Role.Participant,
-                Role.Member,
+                Role.Visitor,
                 Role.None
             )
         },
