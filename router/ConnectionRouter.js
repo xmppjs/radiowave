@@ -3,7 +3,8 @@
 var util = require('util'),
     winston = require('winston'),
     logger = winston.loggers.get('connrouter'),
-    BaseRouter = require('./BaseRouter');
+    BaseRouter = require('./BaseRouter'),
+    Promise = require('bluebird');
 
 var JID = require('node-xmpp-core').JID,
     XmppVerify = require('../core/XmppVerify');
@@ -43,14 +44,17 @@ ConnectionRouter.prototype.findAuthMethod = function (method) {
 
 ConnectionRouter.prototype.verifyUser = function (opts) {
     logger.debug('verify user');
-    
-    this.storage.User
+    var self = this;
+    return new Promise(function(resolve, reject) {
+        self.storage.User
         .findOrCreate({
             jid: opts.jid.bare().toString()
         })
         .success(function (user, created) {
             console.log('USER created %s', user.jid);
+            resolve();
         });
+    });    
 };
 
 
@@ -80,10 +84,13 @@ ConnectionRouter.prototype.authenticate = function (opts, cb) {
                     }
                 }
                 
-                self.verifyUser(opts);
+                self.verifyUser(opts).then(function(){
+                    // call callback
+                    cb(null, opts); 
+                }).catch(function(err){
+                    cb('user verification failed');
+                });
 
-                // call callback
-                cb(null, opts);
             }).catch(function(err){
                 logger.debug('xmpp user authentication failed');
                 console.log('xmpp user authentication failed');
