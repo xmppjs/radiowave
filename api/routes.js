@@ -13,8 +13,7 @@ var channel = require('./Channel'),
     roomHooks = require('./Room-Hooks'),
     users = require('./Users'),
     orgs = require('./Orgs'),
-    publicRoutes = require ('./Public'),
-    lookup = require('./Lookup');
+    publicRoutes = require ('./Public');
 
 var routes = function (app, storage) {
     logger.info('register routes');
@@ -30,10 +29,6 @@ var routes = function (app, storage) {
     channel(app, storage);
     channelEvents(app, storage);
     channelSubscribers(app, storage);
-
-    // only for debugging
-    lookup(app, storage);
-
 };
 
 // Expose routes

@@ -9,14 +9,14 @@ var routes = function(app) {
     /**
      * trigger an event
      */
-    app.post('/api/channels/:owner/:channel/messages', function(req, res) {
+    app.post('/api/channels/:owner/:channel/events', function(req, res) {
         res.json({});
     });
 
     /**
      * List events for a channel
      */
-    app.get('/api/channels/:owner/:channel/messages', function(req, res) {
+    app.get('/api/channels/:owner/:channel/events', function(req, res) {
         res.json({});
     });
 

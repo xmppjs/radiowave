@@ -19,16 +19,7 @@ var routes = function (app, storage) {
 
         logger.debug('Get room: ' +  username + '/' + roomname);
         
-        Users.user(username).then(
-            function (user) {
-                return user.getRoom(roomname);
-            }).then(
-            function (room) {
-                res.json(roomToJson(room));
-            },
-            function (error) {
-                res.json(404, new ApiError(error));
-            });
+        res.json({});
     });
 
     /**

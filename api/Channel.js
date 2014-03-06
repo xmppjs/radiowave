@@ -6,7 +6,6 @@ var ApiError = require('./utils/ApiError'),
 
 var routes = function(app, storage) {
     logger.info('register channel routes');
-    var Users = storage.users;
 
     /**
      * Create a new channels for the authenticated user.
@@ -31,18 +30,7 @@ var routes = function(app, storage) {
 
         logger.debug('Get channel: ' +  username + '/' + channelname);
         
-        Users.user(username).then(
-            function (user) {
-                return user.getChannel(channelname);
-            }).then(
-            function (channel) {
-                // logger.debug('got channel' + JSON.stringify(channel));
-                logger.debug('got channel : ' + channelname);
-                res.json(channel);
-            },
-            function (error) {
-                res.json(404, new ApiError(error));
-            });
+        res.json({});
     });
 
     /**

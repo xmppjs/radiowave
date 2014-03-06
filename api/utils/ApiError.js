@@ -10,5 +10,4 @@ ApiError.prototype.toJSON = function () {
     };
 };
 
-
 module.exports = ApiError;
