@@ -18,23 +18,56 @@ util.inherits(NodeHandler, XepComponent);
 NodeHandler.prototype.Error = {};
 NodeHandler.prototype.Error.Conflict = ltx.parse('<error type=\'cancel\'><conflict xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
 
+
+/**
+ * set one configuration in a channel
+ */
+NodeHandler.prototype.setConfiguration = function (node, key, value) {
+    var self = this;
+    return new Promise(function(resolve, reject) {
+        node.getConfiguration({
+            where : {
+                key: key
+            }
+        }).success(function(conf) {
+            if (conf && conf.length === 1) {
+                var c = conf[0];
+                c.value = value;
+                c.save().success(resolve).error(reject);
+            } else {
+                self.storage.ChannelConf.create({ 
+                    key: key,
+                    value: value
+                }).success(function(conf) {
+                    node.addConfiguration(conf).success(resolve).error(reject);
+                });
+            }
+        });
+    });
+};
+
+
 /**
  * set the configuration into the node
  */
 NodeHandler.prototype.configureNode = function (node, configuration) {
     logger.debug('configureNode' + node);
+    var self = this;
     return new Promise(function(resolve, reject) {
         // no node found
         if (node) {
             var conf = configuration || [];
 
+            var promisses = [];
+
             // overwrite configuration
             for (var j = 0; j < conf.length; j++) {
                 logger.debug('set ' + node.name + ' key: ' + conf[j].key + ' ' + conf[j].value);
-                // node.setConfiguration(conf[j].key, conf[j].value);
+                promisses.push(self.setConfiguration(node, conf[j].key, conf[j].value));
             }
 
-            resolve();
+            Promise.all(promisses).then(resolve).catch(reject);
+
         } else {
             reject('node parameter is missing');
         }
@@ -119,7 +152,9 @@ NodeHandler.prototype.associateUser = function (channel, user, configuration) {
             affiliation: self.storage.ChannelSub.Affiliation.Owner,
             substate: self.storage.ChannelSub.SubState.Member
         }).success(function () {
+            console.log('start configuring node');
             self.configureNode(channel, configuration).then(function(){
+                console.log('node configured');
                 resolve(channel);
             }).catch(function(err){
                 reject(err);

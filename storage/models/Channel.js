@@ -99,9 +99,7 @@ module.exports = function (sequelize, DataTypes) {
                                     reject(err);
                                 });
                             }
-                        }).error(function(err){
-                            reject(err);
-                        });
+                        }).error(reject);
                     }
                 });
             },
@@ -132,9 +130,7 @@ module.exports = function (sequelize, DataTypes) {
                                 reject('no subscriber');
                             }
 
-                        }).error(function(err){
-                            reject(err);
-                        });
+                        }).error(reject);
                     }
                 });
             },
@@ -158,14 +154,8 @@ module.exports = function (sequelize, DataTypes) {
                         } else {
                             reject();
                         }
-                    }).error(function(err){
-                        reject(err);
-                    });
+                    }).error(reject);
                 });
-            },
-            setConfiguration: function () {
-                // TODO implement
-                return null;
             }
         }
     });

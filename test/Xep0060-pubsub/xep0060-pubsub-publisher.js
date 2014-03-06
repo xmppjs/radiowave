@@ -374,8 +374,14 @@ describe('Xep-0060', function () {
                     julia = results[0];
                     romeo = results[1];
                 })
-                // send message
                 .then(function () {
+                    // julia subscribes room
+                    var stanza = pub_helper.subscribeNodeStanza(helper.userJulia.jid, node);
+                    return helper.sendMessageWithJulia(stanza.root());
+                })
+                .then(function () {
+                    // send publish message
+                    console.log('romeo publish: '+ publish.root().toString());
                     romeo.send(publish);
                 })
                 .then(function (){
@@ -452,7 +458,10 @@ describe('Xep-0060', function () {
              * </message>
              */
             it('7.1.2.2 Notification Without Payload', function (done) {
+                console.log('7.1.2.2 Notification Without Payload');
                 this.timeout(5000);
+
+                var configNode = 'config_node';
 
                 // publish message
                 var publish = new ltx.Element('iq', {
@@ -462,7 +471,7 @@ describe('Xep-0060', function () {
                 }).c('pubsub', {
                     'xmlns': 'http://jabber.org/protocol/pubsub'
                 }).c('publish', {
-                    'node': 'config_node'
+                    'node': configNode
                 }).c('item', {
                     id: 'item_01'
                 }).t('abc');
@@ -474,8 +483,13 @@ describe('Xep-0060', function () {
                     julia = results[0];
                     romeo = results[1];
                 })
-                // send message
                 .then(function () {
+                    // julia subscribes room
+                    var stanza = pub_helper.subscribeNodeStanza(helper.userJulia.jid, configNode);
+                    return helper.sendMessageWithJulia(stanza.root());
+                })
+                .then(function () {
+                    // send message
                     romeo.send(publish);
                 })
                 .then(function (){
@@ -607,7 +621,7 @@ describe('Xep-0060', function () {
                 console.log('7.1.3.3 Node Does Not Exist');
 
                 // dependent on pubsub service configuration
-                var autocreate = true;
+                var autocreate = false;
 
                 var itemId = uuid.v4();
 
