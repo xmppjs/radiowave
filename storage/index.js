@@ -69,8 +69,8 @@ Storage.prototype.initialize = function (syncOpts) {
         // sync models with database
         sequelize.sync(syncOpts)
             .complete(function (err) {
-                logger.error(err);
                 if (err) {
+                    logger.error(err);
                     reject(err);
                 } else {
                     resolve(self);
