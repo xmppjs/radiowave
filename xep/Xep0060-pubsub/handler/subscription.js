@@ -9,7 +9,9 @@ var util = require('util'),
     NS = require('../namespace'),
     Iq = require('node-xmpp-core').Stanza.Iq;
 
-var SubscriptionHandler = function () {};
+var SubscriptionHandler = function (storage) {
+    this.storage = storage;
+};
 
 util.inherits(SubscriptionHandler, XepComponent);
 
@@ -37,10 +39,13 @@ SubscriptionHandler.prototype.handleSubscribe = function (user, node, stanza, su
         return;
     }
 
-    logger.debug('SUBSCRIBE: ' + subscriberJid.toString() + ' -> ' + node.name);
+    logger.debug('Subscribe ' + subscriberJid.toString() + ' to ' + node.name);
 
     // store new subscriber
-    node.subscribe(subscriberJid.bare().toString()).then(
+    node.subscribe(user, {
+        affiliation: self.storage.ChannelSub.Affiliation.Member,
+        substate: self.storage.ChannelSub.SubState.Subscribed
+    }).then(
         function () {
             // Success Case, send confirmation
             var msg = new Iq({
@@ -78,6 +83,7 @@ SubscriptionHandler.prototype.handleSubscribe = function (user, node, stanza, su
         function (err) {
             // error
             logger.error(err);
+            self.sendError(stanza, self.Error.BadRequest);
         }
     );
 };
@@ -104,7 +110,7 @@ SubscriptionHandler.prototype.handleUnsubscribe = function (user, node, stanza, 
 
     // unregister subscriber
     logger.debug('user' + fromJid.bare().toString() + ' unsubscribe the node');
-    node.unsubscribe(fromJid.bare().toString()).then(
+    node.unsubscribe(user).then(
         function () {
             self.sendSuccess(stanza);
         }).

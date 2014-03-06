@@ -110,6 +110,94 @@ function startServer() {
     return promise;
 }
 
+function sendMessageWithRomeo(stanza) {
+
+    return new Promise(function (resolve, reject) {
+        var romeo;
+
+        // start clients
+        Promise.all([startRomeo()]).then(function (results) {
+            console.log('romeo is online');
+            romeo = results[0];
+        })
+        // send message
+        .then(function () {
+            console.log('romeo send message: ' + stanza.toString());
+            romeo.send(stanza);
+        })
+        // wait for response
+        .then(function () {
+
+            return new Promise(function (recieve_resolve, recieve_reject) {
+                romeo.once('stanza', function (stanza) {
+                    console.log('romeo recieved: ' + stanza.toString());
+                    recieve_resolve(stanza);
+                });
+
+                romeo.on('error', function (error) {
+                    console.error(error);
+                    recieve_reject(error);
+                });
+
+            });
+
+        }).then(function (message) {
+            console.log('romeo logs out');
+            romeo.end();
+            resolve(message);
+        }).
+        catch (function (err) {
+            console.error(err);
+            romeo.end();
+            reject(err);
+        });
+    });
+}
+
+function sendMessageWithJulia(stanza) {
+
+    return new Promise(function (resolve, reject) {
+        var julia;
+
+        // start clients
+        Promise.all([startJulia()]).then(function (results) {
+            console.log('julia is online');
+            julia = results[0];
+        })
+        // send message
+        .then(function () {
+            console.log('julia send message: ' + stanza.toString());
+            julia.send(stanza);
+        })
+        // wait for response
+        .then(function () {
+
+            return new Promise(function (recieve_resolve, recieve_reject) {
+                julia.once('stanza', function (stanza) {
+                    console.log('julia recieved: ' + stanza.toString());
+                    recieve_resolve(stanza);
+                });
+
+                julia.on('error', function (error) {
+                    console.error(error);
+                    recieve_reject(error);
+                });
+
+            });
+
+        }).then(function (message) {
+            console.log('julia logs out');
+            julia.end();
+            resolve(message);
+        }).
+        catch (function (err) {
+            console.error(err);
+            julia.end();
+            reject(err);
+        });
+    });
+}
+
 function configureLoglevel(level) {
     console.log('configure xrocket logging');
 
@@ -154,4 +242,6 @@ module.exports = {
     'startJulia': startJulia,
     'startBenvolio': startBenvolio,
     'startServer': startServer,
+    'sendMessageWithRomeo' : sendMessageWithRomeo,
+    'sendMessageWithJulia' : sendMessageWithJulia
 };

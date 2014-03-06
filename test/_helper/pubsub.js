@@ -58,53 +58,10 @@ function subscribeNodeStanza(jid, node, id) {
     return subscribe;
 }
 
-function sendMessageWithRomeo(stanza) {
 
-    return new Promise(function (resolve, reject) {
-        var romeo;
-
-        // start clients
-        Promise.all([helper.startRomeo()]).then(function (results) {
-            console.log('romeo is online');
-            romeo = results[0];
-        })
-        // send message
-        .then(function () {
-            console.log('romeo send message: ' + stanza.toString());
-            romeo.send(stanza);
-        })
-        // wait for response
-        .then(function () {
-
-            return new Promise(function (recieve_resolve, recieve_reject) {
-                romeo.once('stanza', function (stanza) {
-                    console.log('romeo recieved: ' + stanza.toString());
-                    recieve_resolve(stanza);
-                });
-
-                romeo.on('error', function (error) {
-                    console.error(error);
-                    recieve_reject(error);
-                });
-
-            });
-
-        }).then(function (message) {
-            console.log('romeo logs out');
-            romeo.end();
-            resolve(message);
-        }).
-        catch (function (err) {
-            console.error(err);
-            romeo.end();
-            reject(err);
-        });
-    });
-}
 
 module.exports = {
     'createNodeStanza': createNodeStanza,
     'deleteNodeStanza': deleteNodeStanza,
-    'subscribeNodeStanza': subscribeNodeStanza,
-    'sendMessageWithRomeo' : sendMessageWithRomeo
+    'subscribeNodeStanza': subscribeNodeStanza
 };

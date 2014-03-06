@@ -99,6 +99,8 @@ NodeHandler.prototype.findOrCreateNode = function (nodename, user) {
                 }).catch(function(err){
                     reject(err);
                 });
+            } else {
+                resolve(channel);
             }
         }).error(function (err) {
             reject(err);
@@ -114,7 +116,8 @@ NodeHandler.prototype.associateUser = function (channel, user, configuration) {
     return new Promise(function(resolve, reject) {
         // add assiciation between room and user
         user.addChannel(channel, {
-            affiliation: 'owner',
+            affiliation: self.storage.ChannelSub.Affiliation.Owner,
+            substate: self.storage.ChannelSub.SubState.Member
         }).success(function () {
             self.configureNode(channel, configuration).then(function(){
                 resolve(channel);

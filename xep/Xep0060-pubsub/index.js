@@ -26,7 +26,7 @@ function PubSub(options) {
 
     XepComponent.call(this);
 
-    this.autoCreateChannel = true;
+    this.autoCreateChannel = false;
 
     this.storage = options.storage;
 
@@ -165,10 +165,13 @@ PubSub.prototype.findUser = function (jid) {
 };
 
 PubSub.prototype.findNode = function (nodename, user, doNotCreate) {
+    doNotCreate = doNotCreate || false;
     console.log('search for node: ' + nodename);
     if (this.autoCreateChannel && !doNotCreate) {
+        console.log('activate auto-create');
         return this.nodeHandler.findOrCreateNode(nodename, user);
     } else {
+        console.log('just find this node');
         return this.nodeHandler.findNode(nodename);
     }
 };
@@ -192,6 +195,7 @@ PubSub.prototype.handlePubSub = function (method, stanza, pubsubEl) {
             break;
         case 'subscribe':
             self.findNode(nodename, user).then(function(node){
+                console.log('found: ' + node);
                 if (node) {
                     self.subscriptionHandler.handleSubscribe(user, node, stanza, pubsubEl);
                 } else {
@@ -202,6 +206,7 @@ PubSub.prototype.handlePubSub = function (method, stanza, pubsubEl) {
             break;
         case 'unsubscribe':
             self.findNode(nodename, user, true).then(function(node){
+                console.log('found: ' + node);
                 if (node) {
                     self.subscriptionHandler.handleUnsubscribe(user, node, stanza, pubsubEl);
                 } else {
@@ -211,6 +216,7 @@ PubSub.prototype.handlePubSub = function (method, stanza, pubsubEl) {
             break;
         case 'publish':
             self.findNode(nodename, user).then(function(node){
+                console.log('found: ' + node);
                 if (node) {
                     self.publishHandler.handlePublish(user, node, stanza, pubsubEl);
                 } else {
@@ -220,6 +226,7 @@ PubSub.prototype.handlePubSub = function (method, stanza, pubsubEl) {
             break;
         case 'delete':
             self.findNode(nodename, user, true).then(function(node){
+                console.log('found: ' + node);
                 if (node) {
                     self.nodeHandler.handleDelete(user, node, stanza, pubsubEl);
                 } else {

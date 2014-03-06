@@ -69,7 +69,7 @@ module.exports = function (sequelize, DataTypes) {
                 return new Promise(function(resolve, reject) {
 
                     // verify parameters
-                    if (!user) {
+                    if (!user && !options && !options.affiliation && !options.substate) {
                         reject('wrong parameters');
                     } else {
                         // checkout if the current user is subscriber
@@ -85,8 +85,9 @@ module.exports = function (sequelize, DataTypes) {
                                 var channelSubscriber = users[0];
 
                                 // update data
-                                channelSubscriber.ChannelSubsription.affiliation = options.affiliation;
-                                channelSubscriber.ChannelSubsription.save();
+                                channelSubscriber.ChannelSub.affiliation = options.affiliation;
+                                channelSubscriber.ChannelSub.substate = options.substate;
+                                channelSubscriber.ChannelSub.save();
 
                                 resolve(channelSubscriber);
                             } else {
@@ -120,7 +121,13 @@ module.exports = function (sequelize, DataTypes) {
 
                             // user is already part of this room
                             if (users && users.length > 0) {
-                                self.removeSubscriber(users[0]);
+                                var channelSubscriber = users[0];
+
+                                channelSubscriber.ChannelSub.substate = 'none';
+                                channelSubscriber.ChannelSub.save();
+
+                                // self.removeSubscriber(users[0]);
+                                resolve();
                             } else {
                                 reject('no subscriber');
                             }

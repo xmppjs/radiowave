@@ -135,7 +135,7 @@ describe('Xep-0060', function () {
                 var id = 'newnode-r2d2';
                 var stanza = pub_helper.createNodeStanza(helper.userRomeo.jid, node, id );
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
                         assert.equal(stanza.attrs.type, 'result');
@@ -208,7 +208,7 @@ describe('Xep-0060', function () {
                     id: 'item_01'
                 }).t('abc').c('test').up().up().c('item');
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
 
@@ -245,7 +245,7 @@ describe('Xep-0060', function () {
                     'node': node
                 }).c('item', {});
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
 
@@ -259,7 +259,7 @@ describe('Xep-0060', function () {
                         var item = publish.getChild('item');
                         item.should.not.be.empty;
 
-                        assert.equal(item.attrs.id, 'item_01');
+                        should.exist(item.attrs.id);
 
                         done();
                     } catch(err) {
@@ -288,7 +288,7 @@ describe('Xep-0060', function () {
                     id: 'item_02'
                 });
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
 
@@ -379,6 +379,7 @@ describe('Xep-0060', function () {
                     romeo.send(publish);
                 })
                 .then(function (){
+                    console.log('WAIT');
                     return new Promise(function (resolve) {
                         julia.once('stanza', function(stanza){
                             resolve(stanza);
@@ -427,7 +428,7 @@ describe('Xep-0060', function () {
                     'node': 'config_node'
                 }).up().c('configure').cnode(config);
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
                         assert.equal(stanza.attrs.type, 'result');
@@ -516,7 +517,7 @@ describe('Xep-0060', function () {
                 var id = 'delete_node_id';
                 var stanza = pub_helper.deleteNodeStanza(helper.userRomeo.jid, 'config_node', id );
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
                         assert.equal(stanza.attrs.type, 'result');
@@ -622,7 +623,7 @@ describe('Xep-0060', function () {
                     id: itemId
                 }).t('abc');
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
 
@@ -838,7 +839,7 @@ describe('Xep-0060', function () {
 
                 var stanza = pub_helper.deleteNodeStanza(helper.userRomeo.jid, node);
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
 
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());

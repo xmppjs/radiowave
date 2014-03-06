@@ -70,7 +70,7 @@ describe('Xep-0060', function () {
                 var id = 'newnode-r2d2';
                 var stanza = pub_helper.createNodeStanza(helper.userRomeo.jid, 'princely_musings', id );
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
                         assert.equal(stanza.attrs.type, 'result');
@@ -100,7 +100,7 @@ describe('Xep-0060', function () {
 
                 var stanza = pub_helper.createNodeStanza(helper.userRomeo.jid, 'princely_musings', id );
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
 
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
@@ -159,7 +159,7 @@ describe('Xep-0060', function () {
                     'xmlns': 'http://jabber.org/protocol/pubsub'
                 }).c('create');
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
 
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
@@ -187,7 +187,7 @@ describe('Xep-0060', function () {
             it('Postcondition: delete test node with generated name', function (done) {
                 var stanza = pub_helper.deleteNodeStanza(helper.userRomeo.jid, generatednodename);
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
 
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
@@ -263,7 +263,7 @@ describe('Xep-0060', function () {
                     'node': 'princely_musings_config'
                 }).up().c('configure').cnode(config);
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
 
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
@@ -283,7 +283,7 @@ describe('Xep-0060', function () {
             it('Postcondition: delete test node princely_musings_config', function (done) {
                 var stanza = pub_helper.deleteNodeStanza(helper.userRomeo.jid, 'princely_musings_config');
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
 
@@ -341,7 +341,7 @@ describe('Xep-0060', function () {
                 });
 
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
 
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
@@ -410,7 +410,7 @@ describe('Xep-0060', function () {
                     'node': 'princely_musings'
                 });
 
-                pub_helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
                     try {
 
                         assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
