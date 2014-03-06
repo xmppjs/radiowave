@@ -1,7 +1,7 @@
 {
   "name": "xrocketd",
   "description": "lightweight xmpp server library",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": true,
   "main": "xrocket.js",
   "bin": {
@@ -15,21 +15,21 @@
     "node-uuid": "1.4.1",
     "winston": "0.7.2",
     "winston-posix-syslog": "git+https://github.com/chris-rock/winston-posix-syslog.git#tests",
-    "strip-json-comments" : "~0.1.1",
-    "sequelize" : "~1.7.0",
+    "strip-json-comments": "~0.1.1",
+    "sequelize": "~1.7.0",
     "pg": "2.8.2",
     "bluebird": "~1.0.0",
     "ldapjs": "0.7.0",
-    "superagent" : "~0.15.7",
+    "superagent": "~0.15.7",
     "nconf": "~0.6.8",
-    "express" : "3.x.x",
+    "express": "3.x.x",
     "passport": "~0.2.0",
     "passport-http-bearer": "~1.0.1",
     "passport-http": "~0.2.2",
     "pem": "1.2.2",
     "socket.io": "0.9.x",
     "ws": "0.4.31",
-    "uuid" : "1.4.1"
+    "uuid": "1.4.1"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
