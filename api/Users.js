@@ -35,6 +35,23 @@ var routes = function (app, storage) {
         var username = getUsername(req);
         var usr = null;
 
+        var type = req.query.type; // all, owner, member.
+        type  = type || 'all';
+
+        var affiliation = [];
+        switch (type) {
+            case 'owner' : 
+                affiliation.push(storage.RoomMembers.Affiliation.Owner);
+            break;
+            case 'member' : 
+                affiliation.push(storage.RoomMembers.Affiliation.Member);
+            break;
+            default : // all 
+                affiliation.push(storage.RoomMembers.Affiliation.Owner);
+                affiliation.push(storage.RoomMembers.Affiliation.Member);
+            break;
+        }
+
         console.log(JSON.stringify(req.user));
 
         var jid = username + '@example.net';
@@ -50,7 +67,7 @@ var routes = function (app, storage) {
                 // Owner as default affiliation
                 user.getRooms({
                     where: {
-                        affiliation: [storage.RoomMembers.Affiliation.Owner]
+                        affiliation: affiliation
                     }
                 }).success(function (ownerRooms) {
                     res.json(ownerRooms);
