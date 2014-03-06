@@ -36,17 +36,21 @@ Starter.prototype.start = function(filepath) {
         self.xrsettings = settings;
     })
         .then(function () {
-            // load connection manager
-            logger.debug('load connection manger');
-            return self.cm.load(self.xR, self.xrsettings);
-        })
-        .then(function () {
             // load storage module
             logger.debug('load storage module');
             return self.storage.load(self.xrsettings);
         })
         .then(function (sto) {
             self.xrstorage = sto;
+        })
+        .then(function () {
+            // initialize connection router
+            self.xR.addConnectionRouter(new xRocket.Router.ConnectionRouter(self.xrstorage));
+        })
+        .then(function () {
+            // load connection manager
+            logger.debug('load connection manger');
+            return self.cm.load(self.xR, self.xrsettings, self.xrstorage);
         })
         .then(function () {
             // load xep modules

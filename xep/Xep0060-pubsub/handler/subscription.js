@@ -9,38 +9,43 @@ var util = require('util'),
     NS = require('../namespace'),
     Iq = require('node-xmpp-core').Stanza.Iq;
 
-var SubscriptionHandler = function () {};
+var SubscriptionHandler = function (storage) {
+    this.storage = storage;
+};
 
 util.inherits(SubscriptionHandler, XepComponent);
 
+SubscriptionHandler.prototype.Error = {};
+SubscriptionHandler.prototype.Error.NotSubscribed = ltx.parse('<error type=\'cancel\'><unexpected-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><not-subscribed xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
+SubscriptionHandler.prototype.Error.BadRequest = ltx.parse('<error type=\'modify\'><bad-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><invalid-jid xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
 /**
- * @description subscribes a new jiid
+ * @description subscribes a new jid
  * @param stanza full pubsub message stanza
  * @param pubsub already extracted pubsub child node
  * @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe
  */
-SubscriptionHandler.prototype.handleSubscribe = function (node, stanza, sub) {
+SubscriptionHandler.prototype.handleSubscribe = function (user, node, stanza, subcribeEl) {
     logger.debug('handleSubscribe');
     var self = this;
-    var jid = sub.attrs.jid;
-
-    var from = new JID(stanza.attrs.from);
-    var subscriber = new JID(sub.attrs.jid);
+    
+    var fromJid = new JID(stanza.attrs.from);
+    var subscriberJid = new JID(subcribeEl.attrs.jid);
 
     // check that jids match
-    if (!from.bare().equals(subscriber.bare())) {
-        logger.error('subscriptions jids do not match : ' + from.toString() + ' != ' + subscriber.toString());
+    if (!fromJid.bare().equals(subscriberJid.bare())) {
+        logger.error('subscriptions jids do not match : ' + fromJid.toString() + ' != ' + subscriberJid.toString());
         // this is a wrong stanza
-        var errorXml = ltx.parse('<error type=\'modify\'><bad-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><invalid-jid xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
-        this.sendError(stanza, errorXml);
+        this.sendError(stanza, self.Error.BadRequest);
         return;
     }
 
-    // check that node exists
-    logger.debug('SUBSCRIBE: ' + jid + ' -> ' + node.getName());
+    logger.debug('Subscribe ' + subscriberJid.toString() + ' to ' + node.name);
 
     // store new subscriber
-    node.subscribe(subscriber.bare().toString()).then(
+    node.subscribe(user, {
+        affiliation: self.storage.ChannelSub.Affiliation.Member,
+        substate: self.storage.ChannelSub.SubState.Subscribed
+    }).then(
         function () {
             // Success Case, send confirmation
             var msg = new Iq({
@@ -55,8 +60,8 @@ SubscriptionHandler.prototype.handleSubscribe = function (node, stanza, sub) {
             msg.c('pubsub', {
                 'xmlns': NS.PUBSUB
             }).c('subscription', {
-                'node': sub.attrs.node,
-                'jid': sub.attrs.jid,
+                'node': subcribeEl.attrs.node,
+                'jid': subcribeEl.attrs.jid,
                 'subscription': 'subscribed'
             });
 
@@ -69,15 +74,16 @@ SubscriptionHandler.prototype.handleSubscribe = function (node, stanza, sub) {
              * @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe-last
              */
             /*node.eachMessage(function (el) {
-        el.attrs.to = sub.attrs.jid;
-        // route message
-        this.send(el, null);
-    });*/
+                el.attrs.to = sub.attrs.jid;
+                // route message
+                this.send(el, null);
+            });*/
         }).
     catch (
         function (err) {
             // error
             logger.error(err);
+            self.sendError(stanza, self.Error.BadRequest);
         }
     );
 };
@@ -88,32 +94,29 @@ SubscriptionHandler.prototype.handleSubscribe = function (node, stanza, sub) {
  * @param pubsub already extracted pubsub child node
  * @see http://xmpp.org/extensions/xep-0060.html#subscriber-unsubscribe
  */
-SubscriptionHandler.prototype.handleUnsubscribe = function (node, stanza, unsubscribe) {
+SubscriptionHandler.prototype.handleUnsubscribe = function (user, node, stanza, unsubscribeEl) {
     logger.debug('handleUnsubscribe');
     var self = this;
-    var errorXml = null;
 
-    var userjid = new JID(stanza.attrs.from);
-    var subscriber = new JID(unsubscribe.attrs.jid);
+    var fromJid = new JID(stanza.attrs.from);
+    var subscriberJid = new JID(unsubscribeEl.attrs.jid);
 
     // check that jids match
-    if (!userjid.bare().equals(subscriber)) {
+    if (!fromJid.bare().equals(subscriberJid)) {
         // this is a wrong stanza
-        errorXml = ltx.parse('<error type=\'modify\'><bad-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><invalid-jid xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
-        this.sendError(stanza, errorXml);
+        this.sendError(stanza, self.Error.BadRequest);
         return;
     }
 
     // unregister subscriber
-    logger.debug('user' + userjid.bare() + ' unsubscribe the node');
-    node.unsubscribe(userjid.bare().toString()).then(
+    logger.debug('user' + fromJid.bare().toString() + ' unsubscribe the node');
+    node.unsubscribe(user).then(
         function () {
             self.sendSuccess(stanza);
         }).
     catch (
         function () {
-            errorXml = ltx.parse('<error type=\'cancel\'><unexpected-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><not-subscribed xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
-            self.sendError(stanza, errorXml);
+            self.sendError(stanza, self.Error.NotSubscribed);
         });
 };
 

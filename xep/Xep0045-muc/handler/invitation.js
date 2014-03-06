@@ -42,7 +42,7 @@ util.inherits(InvitationHandler, XepComponent);
  *   </x>
  * </message>
  */
-InvitationHandler.prototype.invite = function (room, stanza, x) {
+InvitationHandler.prototype.invite = function (room, user, stanza, x) {
 
     // extract content
     var roomjid = new JID(stanza.attrs.to);

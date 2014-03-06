@@ -6,6 +6,6 @@ module.exports = {
     Auth :require('./auth'),
     Net : require('./net'),
     XRocket : require('./core/XRocket'),
-    Storage : require('./storage/in-memory'),
+    Storage : require('./storage'),
     Api : require('./api/routes')
 };

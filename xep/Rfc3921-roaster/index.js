@@ -19,22 +19,20 @@ function Roaster(options) {
         options = {};
     }
 
-    // initialize storage options
-    if (!options.storage) {
-        options.storage = {};
-    }
-
     this.options = options;
 
     XepComponent.call(this);
 
-    this.Users = options.storage.users;
+    this.storage = options.storage;
 }
 util.inherits(Roaster, XepComponent);
 
 Roaster.prototype.name = 'RFC 3921: Roaster';
-
 Roaster.prototype.version = '0.1.0';
+
+Roaster.prototype.Error = {
+    NotFound: ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>')
+};
 
 Roaster.prototype.initialize = function () {
 };
@@ -75,7 +73,7 @@ Roaster.prototype.convertXMLtoJSON = function (xmlItem) {
     for (var i = 0; i < groups.length; i++) {
         groupItems.push(groups[i].getText());
     }
-    item.groups = groupItems;
+    item.group = JSON.stringify(groupItems);
 
     logger.debug("ITEM:" + JSON.stringify(item));
 
@@ -92,14 +90,21 @@ Roaster.prototype.convertJSONtoXML = function (jsonList) {
 
         var xitem = query.c('item', {
             jid: item.jid,
-            name: item.name,
-            subscription: item.subscription
+            name: item.Roaster.name,
+            subscription: item.Roaster.subscription
         });
 
         // iterate over group items
-        for (var j = 0; j < item.groups.length; j++) {
-            console.log(item.groups[j]);
-            xitem.c('group').t(item.groups[j]);
+        if (item.Roaster.group) {
+            try {
+                var groups = JSON.parse(item.Roaster.group);
+                for (var j = 0; j < groups.length; j++) {
+                    console.log(groups[j]);
+                    xitem.c('group').t(groups[j]);
+                }
+            } catch(err) {
+
+            }
         }
     }
     return query;
@@ -112,33 +117,39 @@ Roaster.prototype.handleGetRoaster = function (stanza) {
     var self = this;
     var jid = new JID(stanza.attrs.from).bare();
 
-    var username = jid.getLocal();
-    this.Users.user(username).then(
-        function (user) {
-            return user.listContacts();
-        }).then(
-        function (list) {
-            var roasterResult = new ltx.Element('iq', {
-                from: stanza.attrs.to,
-                to: stanza.attrs.from,
-                id: stanza.attrs.id,
-                type: 'result'
+    this.storage.User.find({
+            where: {
+                jid: jid.toString()
+            }
+        }).success(function(user) {
+            console.log('roaster user: '+ JSON.stringify(user));
+            user.getRoaster().success(function(list){
+                console.log('roaster entries: ' + JSON.stringify(list));
+
+                var roasterResult = new ltx.Element('iq', {
+                    from: stanza.attrs.to,
+                    to: stanza.attrs.from,
+                    id: stanza.attrs.id,
+                    type: 'result'
+                });
+
+                if (!list) {
+                    list = [];
+                }
+
+                roasterResult.cnode(self.convertJSONtoXML(list));
+                logger.debug(roasterResult.toString());
+                logger.debug('send roaster to ' + stanza.attrs.from);
+                self.send(roasterResult);
+
+            }).error(function(err){
+                logger.error(err);
+                self.sendError(stanza);
             });
 
-            if (!list) {
-                list = [];
-            }
-            roasterResult.cnode(self.convertJSONtoXML(list));
-            logger.debug(roasterResult.toString());
-            logger.debug('send roaster to ' + stanza.attrs.from);
-            self.send(roasterResult);
-        }).then(
-        function () {},
-        function (err) {
-            logger.debug('ERROR' + err);
-            // channel does not exist
-            var errorXml = ltx.parse('<error type=\'cancel\'><item-not-found xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/></error>');
-            self.sendError(stanza, errorXml);
+        }).error(function(err){
+            logger.error(err);
+            self.sendError(stanza);
         });
 };
 
@@ -155,7 +166,7 @@ Roaster.prototype.sendOk = function (stanza) {
 };
 
 Roaster.prototype.sendError = function (stanza, err) {
-    logger.error(err.stack);
+    logger.error(err);
     var roasterResult = new ltx.Element('iq', {
         from: stanza.attrs.to,
         to: stanza.attrs.from,
@@ -190,31 +201,54 @@ Roaster.prototype.handleUpdateRoasterItem = function (stanza, item) {
     try {
         var self = this;
         var jid = new JID(stanza.attrs.from).bare();
-        var jsonitem = this.convertXMLtoJSON(item);
+        var roasteritem = this.convertXMLtoJSON(item);
         logger.debug(item.toString());
-        logger.debug(JSON.stringify(jsonitem));
-        if (!this.verifyItem(jsonitem)) {
+        logger.debug(JSON.stringify(roasteritem));
+        if (!this.verifyItem(roasteritem)) {
             throw new Error('roaster item not properly set');
         }
 
-        var username = jid.getLocal();
-        this.Users.user(username).then(
-            function (user) {
-                return user.addOrUpdateContact(jsonitem.jid, jsonitem);
-            }).then(
-            function () {
-                self.sendOk(stanza);
-            }).then(
-            function () {},
-            function (err) {
-                logger.error(err);
+        this.storage.User.find({
+            where: {
+                jid: jid.toString()
+            }
+        }).success(function(user) {
+            if (user) {
+                // search friend:
+                self.storage.User.find({
+                    where: {
+                        jid: roasteritem.jid
+                    }
+                }).success(function (friend) {
+
+                    if (friend) {
+                        // extract from roasteritem
+                        user.addRoaster(friend, {name: roasteritem.name, group: roasteritem.group, subscription: 'none'}).success(function(){
+                            self.sendOk(stanza);
+                        });
+                    } else {
+                        self.sendError(stanza);
+                    }
+                }).error(function(err){
+                    self.sendError(stanza);
+                });
+
+            } else {
                 self.sendError(stanza);
-            });
+            }
+
+        }).error(function(err){
+            logger.error(err);
+            self.sendError(stanza);
+        });
 
     } catch (err) {
         self.sendError(stanza, err);
     }
 };
+
+                
+
 
 /**
  * Deletes a roaster item
@@ -223,25 +257,46 @@ Roaster.prototype.handleDeleteRoasterItem = function (stanza, item) {
     try {
         var self = this;
         var jid = new JID(stanza.attrs.from).bare();
-        var jsonitem = this.convertXMLtoJSON(item);
+        var roasteritem = this.convertXMLtoJSON(item);
 
-        if (!this.verifyItem(jsonitem)) {
+        if (!this.verifyItem(roasteritem)) {
             throw new Error('roaster item not properly set');
         }
 
-        var username = jid.getLocal();
-        this.Users.user(username).then(
-            function (user) {
-                return user.removeContact(jsonitem.jid);
-            }).then(
-            function () {
-                self.sendOk(stanza);
-            }).then(
-            function () {},
-            function (err) {
-                logger.error(err);
+        this.storage.User.find({
+            where: {
+                jid: jid.toString()
+            }
+        }).success(function(user) {
+            if (user) {
+                // search friend:
+                self.storage.User.find({
+                    where: {
+                        jid: roasteritem.jid
+                    }
+                }).success(function (friend) {
+
+                    if (friend) {
+                        // extract from roasteritem
+                        user.removeRoaster(friend).success(function(){
+                            self.sendOk(stanza);
+                        });
+                    } else {
+                        self.sendError(stanza);
+                    }
+                }).error(function(err){
+                    logger.error(err);
+                    self.sendError(stanza);
+                });
+
+            } else {
                 self.sendError(stanza);
-            });
+            }
+        }).error(function(err){
+            logger.error(err);
+            self.sendError(stanza);
+        });
+
     } catch (err) {
         self.sendError(stanza, err);
     }

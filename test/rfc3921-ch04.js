@@ -3,142 +3,69 @@
 // assertion
 var assert = require('assert'),
     should = require('should'),
+    Promise = require('bluebird'),
+    ltx = require('ltx'),
     helper = require('./_helper/helper');
 
 // logging
 helper.configureLoglevel('silly');
 
-// xmpp client
-var ltx = require('ltx'),
-    Client = require('node-xmpp-client'),
-    Message = require('node-xmpp-core').Stanza.Message;
-
-// x rocket server
-var XRocket = require('../core/XRocket'),
-    Simple = require('../auth/Simple'),
-    C2SServer = require('xrocketd-cm').Net.C2SServer;
-
-// SASL Methods
-var Plain = require('node-xmpp-server/lib/authentication/plain');
-
 // Xep Components
-var ComponentRouter = require('../router/ComponentRouter'),
-    Rfc3921Messaging = require('../xep/Rfc3921-messaging');
+var Rfc3921Messaging = require('../xep/Rfc3921-messaging');
 
-// user
-var userRomeo = {
-    jid: 'romeo@example.net',
-    password: 'romeo',
-    host: 'localhost'
-};
-
-var userJulia = {
-    jid: 'julia@example.net',
-    password: 'julia',
-    host: 'localhost'
-};
-
-function getClientRomeo() {
-    var cl = new Client({
-        jid: userRomeo.jid,
-        password: userRomeo.password,
-        preferred: 'PLAIN',
-        host: userRomeo.host
-    });
-    return cl;
+function configureXEP(server) {
+    // register messaging component
+    server.cr.register(new Rfc3921Messaging());
 }
 
-function getClientJulia() {
-    var cl = new Client({
-        jid: userJulia.jid,
-        password: userJulia.password,
-        preferred: 'PLAIN',
-        host: userJulia.host
-    });
-    return cl;
+function generateMessage (to, from) {
+    var el = ltx.parse("<message to='" + to + "' from='" + from + "' type='chat' xml:lang='en'></message>");
+    return el.root();
+}
+
+function sendMessageFromJuliaToRomeo (stanza) {
+    return new Promise(function(resolve, reject) {
+        var julia, romeo = null;
+        
+        // start clients
+        Promise.all([helper.startJulia(), helper.startRomeo()]).then(function (results) {
+            julia = results[0];
+            romeo = results[1];
+        })
+        .then(function () {
+            // send publish message
+            console.log('julia send: '+ stanza.root().toString());
+            julia.send(stanza);
+        })
+        .then(function (){
+            romeo.once('stanza', function(stanza){
+                resolve(stanza);
+            });
+        }).catch(reject);     
+    })
 }
 
 describe('Rfc3921', function () {
     describe('Messaging', function () {
 
-        var xR = null;
-        var clJulia = null;
-        var clRomeo = null;
-
-        function setUpServer(done) {
-            // C2S Server 
-            var cs2 = new C2SServer({});
-            cs2.registerSaslMechanism(Plain);
-
-            // attach connection manager to xrocket
-            xR = new XRocket();
-            xR.addConnectionManager(cs2);
-
-            // register users
-            var simpleAuth = new Simple();
-            simpleAuth.addUser('romeo', 'romeo');
-            simpleAuth.addUser('julia', 'julia');
-            xR.connectionRouter.authMethods.push(simpleAuth);
-
-            // register xep component
-            var cr = new ComponentRouter({
-                domain: 'example.net'
-            });
-
-            // chain XRocket to ComponentRouter
-            xR.chain(cr);
-
-            // register messaging component
-            cr.register(new Rfc3921Messaging());
-
-            done();
-        }
-
-        function sendMessage(message, check) {
-
-            clRomeo.on('stanza',
-                function (stanza) {
-                    if (stanza.is('message')) {
-                        check(null, stanza);
-                    } else {
-                        check('wrong stanza ' + stanza.root().toString());
-                    }
-                });
-
-            clJulia.on('online', function () {
-                clJulia.send(message);
-            });
-
-            clJulia.on('error', function (e) {
-                console.error(e);
-                check(e);
-            });
-
-            clRomeo.on('error', function (e) {
-                console.error(e);
-                check(e);
-            });
-
-        }
+        var srv = null;
 
         before(function (done) {
-            setUpServer(done);
+            helper.startServer()
+            // configure muc module
+            .then(function (server) {
+                srv = server;
+                configureXEP(server);
+                done();
+            })
+                .
+            catch (function (err) {
+                done(err);
+            });
         });
 
         after(function (done) {
-            xR.shutdown();
-            done();
-        });
-
-        beforeEach(function (done) {
-            clJulia = getClientJulia();
-            clRomeo = getClientRomeo();
-            done();
-        });
-
-        afterEach(function (done) {
-            clJulia.end();
-            clRomeo.end();
+            srv.xR.shutdown();
             done();
         });
 
@@ -155,15 +82,23 @@ describe('Rfc3921', function () {
          *
          */
         it('4.2. Specifying a Message Type', function (done) {
-            var el = ltx.parse("<message to='" + userRomeo.jid + "' from='" + userJulia + "' type='chat' xml:lang='en'></message>");
+            
+            var stanza = generateMessage(helper.userRomeo.jid, helper.userJulia.jid );
             var body = ltx.parse("<body>Wherefore art thou, Romeo?</body>");
-            el.cnode(body);
-            sendMessage(el, function (err, stanza) {
-                should.not.exist(err);
-                var responseBody = stanza.getChild('body');
-                assert.equal(body.toString(), responseBody.toString());
-                done();
+            stanza.cnode(body);
+
+            sendMessageFromJuliaToRomeo(stanza).then(function(message){
+                try {
+                    var responseBody = message.getChild('body');
+                    assert.equal(body.toString(), responseBody.toString());
+                    done();
+                } catch(err) {
+                    done(err);
+                }
+            }).catch(function(err){
+                done(err);
             });
+           
         });
 
         /**
@@ -180,18 +115,27 @@ describe('Rfc3921', function () {
          *
          */
         it('4.3. Specifying a Message Body', function (done) {
-            var el = ltx.parse("<message to='" + userRomeo.jid + "' from='" + userJulia + "' type='chat' xml:lang='en'></message>");
+            
+            var stanza = generateMessage(helper.userRomeo.jid, helper.userJulia.jid );
+
             var body = ltx.parse("<body>Wherefore art thou, Romeo?</body>");
             var body2 = ltx.parse("<body xml:lang='cz'>Pro&#x010D;e&#x017D; jsi ty, Romeo?</body>");
-            el.cnode(body);
-            el.cnode(body2);
-            sendMessage(el, function (err, stanza) {
-                should.not.exist(err);
-                var responseBody = stanza.getChildren('body');
-                assert.equal(body.toString(), responseBody[0].toString());
-                assert.equal(body2.toString(), responseBody[1].toString());
-                done();
+            stanza.cnode(body);
+            stanza.cnode(body2);
+
+            sendMessageFromJuliaToRomeo(stanza).then(function(message){
+                try {
+                    var responseBody = message.getChildren('body');
+                    assert.equal(body.toString(), responseBody[0].toString());
+                    assert.equal(body2.toString(), responseBody[1].toString());
+                    done();
+                } catch(err) {
+                    done(err);
+                }
+            }).catch(function(err){
+                done(err);
             });
+
         });
 
         /**
@@ -211,28 +155,36 @@ describe('Rfc3921', function () {
          *
          */
         it('4.4. Specifying a Message Subject', function (done) {
-            var el = ltx.parse("<message to='" + userRomeo.jid + "' from='" + userJulia + "' type='chat' xml:lang='en'></message>");
+
+            var stanza = generateMessage(helper.userRomeo.jid, helper.userJulia.jid );
+
             var subject = ltx.parse("<subject>I implore you!</subject>");
             var subject2 = ltx.parse("<subject xml:lang='cz'>&#x00DA;p&#x011B;nliv&#x011B; prosim!</subject>");
-            el.cnode(subject);
-            el.cnode(subject2);
+            stanza.cnode(subject);
+            stanza.cnode(subject2);
 
             var body = ltx.parse("<body>Wherefore art thou, Romeo?</body>");
             var body2 = ltx.parse("<body xml:lang='cz'>Pro&#x010D;e&#x017D; jsi ty, Romeo?</body>");
-            el.cnode(body);
-            el.cnode(body2);
-            sendMessage(el, function (err, stanza) {
-                should.not.exist(err);
+            stanza.cnode(body);
+            stanza.cnode(body2);
 
-                var responseSubject = stanza.getChildren('subject');
-                assert.equal(subject.toString(), responseSubject[0].toString());
-                assert.equal(subject2.toString(), responseSubject[1].toString());
+            sendMessageFromJuliaToRomeo(stanza).then(function(message){
+                try {
+                    var responseSubject = message.getChildren('subject');
+                    assert.equal(subject.toString(), responseSubject[0].toString());
+                    assert.equal(subject2.toString(), responseSubject[1].toString());
 
-                var responseBody = stanza.getChildren('body');
-                assert.equal(body.toString(), responseBody[0].toString());
-                assert.equal(body2.toString(), responseBody[1].toString());
-                done();
+                    var responseBody = message.getChildren('body');
+                    assert.equal(body.toString(), responseBody[0].toString());
+                    assert.equal(body2.toString(), responseBody[1].toString());
+                    done();
+                } catch(err) {
+                    done(err);
+                }
+            }).catch(function(err){
+                done(err);
             });
+
         });
 
         /**
@@ -266,19 +218,29 @@ describe('Rfc3921', function () {
          */
         it('4.5. Specifying a Conversation Thread', function (done) {
 
-            var el = ltx.parse("<message to='" + userRomeo.jid + "' from='" + userJulia + "' type='chat' xml:lang='en'></message>");
+            var stanza = generateMessage(helper.userRomeo.jid, helper.userJulia.jid );
+
             var body = ltx.parse("<body>Wherefore art thou, Romeo?</body>");
             var thread = ltx.parse("<thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>");
-            el.cnode(body);
-            el.cnode(thread);
-            sendMessage(el, function (err, stanza) {
-                should.not.exist(err);
-                var responseBody = stanza.getChild('body');
-                assert.equal(body.toString(), responseBody.toString());
-                var responseThread = stanza.getChild('thread');
-                assert.equal(thread.toString(), responseThread.toString());
-                done();
+            stanza.cnode(body);
+            stanza.cnode(thread);
+
+            sendMessageFromJuliaToRomeo(stanza).then(function(message){
+                try {
+
+                    var responseBody = message.getChild('body');
+                    assert.equal(body.toString(), responseBody.toString());
+                    var responseThread = message.getChild('thread');
+                    assert.equal(thread.toString(), responseThread.toString());
+                    done();
+
+                } catch(err) {
+                    done(err);
+                }
+            }).catch(function(err){
+                done(err);
             });
+
         });
     });
 });

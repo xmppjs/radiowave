@@ -1,0 +1,70 @@
+{
+    "domain": "example.net",
+    "environment": "development",
+    "modules": [{
+        "type": "Rfc3921Roaster"
+    }, {
+        "type": "Rfc3921Messaging"
+    }, {
+        "type": "Xep0045",
+        "subdomain": "chat"
+    }, {
+        "type": "Xep0060",
+        "subdomain": "pubsub"
+    }, {
+        "type": "Xep0030"
+    }, {
+        "type": "Xep0092"
+    }, {
+        "type": "Xep0199"
+    }, {
+        "type": "Xep0307"
+    }],
+    "connection": [{
+        "type": "tcp",
+        "port": 5222,
+        "interface": "0.0.0.0"
+    }, {
+        "type": "bosh",
+        "port": 8888,
+        "path": "http-bind",
+        "interface": "0.0.0.0"
+    }, {
+        "type": "websocket",
+        "port": 42426,
+        "interface": "0.0.0.0"
+
+    }, {
+        "type": "socketio",
+        "port": 8888,
+        "interface": "0.0.0.0"
+    }],
+    "auth": [{
+        "type": "simple",
+        "testusers" : true,
+        "users": [{
+            "user": "romeo",
+            "password": "romeo"
+        }, {
+            "user": "mercutio",
+            "password": "mercutio"
+        }, {
+            "user": "benvolio",
+            "password": "benvolio"
+        }]
+    }],
+    "storage": {
+        "dialect" : "sqlite",
+        "user": "username",
+        "password" : "password",
+        "database": "database",
+        "storage": "./database.sqlite"
+    },
+    "api": {
+        "activate": true,
+        "port": 8888,
+        "cors": {
+            "hosts": ["http://localhost", "http://example.net"]
+        }
+    }
+}

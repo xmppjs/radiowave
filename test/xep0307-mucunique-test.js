@@ -3,91 +3,41 @@
 // assertion
 var assert = require('assert'),
     should = require('should'),
+    Promise = require('bluebird'),
+    ltx = require('ltx'),
     helper = require('./_helper/helper');
 
 // logging
 helper.configureLoglevel('silly');
 
-// xmpp client
-var ltx = require('ltx'),
-    Client = require('node-xmpp-client'),
-    Message = require('node-xmpp-core').Stanza.Message,
-    C2SServer = require('xrocketd-cm').Net.C2SServer;
-
-// x rocket server
-var xRocket = require('../xrocket');
-
 // Xep Components
 var Xep0307 = require('../xep/Xep0307-mucunique');
 
-// user
-var user = {
-    jid: 'crone1@example.net',
-    password: 'crone1',
-    host: 'localhost'
-};
-
-function getClient() {
-    var cl = new Client({
-        jid: user.jid,
-        password: user.password,
-        preferred: 'PLAIN',
-        host: user.host
-    });
-    return cl;
+function configureXEP(server) {
+    // register messaging component
+    server.cr.register(new Xep0307());
 }
 
 describe('XEP-0307', function () {
-    var xR = null;
-
-    function setUpServer(done) {
-        var cs2 = new C2SServer({});
-
-        // attach connection manager to xrocket
-        xR = new xRocket.XRocket();
-        xR.addConnectionManager(cs2);
-
-        // register users
-        var simpleAuth = new xRocket.Auth.Simple();
-        simpleAuth.addUser('crone1', 'crone1');
-        xR.connectionRouter.authMethods.push(simpleAuth);
-
-        // register xep component
-        var cr = new xRocket.Router.ComponentRouter({
-            domain: 'example.net'
-        });
-        var lr = new xRocket.Router.LogRouter();
-
-        cr.register(new Xep0307());
-
-        // chain XRocket to ComponentRouter
-        xR.chain(lr).chain(cr);
-
-        done();
-    }
-
-    function sendMessage(cl, stanza, done) {
-        cl.on('stanza',
-            function (stanza) {
-                done(null, stanza);
-            });
-
-        cl.on('online', function () {
-            cl.send(stanza);
-        });
-
-        cl.on('error', function (e) {
-            console.log(e);
-            done(e);
-        });
-    }
+    
+    var srv = null;
 
     before(function (done) {
-        setUpServer(done);
+        helper.startServer()
+        // configure muc module
+        .then(function (server) {
+            srv = server;
+            configureXEP(server);
+            done();
+        })
+            .
+        catch (function (err) {
+            done(err);
+        });
     });
 
     after(function (done) {
-        xR.shutdown();
+        srv.xR.shutdown();
         done();
     });
 
@@ -109,34 +59,36 @@ describe('XEP-0307', function () {
      * </iq>
      */
     it('Entity Requests Unique Room Name', function (done) {
-        var cl = getClient();
 
-        var publish = new ltx.Element('iq', {
+        var stanza = new ltx.Element('iq', {
             to: 'chat.example.net',
-            from: cl.jid,
+            from: helper.userRomeo.jid,
             type: 'get'
         });
-        publish.c('unique', {
+        stanza.c('unique', {
             'xmlns': 'http://jabber.org/protocol/muc#unique'
         });
 
-        sendMessage(cl, publish, function (err, stanza) {
-            console.log(err);
-            console.log(stanza.toString());
-            should.not.exist(err);
-            if (stanza.is('iq')) {
-                assert.equal(stanza.attrs.type, 'result');
+        helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                try {
 
-                var unique = stanza.getChild('unique', 'http://jabber.org/protocol/muc#unique');
-                unique.should.not.be.empty;
+                    assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
 
-                var id = unique.text();
-                id.should.match(/[A-Za-z0-9-]{36}/); // uuid
+                    assert.equal(stanza.attrs.type, 'result');
 
-                done();
-            } else {
-                done('wrong stanza ' + stanza.root().toString());
-            }
-        });
+                    var unique = stanza.getChild('unique', 'http://jabber.org/protocol/muc#unique');
+                    unique.should.not.be.empty;
+
+                    var id = unique.text();
+                    id.should.match(/[A-Za-z0-9-]{36}/); // uuid
+
+                    done();
+                   
+                } catch(err) {
+                    done(err);
+                }
+            }).catch(function(err){
+                done(err);
+            });
     });
 });
