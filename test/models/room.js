@@ -11,7 +11,7 @@ describe('Model', function () {
 
         var sequelize = new Sequelize('database', 'username', 'password', {
             dialect: 'sqlite',
-            storage: './database.sqlite'
+            storage: './test.sqlite'
         });
 
         // load the database model
@@ -30,7 +30,7 @@ describe('Model', function () {
     });
 
 
-    describe('User', function () {
+    describe('Room', function () {
 
         it('create new user', function (done) {
 
@@ -67,8 +67,8 @@ describe('Model', function () {
                     // done();
 
                     user.addRoom(room, {
-                        role: 'moderator',
-                        affiliation: 'owner',
+                        role: db.RoomMembers.Role.Moderator,
+                        affiliation: db.RoomMembers.Affiliation.Owner,
                         nickname: 'jj'
                     }).success(function () {
                         console.log('got here');
@@ -100,8 +100,8 @@ describe('Model', function () {
                     // done();
 
                     user.addRoom(room, {
-                        role: 'moderator',
-                        affiliation: 'owner',
+                        role: db.RoomMembers.Role.Moderator,
+                        affiliation: db.RoomMembers.Affiliation.Owner,
                         nickname: 'bb'
                     }).success(function () {
                         console.log('got here');
@@ -133,8 +133,8 @@ describe('Model', function () {
                     // done();
 
                     user.addRoom(room, {
-                        role: 'moderator',
-                        affiliation: 'owner',
+                        role: db.RoomMembers.Role.Moderator,
+                        affiliation: db.RoomMembers.Affiliation.Owner,
                         nickname: 'aa'
                     }).success(function () {
                         console.log('got here');
@@ -166,8 +166,8 @@ describe('Model', function () {
                 }).success(function (user) {
 
                     room.addMember(user, {
-                        role: 'participant',
-                        affiliation: 'member',
+                        role: db.RoomMembers.Role.Participant,
+                        affiliation: db.RoomMembers.Affiliation.Member,
                         nickname: 'ar1'
                     }).success(function () {
                         done();
@@ -194,8 +194,8 @@ describe('Model', function () {
                 }).success(function (user) {
 
                     room.addMember(user, {
-                        role: 'participant',
-                        affiliation: 'member',
+                        role: db.RoomMembers.Role.Participant,
+                        affiliation: db.RoomMembers.Affiliation.Member,
                         nickname: 'ar2'
                     }).success(function () {
                         done();
@@ -235,7 +235,7 @@ describe('Model', function () {
 
                 user.getRooms({
                     where: {
-                        affiliation: 'owner'
+                        affiliation: db.RoomMembers.Affiliation.Owner
                     }
                 }).success(function (ownerRooms) {
                     assert.equal(ownerRooms.length, 1);
