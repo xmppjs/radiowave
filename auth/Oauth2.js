@@ -34,10 +34,10 @@ OAUTH2.prototype.verifyToken = function (username, oauthToken, cb) {
     var self = this;
 
     logger.debug('oauth2 call: ' + this.settings.url);
-
+    
     // load user details
     superagent
-        .post(self.url)
+        .get(self.url)
         .send({})
         .set('content-type', self.contentType)
         .set('Authorization', self.tokenType + ' ' + oauthToken)
