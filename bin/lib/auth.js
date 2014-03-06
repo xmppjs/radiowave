@@ -39,6 +39,19 @@ Auth.prototype.simple = function (settings) {
         });
     }
 
+    // register test user
+    if (settings.testusers) {
+
+        var usrbase = 'load';
+        var usrpwd = 'passwd';
+        var number = 10000;
+
+        for (var i = 1; i <= number; i++) {
+            simpleAuth.addUser(usrbase+i, usrpwd+i);
+        }
+
+    }
+
     return simpleAuth;
 };
 
