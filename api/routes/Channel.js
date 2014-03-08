@@ -1,6 +1,6 @@
 'use strict';
 
-var ApiError = require('./utils/ApiError'),
+var ApiError = require('../utils/ApiError'),
     winston = require('winston'),
     logger = winston.loggers.get('webapi');
 

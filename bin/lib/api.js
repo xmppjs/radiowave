@@ -4,7 +4,8 @@ var winston = require('winston'),
     logger = winston.loggers.get('xrocketd'),
     Promise = require('bluebird'),
     express = require('express'),
-    xRocket = require('../../xrocket');
+    xRocket = require('../../xrocket'),
+    JID = require('node-xmpp-core').JID;
 
 var passport = require('passport'),
     BearerStrategy = require('passport-http-bearer').Strategy,
@@ -12,6 +13,7 @@ var passport = require('passport'),
 
 function API() {
     this.authMethods = [];
+    this.domain = "";
 }
 
 API.prototype.addAuthMethod = function(method) {
@@ -31,6 +33,10 @@ API.prototype.findAuthMethod = function (method) {
 API.prototype.verify = function(opts, cb) {
     var auth = this.findAuthMethod(opts.saslmech);
     if (auth.length > 0) {
+        if (!opts.jid) {
+            // we build a JID to escape the username properly
+            opts.jid = new JID(opts.username + '@' + this.domain).toString();
+        } 
         auth[0].authenticate(opts).then(function(user){
                 logger.debug('api user authenticated: ');
                 cb(null, user);
@@ -87,7 +93,7 @@ API.prototype.configurePassport = function (passport) {
 };
 
 API.prototype.configureRoutes = function (app, storage) {
-    var routes = xRocket.Api;
+    var routes = xRocket.Api.Routes;
     // load xrocketd api
     routes(app, storage);
 };
@@ -150,6 +156,7 @@ API.prototype.startApi = function (storage, settings, multiport) {
     logger.debug(path.resolve(__dirname, '../web'));
     app.use(express.static(path.resolve(__dirname, '../web')));
 
+    // catch exceptions
     app.use(function (err, req, res, next) {
         console.log(err);
         res.status(err.status || 500);
@@ -163,6 +170,11 @@ API.prototype.startApi = function (storage, settings, multiport) {
  * load the Rest API
  */
 API.prototype.load = function (settings, storage) {
+
+    // determine domain
+    this.domain = settings.get('domain');
+
+    // load express
     var self = this;
     return new Promise(function (resolve, reject) {
 

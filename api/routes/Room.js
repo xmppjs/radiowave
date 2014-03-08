@@ -1,10 +1,8 @@
 'use strict';
 
-var ApiError = require('./utils/ApiError'),
+var ApiError = require('../utils/ApiError'),
     winston = require('winston'),
     logger = winston.loggers.get('webapi');
-
-var roomToJson = require('./utils/roomToJson');
 
 var routes = function (app, storage) {
     logger.info('register room routes');
