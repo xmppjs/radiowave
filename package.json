@@ -21,7 +21,7 @@
     "bluebird": "~1.0.0",
     "ldapjs": "0.7.0",
     "superagent": "~0.15.7",
-    "nconf": "~0.6.8",
+    "nconf": "~0.6.9",
     "express": "3.x.x",
     "passport": "~0.2.0",
     "passport-http-bearer": "~1.0.1",

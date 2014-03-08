@@ -4,7 +4,9 @@ var nconf = require('nconf'),
     Promise = require('bluebird'),
     winston = require('winston'),
     express = require('express'),
-    logger = winston.loggers.get('xrocketd');
+    logger = winston.loggers.get('xrocketd'),
+    fs = require('fs'),
+    stripJsonComments = require('strip-json-comments');
 
 function Settings() {}
 
@@ -71,22 +73,44 @@ Settings.prototype.load = function (settingsfile) {
     var self = this;
     return new Promise(function (resolve, reject) {
         logger.debug('Load file: ' + settingsfile);
-        nconf.argv().env().file({
-            file: settingsfile
+
+        // load file
+        fs.readFile(settingsfile, { encoding: 'utf8'} , function (err, data) {
+            if (err) {
+                reject(err);
+            } else {
+
+                var json = {};
+                try {
+
+                    // parse data and strip comments from settings file
+                    json = JSON.parse(stripJsonComments(data));
+
+                    // use memory storage
+                    nconf.use('memory');
+
+                    // load json config
+                    nconf.argv()
+                        .env()
+                        .defaults(json);
+
+                    // load config here
+                    process.env.NODE_ENV = nconf.get('environment');
+
+                    logger.debug('Environment: ' + nconf.get('environment'));
+
+                    // detect multi port configuration
+                    var result = self.detectMultiPort(nconf);
+                    if (result) {
+                        resolve(nconf);
+                    } else {
+                        reject('could not properly load config file');
+                    }
+                } catch (err) {
+                    reject(err);
+                }
+            }
         });
-
-        // load config here
-        process.env.NODE_ENV = nconf.get('environment');
-
-        logger.debug('Environment: ' + nconf.get('environment'));
-
-        var result = self.detectMultiPort(nconf);
-
-        if (result) {
-            resolve(nconf);
-        } else {
-            reject('could not properly load config file');
-        }
     });
 };
 
