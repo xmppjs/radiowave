@@ -63,7 +63,7 @@ Storage.prototype.initialize = function (syncOpts) {
         // initialize db connection
         var sequelize = new Sequelize(
             self.opt.database,
-            self.opt.username,
+            self.opt.user,
             self.opt.password, options);
         self.sequelize = sequelize;
 
