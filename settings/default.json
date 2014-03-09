@@ -1,6 +1,9 @@
 {
+    // xmpp domain
     "domain": "example.net",
+    // should be "development" or "production"
     "environment": "development",
+    // load various xrocket modules
     "modules": [{
         "type": "Rfc3921Roaster"
     }, {
@@ -20,6 +23,7 @@
     }, {
         "type": "Xep0307"
     }],
+    // load the connection manager
     "connection": [{
         "type": "tcp",
         "port": 5222,
@@ -39,6 +43,7 @@
         "port": 8888,
         "interface": "0.0.0.0"
     }],
+    // sets the authentication mechanism
     "auth": [{
         "type": "simple",
         "testusers" : true,
@@ -53,6 +58,8 @@
             "password": "benvolio"
         }]
     }],
+    // storage for the data, xrocketd supports
+    // sqlite, postgre and mysql
     "storage": {
         "dialect" : "sqlite",
         "user": "username",
@@ -60,6 +67,7 @@
         "database": "database",
         "storage": "./database.sqlite"
     },
+    // api and cors settings
     "api": {
         "activate": true,
         "port": 8888,

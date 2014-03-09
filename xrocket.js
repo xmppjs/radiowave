@@ -7,5 +7,5 @@ module.exports = {
     Net : require('./net'),
     XRocket : require('./core/XRocket'),
     Storage : require('./storage'),
-    Api : require('./api/routes')
+    Api : require('./api')
 };

@@ -1,6 +1,6 @@
 'use strict';
 
-var ApiError = require('./utils/ApiError'),
+var ApiError = require('../utils/ApiError'),
     winston = require('winston'),
     logger = winston.loggers.get('webapi');
 
@@ -44,6 +44,42 @@ var routes = function(app, storage) {
      * Delete a channel (requires admin access)
      */
     app.del('/api/channels/:owner/:channel', function(req, res) {
+        res.json({});
+    });
+
+
+    /**
+     * List members
+     */
+    app.get('/api/channels/:owner/:channel/subscribers', function(req, res) {
+        res.json({});
+    });
+
+    /**
+     * Add user as a subscriber
+     */
+    app.put('/api/channels/:owner/:channel/subscribers/:user', function(req, res) {
+        res.json({});
+    });
+
+    /**
+     * Remove user as a subscriber
+     */
+    app.del('/api/channels/:owner/:channel/subscribers/:user', function(req, res) {
+        res.json({});
+    });
+
+    /**
+     * trigger an event
+     */
+    app.post('/api/channels/:owner/:channel/events', function(req, res) {
+        res.json({});
+    });
+
+    /**
+     * List events for a channel
+     */
+    app.get('/api/channels/:owner/:channel/events', function(req, res) {
         res.json({});
     });
 };

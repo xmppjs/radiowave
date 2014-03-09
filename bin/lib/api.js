@@ -4,7 +4,8 @@ var winston = require('winston'),
     logger = winston.loggers.get('xrocketd'),
     Promise = require('bluebird'),
     express = require('express'),
-    xRocket = require('../../xrocket');
+    xRocket = require('../../xrocket'),
+    JID = require('node-xmpp-core').JID;
 
 var passport = require('passport'),
     BearerStrategy = require('passport-http-bearer').Strategy,
@@ -12,6 +13,7 @@ var passport = require('passport'),
 
 function API() {
     this.authMethods = [];
+    this.domain = "";
 }
 
 API.prototype.addAuthMethod = function(method) {
@@ -31,6 +33,10 @@ API.prototype.findAuthMethod = function (method) {
 API.prototype.verify = function(opts, cb) {
     var auth = this.findAuthMethod(opts.saslmech);
     if (auth.length > 0) {
+        if (!opts.jid) {
+            // we build a JID to escape the username properly
+            opts.jid = new JID(opts.username + '@' + this.domain).toString();
+        } 
         auth[0].authenticate(opts).then(function(user){
                 logger.debug('api user authenticated: ');
                 cb(null, user);
@@ -86,22 +92,24 @@ API.prototype.configurePassport = function (passport) {
     });
 };
 
-API.prototype.configureRoutes = function (app, storage) {
-    var routes = xRocket.Api;
+API.prototype.configureRoutes = function (app, storage, settings) {
+    var routes = xRocket.Api.Routes;
     // load xrocketd api
-    routes(app, storage);
+    routes(app, storage, settings);
 };
 
 API.prototype.startApi = function (storage, settings, multiport) {
 
     var app = null;
+    var apisettings = settings.get('api');
 
-    if (multiport && ( (settings.port === multiport.port) || (!settings.port))) {
+    
+    if (multiport && ( (apisettings.port === multiport.port) || (!apisettings.port))) {
         app = multiport.app;
         logger.debug('use multiport for api');
-    } else if (settings.port) {
+    } else if (apisettings.port) {
         app = express();
-        app.listen(settings.port);
+        app.listen(apisettings.port);
     } else {
         logger.error('could not determine a port for api');
     }
@@ -119,7 +127,7 @@ API.prototype.startApi = function (storage, settings, multiport) {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    var allowedHost = settings.cors.hosts;
+    var allowedHost = apisettings.cors.hosts;
 
     // check for cors
     app.all('*', function (req, res, next) {
@@ -143,13 +151,14 @@ API.prototype.startApi = function (storage, settings, multiport) {
     // check for authentication for api routes
     app.all('/api/*', this.configurePassport(passport));
 
-    this.configureRoutes(app, storage);
+    this.configureRoutes(app, storage, settings);
 
     // web client
     var path = require('path');
     logger.debug(path.resolve(__dirname, '../web'));
     app.use(express.static(path.resolve(__dirname, '../web')));
 
+    // catch exceptions
     app.use(function (err, req, res, next) {
         console.log(err);
         res.status(err.status || 500);
@@ -163,13 +172,16 @@ API.prototype.startApi = function (storage, settings, multiport) {
  * load the Rest API
  */
 API.prototype.load = function (settings, storage) {
+
+    // determine domain
+    this.domain = settings.get('domain');
+
+    // load express
     var self = this;
     return new Promise(function (resolve, reject) {
-
-        var apisettings = settings.get('api');
         var multiport = settings.get('multiport');
-        if (apisettings && apisettings.activate === true) {
-            self.startApi(storage, apisettings, multiport);
+        if (settings.get('api:activate') === true) {
+            self.startApi(storage, settings, multiport);
         }
     });
 };
