@@ -25,6 +25,16 @@ User.prototype = {
         });
     },
 
+    delRoom: function (room) {
+        return new Promise(function (resolve, reject) {
+            room.destroy().success(function () {
+                resolve();
+            }).error(function (err) {
+                reject(err);
+            });
+        });
+    },
+
     getRoom: function (owner, roomname) {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
@@ -125,6 +135,42 @@ User.prototype = {
             }
         });
 
+    },
+
+    addMember: function (room, user) {
+        console.log('ADD MEMBER');
+        var storage = this.storage;
+
+        console.log(storage.RoomMembers.Role.Participant);
+        console.log(storage.RoomMembers.Affiliation.Member);
+
+        return new Promise(function (resolve, reject) {
+
+            room.addMember(user, {
+                role: storage.RoomMembers.Role.Participant,
+                affiliation: storage.RoomMembers.Affiliation.Member,
+                nickname: ''
+            }).success(function () {
+                // added member to room
+                resolve();
+            }).error(function (err) {
+                logger.error(err);
+                reject();
+            });
+
+        });
+    },
+
+    removeMember: function (room, user) {
+        return new Promise(function (resolve, reject) {
+            room.removeMember(user).success(function () {
+                // removed member to room
+                resolve();
+            }).error(function (err) {
+                logger.error(err);
+                reject();
+            });
+        });
     },
 
     getChannels: function (user, type) {

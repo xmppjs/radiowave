@@ -34,13 +34,14 @@ var routes = function (app, storage, settings) {
      * restriction: only owner and members can access this information
      */
     app.get('/api/rooms/:owner/:room', function (req, res) {
-        logger.debug('Get room: ' +  username + '/' + roomname);
 
         // requester, should be member of the room
         var jid = apiutils.getJid(req);
 
         var username = req.params.owner;
         var roomname = req.params.room;
+
+        logger.debug('Get room: ' +  username + '/' + roomname);
 
         var ownerjid = new JID(username + '@' + domain);
 
@@ -76,7 +77,33 @@ var routes = function (app, storage, settings) {
      * restriction: only owner can do this
      */
     app.del('/api/rooms/:owner/:room', function (req, res) {
-        res.json(404, new ApiError('not found'));
+        var username = req.params.owner;
+        var roomname = req.params.room;
+
+        logger.debug('Delete room: ' +  username + '/' + roomname);
+
+        // requester, should be member of the room
+        var jid = new JID(apiutils.getJid(req));
+        var ownerjid = new JID(username + '@' + domain);
+
+        // verify that owner and requestor are the same
+        if (!ownerjid.equals(jid)) {
+            res.send(404);
+            return;
+        }
+
+        // since only owner can delete rooms, we try to delete the room directly
+        usrManager.findUser(jid.toString()).then(function (user) {
+            return usrManager.getRoom(user, roomname);
+        }).then(function(room) {
+            return usrManager.delRoom(room);
+        }).then(function() {
+            res.send(204);
+        }).catch(function(err) {
+            console.error(err);
+            logger.error(err);
+            res.json(404, new ApiError('not found'));
+        });
     });
 
     /**
@@ -84,19 +111,20 @@ var routes = function (app, storage, settings) {
      * restriction: only owner and members can access this information
      */
     app.get('/api/rooms/:owner/:room/members', function(req, res) {
-        logger.debug('Get room: ' +  username + '/' + roomname);
 
-        // requester, should be member of the room
-        var jid = apiutils.getJid(req);
-
+        // extract parameter
         var username = req.params.owner;
         var roomname = req.params.room;
 
+        logger.debug('Get room: ' +  username + '/' + roomname);
+
+        // requester, should be member of the room
+        var jid = new JID(apiutils.getJid(req));
         var ownerjid = new JID(username + '@' + domain);
 
         var usr = null;
         var r = null;
-        usrManager.findUser(jid).then(function (user) {
+        usrManager.findUser(jid.toString()).then(function (user) {
             usr = user;
             return usrManager.findUser(ownerjid.toString());
         }).then(function(owner){
@@ -120,7 +148,53 @@ var routes = function (app, storage, settings) {
      * restriction: only owner and members can access this information
      */
     app.get('/api/rooms/:owner/:room/members/:user', function(req, res) {
-        res.json({});
+    
+        // extract parameter
+        var username = req.params.owner;
+        var roomname = req.params.room;
+        var membername = req.params.user;
+
+        logger.debug('Get room: ' +  username + '/' + roomname);
+
+        // requester, should be member of the room
+        var jid = new JID(apiutils.getJid(req));
+
+        // owner of the room
+        var ownerjid = new JID(username + '@' + domain);
+
+        // check if this user is member of the room
+        var memberjid = new JID(membername);
+
+        var usr = null;
+        var r = null;
+        var mem = null;
+
+        // check if the "member" is a known user
+        usrManager.findUser(memberjid.toString()).then(function(member){
+            mem = member;
+            // check if the requestor is a known user
+            return usrManager.findUser(jid.toString());
+        }).then(function (user) {
+            usr = user;
+            // check if the owner of the room is a known user
+            return usrManager.findUser(ownerjid.toString());
+        }).then(function(owner){
+            // check if the owner has such room
+            return usrManager.getRoom(owner, roomname);
+        }).then(function(room) {
+            r = room;
+            // check if the requestor is member of the room
+            return room.isMember(usr);
+        }).then(function() {
+            // check if the requested member is really a member of the room
+            return r.isMember(mem);
+        }).then(function() {
+            res.send(204);
+        }).catch(function(err) {
+            console.error(err);
+            logger.error(err);
+            res.send(404);
+        });
     });
 
     /**
@@ -128,7 +202,49 @@ var routes = function (app, storage, settings) {
      * restriction: only owners can do this
      */
     app.put('/api/rooms/:owner/:room/members/:user', function(req, res) {
-        res.json({});
+        // extract parameter
+        var username = req.params.owner;
+        var roomname = req.params.room;
+        var membername = req.params.user;
+
+        logger.debug('Add member to room: ' +  username + '/' + roomname);
+
+        // requester, should be member of the room
+        var jid = new JID(apiutils.getJid(req));
+
+        // owner of the room
+        var ownerjid = new JID(username + '@' + domain);
+
+        // check if this user is member of the room
+        var memberjid = new JID(membername);
+
+        // verify that owner and requestor are the same
+        if (!ownerjid.equals(jid)) {
+            res.send(404);
+            return;
+        }
+
+        var mem;
+
+        // check if the "member" is a known user
+        usrManager.findUser(memberjid.toString()).then(function(member){
+            mem = member;
+            // check if the requestor is a known user
+            return usrManager.findUser(jid.toString());
+        }).then(function(owner){
+            // check if the owner has such room
+            return usrManager.getRoom(owner, roomname);
+        }).then(function(room) {
+            console.log('add');
+            // add member to room
+            return usrManager.addMember(room, mem);
+        }).then(function() {
+            res.send(204);
+        }).catch(function(err) {
+            console.error(err);
+            logger.error(err);
+            res.send(404);
+        });
     });
 
     /**
@@ -136,7 +252,48 @@ var routes = function (app, storage, settings) {
      * restriction: only owners can do this
      */
     app.del('/api/rooms/:owner/:room/members/:user', function(req, res) {
-        res.json({});
+        // extract parameter
+        var username = req.params.owner;
+        var roomname = req.params.room;
+        var membername = req.params.user;
+
+        logger.debug('Add member to room: ' +  username + '/' + roomname);
+
+        // requester, should be member of the room
+        var jid = new JID(apiutils.getJid(req));
+
+        // owner of the room
+        var ownerjid = new JID(username + '@' + domain);
+
+        // check if this user is member of the room
+        var memberjid = new JID(membername);
+
+        // verify that owner and requestor are the same
+        if (!ownerjid.equals(jid)) {
+            res.send(404);
+            return;
+        }
+
+        var mem;
+
+        // check if the "member" is a known user
+        usrManager.findUser(memberjid.toString()).then(function(member){
+            mem = member;
+            // check if the requestor is a known user
+            return usrManager.findUser(jid.toString());
+        }).then(function(owner){
+            // check if the owner has such room
+            return usrManager.getRoom(owner, roomname);
+        }).then(function(room) {
+            // add member to room
+            return usrManager.removeMember(room, mem);
+        }).then(function() {
+            res.send(204);
+        }).catch(function(err) {
+            console.error(err);
+            logger.error(err);
+            res.send(404);
+        });
     });
 
     /**
