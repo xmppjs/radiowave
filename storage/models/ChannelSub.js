@@ -37,7 +37,6 @@ module.exports = function (sequelize, DataTypes) {
             type: DataTypes.ENUM(
                 SubState.Pending,
                 SubState.Unconfigured,
-                SubState.Member,
                 SubState.Subscribed,
                 SubState.None
             )
