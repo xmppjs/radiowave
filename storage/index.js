@@ -28,13 +28,17 @@ Storage.prototype.initialize = function (syncOpts) {
     var self = this;
     return new Promise(function (resolve, reject) {
 
+        var maxConcurrentQueries = self.opt.maxConcurrentQueries || 100;
+        var maxConnections = self.opt.maxConnections || 1;
+        var maxIdleTime = self.opt.maxIdleTime || 30;
+
         // base options
         var options = {
             language: 'en',
-            maxConcurrentQueries: 100,
+            maxConcurrentQueries: maxConcurrentQueries,
             pool: {
-                maxConnections: 5,
-                maxIdleTime: 30
+                maxConnections: maxConnections,
+                maxIdleTime: maxIdleTime
             }
         };
 
