@@ -6,7 +6,7 @@ var Promise = require('bluebird'),
 
 var User = function (storage) {
     this.storage = storage;
-}
+};
 
 User.prototype = {
 
@@ -22,6 +22,34 @@ User.prototype = {
             }).error(function () {
                 reject();
             });
+        });
+    },
+
+    getRoom: function (owner, roomname) {
+        var storage = this.storage;
+        return new Promise(function (resolve, reject) {
+            if (owner) {
+                var affiliation = [];
+                affiliation.push(storage.RoomMembers.Affiliation.Owner);
+
+                // Owner as default affiliation
+                owner.getRooms({
+                    where: {
+                        name: roomname,
+                        affiliation: affiliation
+                    }
+                }).success(function (ownerRooms) {
+                    if (ownerRooms && ownerRooms.length >= 1) {
+                        resolve(ownerRooms[0]);
+                    } else {
+                        reject();
+                    }
+                }).error(function () {
+                    reject();
+                });
+            } else {
+                reject();
+            }
         });
     },
 
@@ -69,22 +97,27 @@ User.prototype = {
         return new Promise(function (resolve, reject) {
 
             if (user) {
+                logger.debug('user' + JSON.stringify(user));
+
                 storage.Room.create({
                     name: data.name
                 }).success(function (room) {
 
+                    logger.debug('room:' + JSON.stringify(room));
                     user.addRoom(room, {
                         role: storage.RoomMembers.Role.Moderator,
                         affiliation: storage.RoomMembers.Affiliation.Owner,
-                        nickname: ''
+                        nickname: 'sdfdsf'
                     }).success(function () {
                         // added room as member
                         resolve(room);
                     }).error(function (err) {
+                        logger.error('Room Members: ' + err);
                         reject();
                     });
 
                 }).error(function (err) {
+                    logger.error('error room create: ' + err);
                     reject('room exists');
                 });
             } else {
@@ -94,7 +127,7 @@ User.prototype = {
 
     },
 
-    getChannels: function (user) {
+    getChannels: function (user, type) {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
             if (user) {
@@ -126,17 +159,17 @@ User.prototype = {
                         affiliation: affiliation
                     }
                 }).success(function (ownerChannels) {
-                    res.json(ownerChannels);
-                }).error(function () {
-                    res.json(400, new ApiError());
+                    resolve(ownerChannels);
+                }).error(function (err) {
+                    reject(err);
                 });
             } else {
-                res.json(400, new ApiError());
+                reject();
             }
         });
     },
 
-    addChannel: function (user) {
+    addChannel: function (user, data) {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
             if (user) {
@@ -161,6 +194,6 @@ User.prototype = {
             }
         });
     }
-}
+};
 
 module.exports = User;

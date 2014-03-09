@@ -7,26 +7,18 @@ var winston = require('winston'),
 var User = require('./User'),
     Orgs = require('./Orgs'),
     Room = require('./Room'),
-    RoomMembers = require('./RoomMembers'),
-    RoomMessages = require('./RoomMessages'),
     Channel = require('./Channel'),
-    ChannelEvents = require('./ChannelEvents'),
-    ChannelSubs = require('./ChannelSubs'),
     Public = require ('./Public');
 
-var routes = function (app, storage) {
+var routes = function (app, storage, settings) {
     logger.info('register routes');
 
     // register additional routes
-    User(app, storage);
-    Orgs(app, storage);
-    Room(app, storage);
-    RoomMembers(app, storage);
-    RoomMessages(app, storage);
-    Channel(app, storage);
-    ChannelEvents(app, storage);
-    ChannelSubs(app, storage);
-    Public(app, storage);
+    User(app, storage, settings);
+    Orgs(app, storage, settings);
+    Room(app, storage, settings);
+    Channel(app, storage, settings);
+    Public(app, storage, settings);
 
 };
 

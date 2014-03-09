@@ -5,15 +5,17 @@ var Promise = require('bluebird');
 module.exports = function (sequelize, DataTypes) {
 
     var Room = sequelize.define('Room', {
-        // xmpp room name
+        // globally unique xmpp room name within one domain
         name: {
             type: DataTypes.STRING,
             unique: true,
             validate: {}
         },
-        title: {
-            type: DataTypes.STRING,
-            validate: {}
+        subject: {
+            type: DataTypes.STRING
+        },
+        description: {
+            type: DataTypes.TEXT
         }
     }, {
         associate: function (models) {
