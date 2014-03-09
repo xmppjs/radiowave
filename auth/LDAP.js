@@ -59,12 +59,15 @@ LDAP.prototype.authenticateWithLDAP = function (username, password) {
                     });
                 }
             });
+
+            self.client.once('error', function(err) {
+                console.log(err);
+            });
         }
     });
 };
 
 LDAP.prototype.authenticate = function (opts) {
-
     var username = null;
 
     // generate ldap username 
@@ -74,8 +77,17 @@ LDAP.prototype.authenticate = function (opts) {
         username = opts.username;
     }
 
-    // authenticate with LDAP bind
-    return this.authenticateWithLDAP(username, opts.password);
+    var self = this;
+    return new Promise(function (resolve, reject) {
+        // authenticate with LDAP bind
+        self.authenticateWithLDAP(username, opts.password).then(function(user){
+            opts.uid = user.uid;
+            resolve(opts);
+        }).catch(function(err){
+            console.error(err);
+            reject(err);
+        });
+    });
 
 };
 
