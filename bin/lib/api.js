@@ -92,22 +92,24 @@ API.prototype.configurePassport = function (passport) {
     });
 };
 
-API.prototype.configureRoutes = function (app, storage) {
+API.prototype.configureRoutes = function (app, storage, settings) {
     var routes = xRocket.Api.Routes;
     // load xrocketd api
-    routes(app, storage);
+    routes(app, storage, settings);
 };
 
 API.prototype.startApi = function (storage, settings, multiport) {
 
     var app = null;
+    var apisettings = settings.get('api');
 
-    if (multiport && ( (settings.port === multiport.port) || (!settings.port))) {
+    
+    if (multiport && ( (apisettings.port === multiport.port) || (!apisettings.port))) {
         app = multiport.app;
         logger.debug('use multiport for api');
-    } else if (settings.port) {
+    } else if (apisettings.port) {
         app = express();
-        app.listen(settings.port);
+        app.listen(apisettings.port);
     } else {
         logger.error('could not determine a port for api');
     }
@@ -125,7 +127,7 @@ API.prototype.startApi = function (storage, settings, multiport) {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    var allowedHost = settings.cors.hosts;
+    var allowedHost = apisettings.cors.hosts;
 
     // check for cors
     app.all('*', function (req, res, next) {
@@ -149,7 +151,7 @@ API.prototype.startApi = function (storage, settings, multiport) {
     // check for authentication for api routes
     app.all('/api/*', this.configurePassport(passport));
 
-    this.configureRoutes(app, storage);
+    this.configureRoutes(app, storage, settings);
 
     // web client
     var path = require('path');
@@ -177,11 +179,9 @@ API.prototype.load = function (settings, storage) {
     // load express
     var self = this;
     return new Promise(function (resolve, reject) {
-
-        var apisettings = settings.get('api');
         var multiport = settings.get('multiport');
-        if (apisettings && apisettings.activate === true) {
-            self.startApi(storage, apisettings, multiport);
+        if (settings.get('api:activate') === true) {
+            self.startApi(storage, settings, multiport);
         }
     });
 };
