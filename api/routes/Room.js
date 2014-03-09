@@ -15,20 +15,6 @@ var routes = function (app, storage, settings) {
     var domain = settings.get('domain');
     var usrManager = new UserManager(storage);
 
-    function exportJSON(model) {
-        if (model instanceof Array) {
-            var exportVal = [];
-            model.forEach(function (item) {
-                exportVal.push(exportJSON(item));
-            });
-            return exportVal;
-        } else if (model && typeof(model.exportJSON) === 'function') {
-            return model.exportJSON();
-        } else {
-            return model.toJSON();
-        }
-    }
-
     /**
      * Get room
      * restriction: only owner and members can access this information
@@ -135,7 +121,7 @@ var routes = function (app, storage, settings) {
         }).then(function() {
             return r.getMembers();
         }).then(function(members) {
-            res.json(exportJSON(members));
+            res.json(apiutils.exportJSON(members));
         }).catch(function(err) {
             console.error(err);
             logger.error(err);
