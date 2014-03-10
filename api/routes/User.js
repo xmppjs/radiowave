@@ -5,7 +5,7 @@ var ApiError = require('../utils/ApiError'),
     logger = winston.loggers.get('webapi'),
     apiutils = require('../utils/utils');
 
-var UserManager = require('../lib/user');
+var UserManager = require('../lib/User');
 
 var routes = function (app, storage) {
     logger.info('register user routes');
