@@ -6,7 +6,7 @@ var ApiError = require('../utils/ApiError'),
     JID = require('node-xmpp-core').JID,
     apiutils = require('../utils/utils');
 
-var UserManager = require('../lib/user');
+var UserManager = require('../lib/User');
 
 var routes = function (app, storage, settings) {
 
