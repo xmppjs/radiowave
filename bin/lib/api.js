@@ -33,10 +33,11 @@ API.prototype.findAuthMethod = function (method) {
 API.prototype.verify = function(opts, cb) {
     var auth = this.findAuthMethod(opts.saslmech);
     if (auth.length > 0) {
-        if (!opts.jid) {
+        if (!opts.jid && opts.username) {
             // we build a JID to escape the username properly
             opts.jid = new JID(opts.username + '@' + this.domain).toString();
-        } 
+        }
+         
         auth[0].authenticate(opts).then(function(user){
                 logger.debug('api user authenticated: ');
                 cb(null, user);
