@@ -8,7 +8,7 @@ var User = require('./User'),
     Orgs = require('./Orgs'),
     Room = require('./Room'),
     Channel = require('./Channel'),
-    Public = require ('./Public');
+    Public = require ('./public');
 
 var routes = function (app, storage, settings) {
     logger.info('register routes');
