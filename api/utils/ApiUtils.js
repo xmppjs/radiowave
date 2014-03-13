@@ -32,7 +32,7 @@ function serverPath(req) {
 function roomToJSON(ownerJid, room, meetingsPath) {
     var jsonroom = room.toJSON();
     jsonroom.owner = ownerJid.getLocal(true).toString();
-    jsonroom.url = url.resolve(meetingsPath,  querystring.escape(jsonroom.owner) + '/' + jsonroom.name);
+    jsonroom.url = url.resolve(meetingsPath,  querystring.escape(jsonroom.owner) + '/' + querystring.escape(jsonroom.name));
     return jsonroom;
 }
 
