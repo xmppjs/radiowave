@@ -1,7 +1,8 @@
 'use strict';
 
 var JID = require('node-xmpp-core').JID,
-    url = require('url');
+    url = require('url'),
+    querystring = require('querystring');
 
 function getJID(req) {
     console.log(JSON.stringify(req.user));
@@ -30,9 +31,8 @@ function serverPath(req) {
 
 function roomToJSON(ownerJid, room, meetingsPath) {
     var jsonroom = room.toJSON();
-    var owner = ownerJid.getLocal().toString();
-    jsonroom.owner = owner;
-    jsonroom.url = url.resolve(meetingsPath,  owner + '/' + jsonroom.name);
+    jsonroom.owner = ownerJid.getLocal(true).toString();
+    jsonroom.url = url.resolve(meetingsPath,  querystring.escape(jsonroom.owner) + '/' + jsonroom.name);
     return jsonroom;
 }
 
