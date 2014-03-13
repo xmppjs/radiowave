@@ -110,14 +110,16 @@ User.prototype = {
                 logger.debug('user' + JSON.stringify(user));
 
                 storage.Room.create({
-                    name: data.name
+                    name: data.name,
+                    subject : data.subject,
+                    description: data.description
                 }).success(function (room) {
 
                     logger.debug('room:' + JSON.stringify(room));
                     user.addRoom(room, {
                         role: storage.RoomMembers.Role.Moderator,
                         affiliation: storage.RoomMembers.Affiliation.Owner,
-                        nickname: 'sdfdsf'
+                        nickname: ''
                     }).success(function () {
                         // added room as member
                         resolve(room);
