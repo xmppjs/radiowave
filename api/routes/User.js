@@ -1,9 +1,9 @@
 'use strict';
 
-var ApiError = require('../utils/ApiError'),
-    winston = require('winston'),
+var winston = require('winston'),
     logger = winston.loggers.get('webapi'),
-    apiutils = require('../utils/utils');
+    ApiError = require('../utils/ApiError'),
+    ApiUtils = require('../utils/ApiUtils');
 
 var UserManager = require('../lib/User');
 
@@ -16,9 +16,9 @@ var routes = function (app, storage) {
      * Get the authenticated user
      */
     app.get('/api/user', function (req, res) {
-        var jid = apiutils.getJid(req);
+        var jid = ApiUtils.getJID(req);
 
-        res.json({user: jid});
+        res.json({user: jid.toString()});
     });
 
     /**
@@ -32,10 +32,10 @@ var routes = function (app, storage) {
      * List rooms for the authenticated user.
      */
     app.get('/api/user/rooms', function (req, res) {
-        var jid = apiutils.getJid(req);
+        var jid = ApiUtils.getJID(req);
         var type = req.query.type; // all, owner, member.
 
-        usrManager.findUser(jid).then(function(user){
+        usrManager.findUser(jid.toString()).then(function(user){
             return usrManager.getRooms(user, type);
         }).then(function(rooms) {
             console.log(JSON.stringify(rooms));
@@ -55,7 +55,7 @@ var routes = function (app, storage) {
      * }
      */
     app.post('/api/user/rooms', function (req, res) {
-        var jid = apiutils.getJid(req);
+        var jid = ApiUtils.getJID(req);
         var data = req.body;
 
         // check that all required parameters are properly set
@@ -64,7 +64,7 @@ var routes = function (app, storage) {
         }
 
         console.log('start database request');
-        usrManager.findUser(jid).then(function(user){
+        usrManager.findUser(jid.toString()).then(function(user){
             logger.debug('found user: ' + JSON.stringify(user));
             return usrManager.addRoom(user, data);
         }).then(function(room){
@@ -82,10 +82,10 @@ var routes = function (app, storage) {
      * List channels for the authenticated user.
      */
     app.get('/api/user/channels', function (req, res) {
-        var jid = apiutils.getJid(req);
+        var jid = ApiUtils.getJID(req);
         var type = req.query.type; // all, owner, member.
 
-        usrManager.findUser(jid).then(function(user){
+        usrManager.findUser(jid.toString()).then(function(user){
             return usrManager.getChannels(user, type);
         }).then(function(room){
             res.json(room);
@@ -98,7 +98,7 @@ var routes = function (app, storage) {
     });
 
     app.post('/api/user/channels', function (req, res) {
-        var jid = apiutils.getJid(req);
+        var jid = ApiUtils.getJID(req);
         var data = req.body;
 
         // check that all required parameters are properly set
@@ -106,7 +106,7 @@ var routes = function (app, storage) {
             res.json(new ApiError('name is missing'));
         }
 
-        usrManager.findUser(jid).then(function(user){
+        usrManager.findUser(jid.toString()).then(function(user){
             return usrManager.addChannel(user, data);
         }).then(function(room){
             res.json(room);

@@ -1,10 +1,10 @@
 'use strict';
 
-var ApiError = require('../utils/ApiError'),
-    winston = require('winston'),
+var winston = require('winston'),
     logger = winston.loggers.get('webapi'),
     JID = require('node-xmpp-core').JID,
-    apiutils = require('../utils/utils');
+    ApiError = require('../utils/ApiError'),
+    ApiUtils = require('../utils/ApiUtils');
 
 var UserManager = require('../lib/User');
 
@@ -22,7 +22,7 @@ var routes = function (app, storage, settings) {
     app.get('/api/rooms/:owner/:room', function (req, res) {
 
         // requester, should be member of the room
-        var jid = apiutils.getJid(req);
+        var jid = ApiUtils.getJID(req);
 
         var username = req.params.owner;
         var roomname = req.params.room;
@@ -33,7 +33,7 @@ var routes = function (app, storage, settings) {
 
         var usr = null;
         var r = null;
-        usrManager.findUser(jid).then(function (user) {
+        usrManager.findUser(jid.toString()).then(function (user) {
             usr = user;
             return usrManager.findUser(ownerjid.toString());
         }).then(function(owner){
@@ -69,7 +69,7 @@ var routes = function (app, storage, settings) {
         logger.debug('Delete room: ' +  username + '/' + roomname);
 
         // requester, should be member of the room
-        var jid = new JID(apiutils.getJid(req));
+        var jid = ApiUtils.getJID(req);
         var ownerjid = new JID(username + '@' + domain);
 
         // verify that owner and requestor are the same
@@ -105,7 +105,7 @@ var routes = function (app, storage, settings) {
         logger.debug('Get room: ' +  username + '/' + roomname);
 
         // requester, should be member of the room
-        var jid = new JID(apiutils.getJid(req));
+        var jid = ApiUtils.getJID(req);
         var ownerjid = new JID(username + '@' + domain);
 
         var usr = null;
@@ -121,7 +121,7 @@ var routes = function (app, storage, settings) {
         }).then(function() {
             return r.getMembers();
         }).then(function(members) {
-            res.json(apiutils.exportJSON(members));
+            res.json(ApiUtils.exportJSON(members));
         }).catch(function(err) {
             console.error(err);
             logger.error(err);
@@ -143,7 +143,7 @@ var routes = function (app, storage, settings) {
         logger.debug('Get room: ' +  username + '/' + roomname);
 
         // requester, should be member of the room
-        var jid = new JID(apiutils.getJid(req));
+        var jid = ApiUtils.getJID(req);
 
         // owner of the room
         var ownerjid = new JID(username + '@' + domain);
@@ -196,7 +196,7 @@ var routes = function (app, storage, settings) {
         logger.debug('Add member to room: ' +  username + '/' + roomname);
 
         // requester, should be member of the room
-        var jid = new JID(apiutils.getJid(req));
+        var jid = ApiUtils.getJID(req);
 
         // owner of the room
         var ownerjid = new JID(username + '@' + domain);
@@ -246,7 +246,7 @@ var routes = function (app, storage, settings) {
         logger.debug('Add member to room: ' +  username + '/' + roomname);
 
         // requester, should be member of the room
-        var jid = new JID(apiutils.getJid(req));
+        var jid = ApiUtils.getJID(req);
 
         // owner of the room
         var ownerjid = new JID(username + '@' + domain);
