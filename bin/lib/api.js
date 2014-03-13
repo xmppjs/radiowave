@@ -31,15 +31,25 @@ API.prototype.findAuthMethod = function (method) {
 };
 
 API.prototype.verify = function(opts, cb) {
+    var self = this;
     var auth = this.findAuthMethod(opts.saslmech);
     if (auth.length > 0) {
+
+        // if we got a username but no jid (e.g. LDAP requests)
         if (!opts.jid && opts.username) {
             // we build a JID to escape the username properly
             opts.jid = new JID(opts.username + '@' + this.domain).toString();
         }
          
         auth[0].authenticate(opts).then(function(user){
-                logger.debug('api user authenticated: ');
+                logger.debug('api user authenticated ');
+
+                // for api request we may not got the jid, but need it, generate jid 
+                // from username (e.g. OAuth API requests)
+                if (!user.jid && user.username) {
+                    // we build a JID to escape the username properly
+                    user.jid = new JID(user.username + '@' + self.domain).toString();
+                }
                 cb(null, user);
             }).catch(function(err){
                 logger.error('api user authentication failed %s', err);

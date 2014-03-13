@@ -49,8 +49,8 @@ OAUTH2.prototype.verifyToken = function (username, oauthToken, cb) {
             } else {
                 // we know the token is valid
                 // verify it against a username
-                // var usr = self.verifyUser(username , res.body);
-                var usr = res.body;
+                var usr = self.verifyUser(username , res.body);
+                // var usr = res.body;
 
                 cb(null, usr);
             }
@@ -69,11 +69,13 @@ OAUTH2.prototype.verifyUser = function (username, content) {
     // if we use xmpp, we verify the jid against the username
     if (username && content[this.uidTag] === username) {
         console.log('usernames fit');
+        content.username = username;
         return content;
     } // for api request we have only a token, but thats enough
     else if (!username && content[this.uidTag])
     {
         console.log('no username');
+        content.username = content[this.uidTag];
         return content;
     }
     else {
