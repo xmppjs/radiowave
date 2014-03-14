@@ -153,6 +153,33 @@ User.prototype = {
 
     },
 
+    updateRoom: function (room, data) {
+
+        return new Promise(function (resolve, reject) {
+
+            if (!room ||  !data) {
+                reject();
+                return;
+            }
+
+            var updates = {};
+
+            if (data.subject) {
+                updates.subject = data.subject;
+            }
+
+            if (data.description) {
+                updates.description = data.description;
+            }
+
+            room.updateAttributes(updates).success(function () {
+                resolve();
+            }).error(function (err) {
+                reject(err);
+            });
+        });
+    },
+
     addMember: function (room, user) {
         console.log('ADD MEMBER');
         var storage = this.storage;
