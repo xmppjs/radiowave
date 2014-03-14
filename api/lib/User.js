@@ -13,6 +13,12 @@ User.prototype = {
     findUser: function (jid) {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
+
+            if (!jid) {
+                reject();
+                return;
+            }
+
             storage.User.find({
                 where: {
                     jid: jid
@@ -27,6 +33,12 @@ User.prototype = {
 
     delRoom: function (room) {
         return new Promise(function (resolve, reject) {
+
+            if (!room) {
+                reject();
+                return;
+            }
+
             room.destroy().success(function () {
                 resolve();
             }).error(function (err) {
@@ -38,66 +50,67 @@ User.prototype = {
     getRoom: function (owner, roomname) {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
-            if (owner) {
-                var affiliation = [];
-                affiliation.push(storage.RoomMembers.Affiliation.Owner);
-
-                // Owner as default affiliation
-                owner.getRooms({
-                    where: {
-                        name: roomname,
-                        affiliation: affiliation
-                    }
-                }).success(function (ownerRooms) {
-                    if (ownerRooms && ownerRooms.length >= 1) {
-                        resolve(ownerRooms[0]);
-                    } else {
-                        reject();
-                    }
-                }).error(function () {
-                    reject();
-                });
-            } else {
+            if (!owner || !roomname) {
                 reject();
+                return;
             }
+
+            var affiliation = [];
+            affiliation.push(storage.RoomMembers.Affiliation.Owner);
+
+            // Owner as default affiliation
+            owner.getRooms({
+                where: {
+                    name: roomname,
+                    affiliation: affiliation
+                }
+            }).success(function (ownerRooms) {
+                if (ownerRooms && ownerRooms.length >= 1) {
+                    resolve(ownerRooms[0]);
+                } else {
+                    reject();
+                }
+            }).error(function () {
+                reject();
+            });
         });
     },
 
     getRooms: function (user, type) {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
-            if (user) {
-
-                type = type || 'all';
-
-                var affiliation = [];
-
-                switch (type) {
-                case 'owner':
-                    affiliation.push(storage.RoomMembers.Affiliation.Owner);
-                    break;
-                case 'member':
-                    affiliation.push(storage.RoomMembers.Affiliation.Member);
-                    break;
-                default: // all 
-                    affiliation.push(storage.RoomMembers.Affiliation.Owner);
-                    affiliation.push(storage.RoomMembers.Affiliation.Member);
-                    break;
-                }
-
-                // Owner as default affiliation
-                user.getRooms({
-                    where: {
-                        affiliation: affiliation
-                    }
-                }).success(function (ownerRooms) {
-                    resolve(ownerRooms);
-                }).error(function () {
-                    reject();
-                });
-            } else {
+            if (!user) {
                 reject();
+                return;
             }
+
+            type = type || 'all';
+
+            var affiliation = [];
+
+            switch (type) {
+            case 'owner':
+                affiliation.push(storage.RoomMembers.Affiliation.Owner);
+                break;
+            case 'member':
+                affiliation.push(storage.RoomMembers.Affiliation.Member);
+                break;
+            default: // all 
+                affiliation.push(storage.RoomMembers.Affiliation.Owner);
+                affiliation.push(storage.RoomMembers.Affiliation.Member);
+                break;
+            }
+
+            // Owner as default affiliation
+            user.getRooms({
+                where: {
+                    affiliation: affiliation
+                }
+            }).success(function (ownerRooms) {
+                resolve(ownerRooms);
+            }).error(function () {
+                reject();
+            });
 
         });
     },
@@ -106,35 +119,36 @@ User.prototype = {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
 
-            if (user) {
-                logger.debug('user' + JSON.stringify(user));
-
-                storage.Room.create({
-                    name: data.name,
-                    subject : data.subject,
-                    description: data.description
-                }).success(function (room) {
-
-                    logger.debug('room:' + JSON.stringify(room));
-                    user.addRoom(room, {
-                        role: storage.RoomMembers.Role.Moderator,
-                        affiliation: storage.RoomMembers.Affiliation.Owner,
-                        nickname: ''
-                    }).success(function () {
-                        // added room as member
-                        resolve(room);
-                    }).error(function (err) {
-                        logger.error('Room Members: ' + err);
-                        reject();
-                    });
-
-                }).error(function (err) {
-                    logger.error('error room create: ' + err);
-                    reject('room exists');
-                });
-            } else {
-                reject('user is missing');
+            if (!user || !data) {
+                reject();
+                return;
             }
+
+            logger.debug('user' + JSON.stringify(user));
+
+            storage.Room.create({
+                name: data.name,
+                subject : data.subject,
+                description: data.description
+            }).success(function (room) {
+
+                logger.debug('room:' + JSON.stringify(room));
+                user.addRoom(room, {
+                    role: storage.RoomMembers.Role.Moderator,
+                    affiliation: storage.RoomMembers.Affiliation.Owner,
+                    nickname: ''
+                }).success(function () {
+                    // added room as member
+                    resolve(room);
+                }).error(function (err) {
+                    logger.error('Room Members: ' + err);
+                    reject();
+                });
+
+            }).error(function (err) {
+                logger.error('error room create: ' + err);
+                reject('room exists');
+            });
         });
 
     },
@@ -143,10 +157,12 @@ User.prototype = {
         console.log('ADD MEMBER');
         var storage = this.storage;
 
-        console.log(storage.RoomMembers.Role.Participant);
-        console.log(storage.RoomMembers.Affiliation.Member);
-
         return new Promise(function (resolve, reject) {
+
+            if (!room || !user) {
+                reject();
+                return;
+            }
 
             room.addMember(user, {
                 role: storage.RoomMembers.Role.Participant,
@@ -165,6 +181,12 @@ User.prototype = {
 
     removeMember: function (room, user) {
         return new Promise(function (resolve, reject) {
+
+            if (!room || !user) {
+                reject();
+                return;
+            }
+
             room.removeMember(user).success(function () {
                 // removed member to room
                 resolve();
@@ -178,68 +200,73 @@ User.prototype = {
     getChannels: function (user, type) {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
-            if (user) {
 
-                type = type || 'all';
-
-                var affiliation = [];
-
-                switch (type) {
-                case 'owner':
-                    affiliation.push(storage.ChannelSub.Affiliation.Owner);
-                    break;
-                case 'member':
-                    affiliation.push(storage.ChannelSub.Affiliation.Member);
-                    break;
-                case 'publisher':
-                    affiliation.push(storage.ChannelSub.Affiliation.Publisher);
-                    break;
-                default: // all 
-                    affiliation.push(storage.ChannelSub.Affiliation.Owner);
-                    affiliation.push(storage.ChannelSub.Affiliation.Member);
-                    affiliation.push(storage.ChannelSub.Affiliation.Publisher);
-                    break;
-                }
-
-                // Owner as default affiliation
-                user.getChannels({
-                    where: {
-                        affiliation: affiliation
-                    }
-                }).success(function (ownerChannels) {
-                    resolve(ownerChannels);
-                }).error(function (err) {
-                    reject(err);
-                });
-            } else {
+            if (!user) {
                 reject();
+                return;
             }
+   
+            type = type || 'all';
+
+            var affiliation = [];
+
+            switch (type) {
+            case 'owner':
+                affiliation.push(storage.ChannelSub.Affiliation.Owner);
+                break;
+            case 'member':
+                affiliation.push(storage.ChannelSub.Affiliation.Member);
+                break;
+            case 'publisher':
+                affiliation.push(storage.ChannelSub.Affiliation.Publisher);
+                break;
+            default: // all 
+                affiliation.push(storage.ChannelSub.Affiliation.Owner);
+                affiliation.push(storage.ChannelSub.Affiliation.Member);
+                affiliation.push(storage.ChannelSub.Affiliation.Publisher);
+                break;
+            }
+
+            // Owner as default affiliation
+            user.getChannels({
+                where: {
+                    affiliation: affiliation
+                }
+            }).success(function (ownerChannels) {
+                resolve(ownerChannels);
+            }).error(function (err) {
+                reject(err);
+            });
+
         });
     },
 
     addChannel: function (user, data) {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
-            if (user) {
-                storage.Channel.create({
-                    name: data.name
-                }).success(function (channel) {
 
-                    user.addChannel(channel, {
-                        affiliation: storage.ChannelSub.Affiliation.Owner,
-                        substate: storage.ChannelSub.SubState.Member
-                    }).success(function () {
-                        resolve(channel);
-                    }).error(function (err) {
-                        reject();
-                    });
-
-                }).error(function (err) {
-                    reject('channel exists');
-                });
-            } else {
-                reject('user is missing');
+            if (!user) {
+                reject();
+                return;
             }
+
+            storage.Channel.create({
+                name: data.name
+            }).success(function (channel) {
+
+                user.addChannel(channel, {
+                    affiliation: storage.ChannelSub.Affiliation.Owner,
+                    substate: storage.ChannelSub.SubState.Member
+                }).success(function () {
+                    resolve(channel);
+                }).error(function (err) {
+                    reject();
+                });
+
+            }).error(function (err) {
+                reject('channel exists');
+            });
+
         });
     }
 };
