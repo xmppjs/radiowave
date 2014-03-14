@@ -243,7 +243,7 @@ var routes = function (app, storage, settings) {
         var roomname = req.params.room;
         var membername = req.params.user;
 
-        logger.debug('Add member to room: ' +  username + '/' + roomname);
+        logger.debug('Delete member from room: ' +  username + '/' + roomname);
 
         // requester, should be member of the room
         var jid = ApiUtils.getJID(req);
@@ -256,7 +256,16 @@ var routes = function (app, storage, settings) {
 
         // verify that owner and requestor are the same
         if (!ownerjid.equals(jid)) {
-            res.send(404);
+            res.send(400);
+            return;
+        }
+
+        // owner cannot remove owner
+        console.log('OWNER: ' + ownerjid.toString());
+        console.log('MEMBER: ' + memberjid.toString());
+
+        if (ownerjid.equals(memberjid)) {
+            res.send(400);
             return;
         }
 
