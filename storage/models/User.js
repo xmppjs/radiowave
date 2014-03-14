@@ -11,6 +11,7 @@ module.exports = function (sequelize, DataTypes) {
         },
         jid: {
             type: DataTypes.STRING,
+            unique: true,
             validate: {}
         },
         uuid: {
