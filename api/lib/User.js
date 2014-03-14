@@ -50,7 +50,7 @@ User.prototype = {
     getRoom: function (owner, roomname) {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
-            if (!owner || !roomname) {
+            if (!owner ||  !roomname) {
                 reject();
                 return;
             }
@@ -119,7 +119,7 @@ User.prototype = {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
 
-            if (!user || !data) {
+            if (!user ||  !data) {
                 reject();
                 return;
             }
@@ -128,7 +128,7 @@ User.prototype = {
 
             storage.Room.create({
                 name: data.name,
-                subject : data.subject,
+                subject: data.subject,
                 description: data.description
             }).success(function (room) {
 
@@ -159,7 +159,7 @@ User.prototype = {
 
         return new Promise(function (resolve, reject) {
 
-            if (!room || !user) {
+            if (!room ||  !user) {
                 reject();
                 return;
             }
@@ -182,7 +182,7 @@ User.prototype = {
     removeMember: function (room, user) {
         return new Promise(function (resolve, reject) {
 
-            if (!room || !user) {
+            if (!room ||  !user) {
                 reject();
                 return;
             }
@@ -205,7 +205,7 @@ User.prototype = {
                 reject();
                 return;
             }
-   
+
             type = type || 'all';
 
             var affiliation = [];
