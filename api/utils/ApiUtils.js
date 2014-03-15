@@ -29,10 +29,32 @@ function serverPath(req) {
     return url.resolve(req.protocol + '://' + req.get('host'), path);
 }
 
+function findOwner(members, ownerJid) {
+
+    if (members) {
+        var owner = null;
+        members.forEach(function (member) {
+            if (member.roomMember.affiliation === 'owner') {
+                if (member.jid) {
+                    owner = new JID(member.jid).getLocal(true).toString();
+                }
+            }
+        });
+        return owner;
+    } else if (ownerJid){
+        return ownerJid.getLocal(true).toString();
+    } else {
+        return null;
+    }
+}
+
 function roomToJSON(ownerJid, room, meetingsPath) {
     var jsonroom = room.toJSON();
-    jsonroom.owner = ownerJid.getLocal(true).toString();
-    jsonroom.url = url.resolve(meetingsPath,  querystring.escape(jsonroom.owner) + '/' + querystring.escape(jsonroom.name));
+
+    jsonroom.owner = findOwner(jsonroom.members, ownerJid);
+    delete jsonroom.members;
+
+    jsonroom.url = url.resolve(meetingsPath, querystring.escape(jsonroom.owner) + '/' + querystring.escape(jsonroom.name));
     return jsonroom;
 }
 

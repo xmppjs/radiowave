@@ -51,7 +51,7 @@ User.prototype = {
         var storage = this.storage;
         return new Promise(function (resolve, reject) {
             if (!owner ||  !roomname) {
-                reject();
+                reject('no owner or roomname');
                 return;
             }
 
@@ -103,11 +103,35 @@ User.prototype = {
 
             // Owner as default affiliation
             user.getRooms({
+                attributes: ['id'],
                 where: {
                     affiliation: affiliation
                 }
-            }).success(function (ownerRooms) {
-                resolve(ownerRooms);
+            }).success(function (userRooms) {
+
+                var ids = userRooms.map(function (val) {
+                    return val.id;
+                });
+
+                console.log(JSON.stringify(ids));
+
+                // read rooms with members
+                storage.Room.findAll({
+                    // include owner
+                    include: [{
+                        model: storage.User,
+                        attributes: ['jid'],
+                        as: 'Members'
+                    }],
+                    where: {
+                        id: ids
+                    }
+                }).success(function (ownerRooms) {
+                    resolve(ownerRooms);
+                }).error(function () {
+                    reject();
+                });
+
             }).error(function () {
                 reject();
             });
