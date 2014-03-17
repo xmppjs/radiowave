@@ -26,7 +26,8 @@ function exportJSON(model) {
 function serverPath(req) {
 
     var path = req.url;
-    return url.resolve(req.protocol + '://' + req.get('host'), path);
+    var requrl = url.resolve(req.protocol + '://' + req.get('host'), path);
+    return requrl.replace(/\/$/, "");
 }
 
 function findOwner(members, ownerJid) {
