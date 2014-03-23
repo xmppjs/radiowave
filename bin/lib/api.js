@@ -16,7 +16,7 @@ function API() {
     this.domain = "";
 }
 
-API.prototype.addAuthMethod = function(method) {
+API.prototype.addAuthMethod = function (method) {
     this.authMethods.push(method);
 };
 
@@ -30,7 +30,7 @@ API.prototype.findAuthMethod = function (method) {
     return found;
 };
 
-API.prototype.verify = function(opts, cb) {
+API.prototype.verify = function (opts, cb) {
     var self = this;
     var auth = this.findAuthMethod(opts.saslmech);
     if (auth.length > 0) {
@@ -40,21 +40,32 @@ API.prototype.verify = function(opts, cb) {
             // we build a JID to escape the username properly
             opts.jid = new JID(opts.username + '@' + this.domain).toString();
         }
-         
-        auth[0].authenticate(opts).then(function(user){
-                logger.debug('api user authenticated ');
 
-                // for api request we may not got the jid, but need it, generate jid 
-                // from username (e.g. OAuth API requests)
-                if (!user.jid && user.username) {
-                    // we build a JID to escape the username properly
-                    user.jid = new JID(user.username + '@' + self.domain).toString();
-                }
-                cb(null, user);
-            }).catch(function(err){
-                logger.error('api user authentication failed %s', err);
-                cb(null, null);
-            });
+        auth[0].authenticate(opts).then(function (user) {
+            logger.debug('api user authenticated ');
+
+            // for api request we may not got the jid, but need it, generate jid 
+            // from username (e.g. OAuth API requests)
+            if (!user.jid && user.username) {
+                // we build a JID to escape the username properly
+                user.jid = new JID(user.username + '@' + self.domain).toString();
+            }
+
+            // register user
+            self.storage.User
+                .findOrCreate({
+                    jid: new JID(user.jid).bare().toString()
+                })
+                .success(function (user, created) {
+                    console.log('USER created %s', user.jid);
+                    cb(null, user);
+                }).error(function(err){
+                    cb(err, null);
+                });
+        }).catch (function (err) {
+            logger.error('api user authentication failed %s', err);
+            cb(err, null);
+        });
     } else {
         // throw error
         logger.error('cannot handle %s', opts.saslmech);
@@ -73,8 +84,8 @@ API.prototype.configurePassport = function (passport) {
             logger.debug('API OAuth Request: %s', accessToken);
 
             var opts = {
-                'saslmech' : 'X-OAUTH2',
-                'oauth_token' : accessToken
+                'saslmech': 'X-OAUTH2',
+                'oauth_token': accessToken
             };
 
             self.verify(opts, done);
@@ -89,9 +100,9 @@ API.prototype.configurePassport = function (passport) {
             logger.debug('API Basic Auth Request: %s', userid);
 
             var opts = {
-                'saslmech' : 'PLAIN',
-                'username' : userid,
-                'password' : password
+                'saslmech': 'PLAIN',
+                'username': userid,
+                'password': password
             };
 
             self.verify(opts, done);
@@ -110,12 +121,14 @@ API.prototype.configureRoutes = function (app, storage, settings) {
 };
 
 API.prototype.startApi = function (storage, settings, multiport) {
+    
+    this.storage = storage;
 
     var app = null;
     var apisettings = settings.get('api');
 
-    
-    if (multiport && ( (apisettings.port === multiport.port) || (!apisettings.port))) {
+
+    if (multiport && ((apisettings.port === multiport.port) || (!apisettings.port))) {
         app = multiport.app;
         logger.debug('use multiport for api');
     } else if (apisettings.port) {
@@ -144,7 +157,7 @@ API.prototype.startApi = function (storage, settings, multiport) {
     app.all('*', function (req, res, next) {
         logger.debug('Valid CORS hosts : ' + JSON.stringify(allowedHost));
         logger.debug('Request from host: ' + req.headers.origin);
-        if ((allowedHost.indexOf(req.headers.origin) > -1) || (process.env.NODE_ENV === 'development')) {
+        if ((allowedHost.indexOf(req.headers.origin) > -1) ||  (process.env.NODE_ENV === 'development')) {
             res.header('Access-Control-Allow-Origin', req.headers.origin);
             res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
             res.header('Access-Control-Allow-Headers', 'Authorization, X-Requested-With, Content-Type, Content-Length, Content-MD5, Date, X-Api-Version');
