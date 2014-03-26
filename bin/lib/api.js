@@ -127,7 +127,6 @@ API.prototype.startApi = function (storage, settings, multiport) {
     var app = null;
     var apisettings = settings.get('api');
 
-
     if (multiport && ((apisettings.port === multiport.port) || (!apisettings.port))) {
         app = multiport.app;
         logger.debug('use multiport for api');
@@ -137,6 +136,8 @@ API.prototype.startApi = function (storage, settings, multiport) {
     } else {
         logger.error('could not determine a port for api');
     }
+
+    app.use(express.logger());
 
     // REST API
     app.use(function (req, res, next) {
