@@ -100,7 +100,7 @@ module.exports = function (sequelize, DataTypes) {
                     // checkout if the current user is member
                     self.getMembers({
                         where: {
-                            userid : user.id
+                            UserId : user.id
                         }
                     }).success(function(users){
                         console.log('found users: ' + JSON.stringify(users));
