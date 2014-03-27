@@ -64,7 +64,7 @@ API.prototype.verify = function (opts, cb) {
                 });
         }).catch (function (err) {
             logger.error('api user authentication failed %s', err);
-            cb(err, null);
+            cb(null, null);
         });
     } else {
         // throw error
