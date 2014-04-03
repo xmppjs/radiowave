@@ -186,10 +186,7 @@ API.prototype.startApi = function (storage, settings, multiport) {
     // catch exceptions
     app.use(function (err, req, res, next) {
         console.log(err);
-        res.status(err.status || 500);
-        res.send({
-            error: 'Your request is not valid.'
-        });
+        res.send(err.status || 400);
     });
 };
 
