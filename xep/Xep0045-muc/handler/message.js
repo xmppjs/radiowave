@@ -14,6 +14,26 @@ function MessageHandler(storage) {
 
 util.inherits(MessageHandler, XepComponent);
 
+
+/**
+ * @description stores a given message in the given room
+ * @param room muc room
+ * @param msg xml message
+ */
+MessageHandler.prototype.storeMessage = function (room, msg) {
+
+    // store message in history
+    this.storage.RoomMessage.create({
+        content: msg.toString()
+    }).success(function (message) {
+        room.addMessage(message).success(function () {
+            // message is added
+        });
+    }).error(function(err){
+        console.error(err);
+    });
+};
+
 /**
  * Implement 7.4
  * @see http://xmpp.org/extensions/xep-0045.html#message
@@ -35,14 +55,8 @@ MessageHandler.prototype.sendMessage = function (room, member, stanza) {
     });
     msg.children = messagebody;
 
-    // store message in history
-    this.storage.Message.create({
-        content: msg.toString()
-    }).success(function (message) {
-        room.addMessage(message).success(function () {
-            // message is added
-        });
-    });
+
+    this.storeMessage(room, msg);
 
     logger.debug('send message to all members');
     // iterate over room members and submit message
@@ -58,7 +72,9 @@ MessageHandler.prototype.sendMessage = function (room, member, stanza) {
                 self.send(clientmsg);
             }
         }
-    );
+    ).error(function(err){
+        console.error(err);
+    });
 };
 
 module.exports = MessageHandler;

@@ -2,7 +2,7 @@
 
 module.exports = function (sequelize, DataTypes) {
 
-    var Message = sequelize.define('Message', {
+    var RoomMessage = sequelize.define('RoomMessage', {
         content: {
             type: DataTypes.TEXT,
             validate: {}
@@ -13,5 +13,5 @@ module.exports = function (sequelize, DataTypes) {
         }
     });
 
-    return Message;
+    return RoomMessage;
 };

@@ -23,9 +23,11 @@ module.exports = function (sequelize, DataTypes) {
                 through: models.RoomMembers,
                 as: 'Members'
             });
-            models.Room.hasMany(models.Message);
+            models.Room.hasMany(models.RoomMessage, {
+                as: 'Messages'
+            });
             models.Room.hasMany(models.RoomConfiguration, {
-                as: 'Configuration'
+                as: 'Configurations'
             });
         },
         instanceMethods: {
