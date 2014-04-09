@@ -18,6 +18,45 @@ util.inherits(SubscriptionHandler, XepComponent);
 SubscriptionHandler.prototype.Error = {};
 SubscriptionHandler.prototype.Error.NotSubscribed = ltx.parse('<error type=\'cancel\'><unexpected-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><not-subscribed xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
 SubscriptionHandler.prototype.Error.BadRequest = ltx.parse('<error type=\'modify\'><bad-request xmlns=\'urn:ietf:params:xml:ns:xmpp-stanzas\'/><invalid-jid xmlns=\'http://jabber.org/protocol/pubsub#errors\'/></error>');
+
+
+/** 
+ * @description sends the history to the given jid
+ * @param node pub sub node
+ * @param jid reciever of the histroy events
+ *
+ * TODO make dependend on node default
+ * @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe-last
+ */
+SubscriptionHandler.prototype.sendHistory = function (node, jid) {
+    console.log('send history');
+    var self = this;
+    node.getEvents().success(function (events) {
+        // console.log(JSON.stringify(events));
+        if (events && events.length && events.length > 0) {
+
+            events.forEach(function(evt){
+                // console.log(JSON.stringify(evt));
+                try {
+                    // extract message
+                    var el = ltx.parse(evt.content);
+
+                    // send to  jid
+                    el.attrs.to = jid;
+
+                    // route message
+                    self.send(el, null);
+
+                } catch (err) {
+                    console.error(err);
+                }
+            });
+        }
+    }).error(function(err){
+        console.error(err);
+    });
+};
+
 /**
  * @description subscribes a new jid
  * @param stanza full pubsub message stanza
@@ -68,16 +107,9 @@ SubscriptionHandler.prototype.handleSubscribe = function (user, node, stanza, su
             // send subscribe response
             self.send(msg);
 
-            /*
-             * send old items to new subscriber
-             * TODO make dependend on node default
-             * @see http://xmpp.org/extensions/xep-0060.html#subscriber-subscribe-last
-             */
-            /*node.eachMessage(function (el) {
-                el.attrs.to = sub.attrs.jid;
-                // route message
-                this.send(el, null);
-            });*/
+            // send old itemes to new subscriber
+            self.sendHistory(node, subcribeEl.attrs.jid);
+
         }).
     catch (
         function (err) {
