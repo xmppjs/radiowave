@@ -54,8 +54,11 @@ module.exports = function (sequelize, DataTypes) {
                 through: models.ChannelSub,
                 as: 'Subscribers'
             });
+            models.Channel.hasMany(models.ChannelEvent, {
+                as: 'Events'
+            });
             models.Channel.hasMany(models.ChannelConf, {
-                as: 'Configuration'
+                as: 'Configurations'
             });
         },
         classMethods: {
@@ -84,7 +87,7 @@ module.exports = function (sequelize, DataTypes) {
                                 var channelSubscriber = users[0];
 
                                 // update data
-                                channelSubscriber.ChannelSub.affiliation = options.affiliation;
+                                // channelSubscriber.ChannelSub.affiliation = options.affiliation;
                                 channelSubscriber.ChannelSub.substate = options.substate;
                                 channelSubscriber.ChannelSub.save();
 

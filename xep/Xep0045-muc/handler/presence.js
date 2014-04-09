@@ -100,7 +100,7 @@ PresenceHandler.prototype.sendPresenceJoin = function (room, newMember, roomjid,
 PresenceHandler.prototype.sendRoomHistory = function (room, member, roomjid ) {
     logger.debug('send room ' + roomjid + ' history to ' + member.jid);
     var self = this;
-    room.getMessages().then(
+    room.getMessages().success(
         function (messages) {
             // send room history
             for (var i = 0, l = messages.length; i < l; i += 1) {
@@ -111,7 +111,9 @@ PresenceHandler.prototype.sendRoomHistory = function (room, member, roomjid ) {
                 self.send(el);
             }
         }
-    );
+    ).error(function(err){
+        console.error(err);
+    });
 };
 
 PresenceHandler.prototype.joinRoom = function (room, user, roomjid) {

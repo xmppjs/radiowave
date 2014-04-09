@@ -51,7 +51,7 @@ PublishHandler.prototype.deliverPayload = function (node, publishEl) {
     var self = this;
     return new Promise(function(resolve) {
 
-        node.getConfiguration({
+        node.getConfigurations({
             where: {
                 key: 'pubsub#deliver_payloads'
             }
@@ -107,15 +107,19 @@ PublishHandler.prototype.generatePublishedStanza = function (node, items) {
     return detail;
 };
 
-PublishHandler.prototype.storeEvent = function (msg) {
+/** 
+ * stores an event to database
+ */
+PublishHandler.prototype.storeEvent = function (node, msg) {
+
     // store message in history
-    /*this.storage.Event.create({
+    this.storage.ChannelEvent.create({
         content: msg.toString()
     }).success(function (message) {
         node.addEvent(message).success(function () {
             // message is added
         });
-    });*/
+    });
 };
 
 /**
@@ -153,7 +157,7 @@ PublishHandler.prototype.handlePublish = function (user, node, stanza, publish) 
             var msg = self.generateMessageStanza(node, attachment );
 
             // store event
-            self.storeEvent(msg);
+            self.storeEvent(node, msg);
 
             // send response to sender
             self.sendSuccess(stanza, self.generatePublishedStanza(node, extractedItems.items));
