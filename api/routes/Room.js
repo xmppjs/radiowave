@@ -295,7 +295,36 @@ var routes = function (app, storage, settings) {
      * List messages for a room
      */
     app.get('/api/rooms/:owner/:room/messages', function(req, res) {
-        res.json({});
+
+        // extract parameter
+        var username = req.params.owner;
+        var roomname = req.params.room;
+
+        logger.debug('Get room: ' +  username + '/' + roomname);
+
+        // requester, should be member of the room
+        var jid = ApiUtils.getJID(req);
+        var ownerjid = new JID(username + '@' + domain);
+
+        var usr = null;
+        var r = null;
+        usrManager.findUser(jid.toString()).then(function (user) {
+            usr = user;
+            return usrManager.findUser(ownerjid.toString());
+        }).then(function(owner){
+            return usrManager.getRoom(owner, roomname);
+        }).then(function(room) {
+            r = room;
+            return room.isMember(usr);
+        }).then(function() {
+            return r.getMessages();
+        }).then(function(messages) {
+            res.json(messages);
+        }).catch(function(err) {
+            console.error(err);
+            logger.error(err);
+            res.json(404, new ApiError('not found'));
+        });
     });
 
     /**

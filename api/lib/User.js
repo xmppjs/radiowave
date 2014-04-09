@@ -65,6 +65,7 @@ User.prototype = {
                     affiliation: affiliation
                 }
             }).success(function (ownerRooms) {
+                console.log('found rooms' + ownerRooms);
                 if (ownerRooms && ownerRooms.length >= 1) {
                     resolve(ownerRooms[0]);
                 } else {
@@ -243,6 +244,36 @@ User.prototype = {
                 resolve();
             }).error(function (err) {
                 logger.error(err);
+                reject();
+            });
+        });
+    },
+
+    getChannel: function (owner, channelname) {
+        console.log('get channel');
+        var storage = this.storage;
+        return new Promise(function (resolve, reject) {
+            if (!owner ||  !channelname) {
+                reject('no owner or channelname');
+                return;
+            }
+
+            var affiliation = [];
+            affiliation.push(storage.ChannelSub.Affiliation.Owner);
+
+            // Owner as default affiliation
+            owner.getChannels({
+                where: {
+                    name: channelname,
+                    affiliation: affiliation
+                }
+            }).success(function (ownerChannels) {
+                if (ownerChannels && ownerChannels.length >= 1) {
+                    resolve(ownerChannels[0]);
+                } else {
+                    reject();
+                }
+            }).error(function () {
                 reject();
             });
         });

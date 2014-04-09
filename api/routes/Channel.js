@@ -1,11 +1,19 @@
 'use strict';
 
-var ApiError = require('../utils/ApiError'),
-    winston = require('winston'),
-    logger = winston.loggers.get('webapi');
+var winston = require('winston'),
+    logger = winston.loggers.get('webapi'),
+    JID = require('node-xmpp-core').JID,
+    ApiError = require('../utils/ApiError'),
+    ApiUtils = require('../utils/ApiUtils');
 
-var routes = function(app, storage) {
+var UserManager = require('../lib/User');
+
+var routes = function(app, storage, settings) {
+
     logger.info('register channel routes');
+
+    var domain = settings.get('domain');
+    var usrManager = new UserManager(storage);
 
     /**
      * Create a new channels for the authenticated user.
@@ -25,12 +33,34 @@ var routes = function(app, storage) {
      * 
      */
     app.get('/api/channels/:owner/:channel', function(req, res) {
+        // extract parameter
         var username = req.params.owner;
         var channelname = req.params.channel;
 
         logger.debug('Get channel: ' +  username + '/' + channelname);
-        
-        res.json({});
+
+        // requester, should be member of the room
+        var jid = ApiUtils.getJID(req);
+        var ownerjid = new JID(username + '@' + domain);
+
+        var usr = null;
+        var c = null;
+        usrManager.findUser(jid.toString()).then(function (user) {
+            usr = user;
+            return usrManager.findUser(ownerjid.toString());
+        }).then(function(owner){
+            return usrManager.getChannel(owner, channelname);
+        }).then(function(channel) {
+            c = channel;
+            return channel.isSubscriber(usr);
+        }).then(function() {
+            console.log('is subscriber');
+            res.json(c);
+        }).catch(function(err) {
+            console.error(err);
+            logger.error(err);
+            res.json(404, new ApiError('not found'));
+        });
     });
 
     /**
@@ -80,7 +110,35 @@ var routes = function(app, storage) {
      * List events for a channel
      */
     app.get('/api/channels/:owner/:channel/events', function(req, res) {
-        res.json({});
+        // extract parameter
+        var username = req.params.owner;
+        var channelname = req.params.channel;
+
+        logger.debug('Get channel: ' +  username + '/' + channelname);
+
+        // requester, should be member of the room
+        var jid = ApiUtils.getJID(req);
+        var ownerjid = new JID(username + '@' + domain);
+
+        var usr = null;
+        var c = null;
+        usrManager.findUser(jid.toString()).then(function (user) {
+            usr = user;
+            return usrManager.findUser(ownerjid.toString());
+        }).then(function(owner){
+            return usrManager.getChannel(owner, channelname);
+        }).then(function(channel) {
+            c = channel;
+            return channel.isSubscriber(usr);
+        }).then(function() {
+            return c.getEvents();
+        }).then(function(events) {
+            res.json(events);
+        }).catch(function(err) {
+            console.error(err);
+            logger.error(err);
+            res.json(404, new ApiError('not found'));
+        });
     });
 };
 
