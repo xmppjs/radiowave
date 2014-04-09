@@ -61,8 +61,8 @@ module.exports = function (sequelize, DataTypes) {
                                 var roomUser = users[0];
 
                                 // update data
-                                roomUser.RoomMembers.role = options.role;
-                                roomUser.RoomMembers.affiliation = options.affiliation;
+                                // roomUser.RoomMembers.role = options.role;
+                                // roomUser.RoomMembers.affiliation = options.affiliation;
                                 roomUser.RoomMembers.nickname = options.nickname;
                                 roomUser.RoomMembers.save();
 

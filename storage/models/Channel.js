@@ -87,7 +87,7 @@ module.exports = function (sequelize, DataTypes) {
                                 var channelSubscriber = users[0];
 
                                 // update data
-                                channelSubscriber.ChannelSub.affiliation = options.affiliation;
+                                // channelSubscriber.ChannelSub.affiliation = options.affiliation;
                                 channelSubscriber.ChannelSub.substate = options.substate;
                                 channelSubscriber.ChannelSub.save();
 
