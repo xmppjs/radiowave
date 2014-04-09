@@ -51,7 +51,7 @@ PublishHandler.prototype.deliverPayload = function (node, publishEl) {
     var self = this;
     return new Promise(function(resolve) {
 
-        node.getConfiguration({
+        node.getConfigurations({
             where: {
                 key: 'pubsub#deliver_payloads'
             }

@@ -54,8 +54,11 @@ module.exports = function (sequelize, DataTypes) {
                 through: models.ChannelSub,
                 as: 'Subscribers'
             });
+            models.Channel.hasMany(models.ChannelEvent, {
+                as: 'Events'
+            });
             models.Channel.hasMany(models.ChannelConf, {
-                as: 'Configuration'
+                as: 'Configurations'
             });
         },
         classMethods: {
