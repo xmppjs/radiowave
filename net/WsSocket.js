@@ -40,7 +40,7 @@ WsSocket.prototype.init = function (ws) {
     ws.on('message', function (body, flags) {
         var content = null;
 
-        if (flags.binary || flags.masked) {
+        if (flags && (flags.binary || flags.masked)) {
             content = body.toString('utf8');
         } else {
             content = body;
