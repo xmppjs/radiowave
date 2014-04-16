@@ -30,7 +30,6 @@ XepModules.prototype.Xep0060 = function (domain, storage, settings) {
         'domain': domain,
         'storage': storage
     });
-
 };
 
 XepModules.prototype.Rfc3921Messaging = function () {
@@ -53,6 +52,14 @@ XepModules.prototype.Xep0307 = function () {
     return new xRocket.Xep.Xep0307();
 };
 
+XepModules.prototype.Xep0049 = function () {
+    return new xRocket.Xep.Xep0049();
+};
+
+XepModules.prototype.Xep0016 = function () {
+    return new xRocket.Xep.Xep0016();
+};
+
 XepModules.prototype.load = function (settings, storage) {
     var self = this;
     return new Promise(function (resolve, reject) {
@@ -67,8 +74,12 @@ XepModules.prototype.load = function (settings, storage) {
         if (modules) {
             modules.forEach(function (module){
                 logger.info('load module ' + module.type );
-                var m = self[module.type](domain, storage, module);
-                cr.register(m);
+                if (self[module.type]) {
+                    var m = self[module.type](domain, storage, module);
+                    cr.register(m);
+                } else {
+                    logger.warn('module ' + module.type + ' is not known.');
+                }
             });
             resolve(cr);
         } else {

@@ -22,6 +22,10 @@
         "type": "Xep0199"
     }, {
         "type": "Xep0307"
+    }, {
+        "type": "Xep0049"
+    }, {
+        "type": "Xep0016"
     }],
     // load the connection manager
     "connection": [{
