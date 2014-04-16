@@ -176,7 +176,7 @@ PresenceHandler.prototype.sendPresenceLeave = function (room, user, roomjid) {
         'role': NS.MUC_ROLE_ADMIN
     });
 
-    room.listMembers().then(
+    room.getMembers().then(
         function (members) {
             for (var i = 0, l = members.length; i < l; i += 1) {
                 var member = members[i];
