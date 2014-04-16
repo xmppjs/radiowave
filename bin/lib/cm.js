@@ -95,6 +95,28 @@ ConnectionManager.prototype.websocket = function (domain, keys, settings) {
     return ws;
 };
 
+ConnectionManager.prototype.engineio = function (domain, keys, settings, multiport) {
+    // Engine IO Server
+    var eioSetttings = {
+        'domain': domain,
+        'autostart': false
+    };
+
+    if (multiport && ( (settings.port === multiport.port) || (!settings.port))) {
+        eioSetttings.server = multiport.server;
+        logger.debug('use multiport for engine.io');
+    } else if (settings.port) {
+        eioSetttings.port = settings.port;
+    } else {
+        logger.error('could not determine a port for engine.io');
+    }
+
+    // Engine.io Server
+    var eio = new xRocket.Net.EioServer(eioSetttings);
+
+    return eio;
+};
+
 ConnectionManager.prototype.socketio = function (domain, keys, settings, multiport) {
     var sioSettings = {
         'domain': domain,
@@ -103,11 +125,11 @@ ConnectionManager.prototype.socketio = function (domain, keys, settings, multipo
 
     if (multiport && ( (settings.port === multiport.port) || (!settings.port))) {
         sioSettings.server = multiport.server;
-        logger.debug('use multiport for socketio');
+        logger.debug('use multiport for socket.io');
     } else if (settings.port) {
         sioSettings.port = settings.port;
     } else {
-        logger.error('could not determine a port for socketio');
+        logger.error('could not determine a port for socket.io');
     }
 
     // Socket.io Server
@@ -130,11 +152,15 @@ ConnectionManager.prototype.load = function (xR, settings) {
 
                 cmsettings.forEach(function (item) {
 
-                    var cm = self[item.type](domain, keys, item, multiport);
-                    if (cm) {
-                        cm.registerSaslMechanism(nodexmppserver.auth.Plain);
-                        cm.registerSaslMechanism(nodexmppserver.auth.XOAuth2);
-                        xR.addConnectionManager(cm);
+                    if (self[item.type]) {
+                        var cm = self[item.type](domain, keys, item, multiport);
+                        if (cm) {
+                            cm.registerSaslMechanism(nodexmppserver.auth.Plain);
+                            cm.registerSaslMechanism(nodexmppserver.auth.XOAuth2);
+                            xR.addConnectionManager(cm);
+                        }
+                    } else {
+                        logger.warn(item.type + ' is not supported as connection manager');
                     }
                 });
             });

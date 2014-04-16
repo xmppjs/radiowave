@@ -4,5 +4,6 @@ module.exports = {
     C2SServer : require('./C2SServer'),
     BOSHServer : require('./BOSHServer'),
     WsServer : require('./WsServer'),
-    SioServer : require('./SioServer')
+    SioServer : require('./SioServer'),
+    EioServer : require('./EioServer')
 };

@@ -30,17 +30,20 @@
         "interface": "0.0.0.0"
     }, {
         "type": "bosh",
-        "port": 8888,
+        "port": 5280,
         "path": "http-bind",
         "interface": "0.0.0.0"
     }, {
         "type": "websocket",
         "port": 42426,
         "interface": "0.0.0.0"
-
     }, {
         "type": "socketio",
         "port": 8888,
+        "interface": "0.0.0.0"
+    }, {
+        "type": "engineio",
+        "port": 8889,
         "interface": "0.0.0.0"
     }],
     // sets the authentication mechanism
