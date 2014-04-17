@@ -1,6 +1,8 @@
 {
     // xmpp domain
     "domain": "example.net",
+    // subpath url e.g. http://exmaple.com/subpath instead of http://exmaple.com/
+    "subpath" : "",
     // should be "development" or "production"
     "environment": "development",
     // load various xrocket modules

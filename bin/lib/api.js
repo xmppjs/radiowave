@@ -115,15 +115,26 @@ API.prototype.configurePassport = function (passport) {
 
 API.prototype.configureRoutes = function (app, storage, settings) {
 
+    // check for authentication for api routes
+    var subpath = settings.get('subpath') || "";
+    var apipath = path.join('/' , subpath , 'api');
+
+    var passport = app.get('passport');
+
+    // the following routes are authenticated
+    app.all(apipath + '/*', passport.authenticate(['basic', 'bearer'], {
+        session: false
+    }));
+
     // load xrocketd api
     var apiroutes = xRocket.Api.Routes(storage, settings);
 
     // call our router we just created
-    app.use('/api', apiroutes.user);
-    app.use('/api', apiroutes.orgs);
-    app.use('/api', apiroutes.room);
-    app.use('/api', apiroutes.channel);
-    app.use('/api', apiroutes.pub);
+    app.use(apipath, apiroutes.user);
+    app.use(apipath, apiroutes.orgs);
+    app.use(apipath, apiroutes.room);
+    app.use(apipath, apiroutes.channel);
+    app.use(apipath, apiroutes.pub);
 };
 
 API.prototype.startApi = function (storage, settings, multiport) {
@@ -143,8 +154,6 @@ API.prototype.startApi = function (storage, settings, multiport) {
         logger.error('could not determine a port for api');
     }
 
-    // app.use(express.logger());
-
     // REST API
     app.use(function (req, res, next) {
         res.removeHeader('X-Powered-By');
@@ -156,6 +165,7 @@ API.prototype.startApi = function (storage, settings, multiport) {
     // initialize use passport
     app.use(passport.initialize());
     this.configurePassport(passport);
+    app.set('passport', passport);
 
     var allowedHost = apisettings.cors.hosts;
 
@@ -178,25 +188,11 @@ API.prototype.startApi = function (storage, settings, multiport) {
         res.send(200);
     });
 
-    // check for authentication for api routes
-    var apipath = '/api/*';
-    var subpath = settings.get('subpath') || "";
-
-    if (subpath) {
-        apipath = path.join('/' , subpath , 'api/*');
-    }
-
-    // the following routes are authenticated
-    app.all('/api/*', passport.authenticate(['basic', 'bearer'], {
-        session: false
-    }));
-
     this.configureRoutes(app, storage, settings);
 
     // web client
     // logger.debug(path.resolve(__dirname, '../web'));
     // app.use(express.static(path.resolve(__dirname, '../web')));
-
 
     // catch exceptions
     app.use(function (err, req, res, next) {
