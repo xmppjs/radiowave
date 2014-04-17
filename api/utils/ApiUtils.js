@@ -23,10 +23,20 @@ function exportJSON(model) {
     }
 }
 
-function serverPath(req) {
+/**
+ * req : http request
+ * host: override http host (optional)
+ */
+function serverPath(req, host) {
 
     var path = req.originalUrl;
-    var requrl = url.resolve(req.protocol + '://' + req.get('host'), path);
+    var requrl = null;
+    if (host) {
+        requrl = url.resolve(host, path);
+    } else {
+        requrl = url.resolve(req.protocol + '://' + req.get('host'), path);
+    }
+
     return requrl.replace(/\/$/, "");
 }
 
