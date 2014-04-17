@@ -4,6 +4,7 @@ var winston = require('winston'),
     logger = winston.loggers.get('xrocketd'),
     Promise = require('bluebird'),
     express = require('express'),
+    bodyParser = require('body-parser'),
     xRocket = require('../../xrocket'),
     JID = require('node-xmpp-core').JID;
 
@@ -109,9 +110,6 @@ API.prototype.configurePassport = function (passport) {
         }
     ));
 
-    return passport.authenticate(['basic', 'bearer'], {
-        session: false
-    });
 };
 
 API.prototype.configureRoutes = function (app, storage, settings) {
@@ -137,7 +135,7 @@ API.prototype.startApi = function (storage, settings, multiport) {
         logger.error('could not determine a port for api');
     }
 
-    app.use(express.logger());
+    // app.use(express.logger());
 
     // REST API
     app.use(function (req, res, next) {
@@ -145,12 +143,11 @@ API.prototype.startApi = function (storage, settings, multiport) {
         next();
     });
 
-    app.use(express.bodyParser());
-    app.use(express.methodOverride());
+    app.use(bodyParser.json({ limit: '1mb' }));
 
     // initialize use passport
     app.use(passport.initialize());
-    app.use(passport.session());
+    this.configurePassport(passport);
 
     var allowedHost = apisettings.cors.hosts;
 
@@ -175,6 +172,10 @@ API.prototype.startApi = function (storage, settings, multiport) {
 
     // check for authentication for api routes
     app.all('/api/*', this.configurePassport(passport));
+    // the following routes are authenticated
+    app.all('/api/*', passport.authenticate(['basic', 'bearer'], {
+        session: false
+    }));
 
     this.configureRoutes(app, storage, settings);
 
