@@ -49,7 +49,7 @@ ConnectionManager.prototype.tcp = function (domain, keys, settings) {
     return cs2;
 };
 
-ConnectionManager.prototype.bosh = function (domain, keys, settings, multiport) {
+ConnectionManager.prototype.bosh = function (domain, keys, settings, multiport, subpath) {
     var boshSettings = null;
     var multiportActive = false;
     if (multiport && ( (settings.port === multiport.port) || (!settings.port))) {
@@ -95,11 +95,12 @@ ConnectionManager.prototype.websocket = function (domain, keys, settings) {
     return ws;
 };
 
-ConnectionManager.prototype.engineio = function (domain, keys, settings, multiport) {
+ConnectionManager.prototype.engineio = function (domain, keys, settings, multiport, subpath) {
     // Engine IO Server
     var eioSetttings = {
         'domain': domain,
-        'autostart': false
+        'autostart': false,
+        'subpath': subpath
     };
 
     if (multiport && ( (settings.port === multiport.port) || (!settings.port))) {
@@ -142,6 +143,7 @@ ConnectionManager.prototype.load = function (xR, settings) {
     return new Promise(function (resolve, reject) {
 
         var domain = settings.get('domain');
+        var subpath = settings.get('subpath') || "";
         // load settings for connection manager
         var cmsettings = settings.get('connection');
         var multiport = settings.get('multiport');
@@ -153,7 +155,7 @@ ConnectionManager.prototype.load = function (xR, settings) {
                 cmsettings.forEach(function (item) {
 
                     if (self[item.type]) {
-                        var cm = self[item.type](domain, keys, item, multiport);
+                        var cm = self[item.type](domain, keys, item, multiport, subpath);
                         if (cm) {
                             cm.registerSaslMechanism(nodexmppserver.auth.Plain);
                             cm.registerSaslMechanism(nodexmppserver.auth.XOAuth2);

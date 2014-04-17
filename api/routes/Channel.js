@@ -2,6 +2,7 @@
 
 var winston = require('winston'),
     logger = winston.loggers.get('webapi'),
+    express = require('express'),
     JID = require('node-xmpp-core').JID,
     ApiError = require('../utils/ApiError'),
     ApiUtils = require('../utils/ApiUtils');
@@ -9,6 +10,8 @@ var winston = require('winston'),
 var UserManager = require('../lib/User');
 
 var routes = function(app, storage, settings) {
+
+    var channelapi = express.Router();
 
     logger.info('register channel routes');
 
@@ -18,21 +21,21 @@ var routes = function(app, storage, settings) {
     /**
      * Create a new channels for the authenticated user.
      */
-    app.post('/api/user/channels', function(req, res) {
+    channelapi.post('/user/channels', function(req, res) {
         res.json({});
     });
 
     /**
      * Create a new channels in this organization.
      */
-    app.post('/api/orgs/:org/channels', function(req, res) {
+    channelapi.post('/orgs/:org/channels', function(req, res) {
         res.json({});
     });
 
     /**
      * 
      */
-    app.get('/api/channels/:owner/:channel', function(req, res) {
+    channelapi.get('/channels/:owner/:channel', function(req, res) {
         // extract parameter
         var username = req.params.owner;
         var channelname = req.params.channel;
@@ -66,14 +69,14 @@ var routes = function(app, storage, settings) {
     /**
      * Edit channel
      */
-    app.patch('/api/channels/:owner/:channel', function(req, res) {
+    channelapi.patch('/channels/:owner/:channel', function(req, res) {
         res.json({});
     });
 
     /**
      * Delete a channel (requires admin access)
      */
-    app.del('/api/channels/:owner/:channel', function(req, res) {
+    channelapi.delete('/channels/:owner/:channel', function(req, res) {
         res.json({});
     });
 
@@ -81,35 +84,35 @@ var routes = function(app, storage, settings) {
     /**
      * List members
      */
-    app.get('/api/channels/:owner/:channel/subscribers', function(req, res) {
+    channelapi.get('/channels/:owner/:channel/subscribers', function(req, res) {
         res.json({});
     });
 
     /**
      * Add user as a subscriber
      */
-    app.put('/api/channels/:owner/:channel/subscribers/:user', function(req, res) {
+    channelapi.put('/channels/:owner/:channel/subscribers/:user', function(req, res) {
         res.json({});
     });
 
     /**
      * Remove user as a subscriber
      */
-    app.del('/api/channels/:owner/:channel/subscribers/:user', function(req, res) {
+    channelapi.delete('/channels/:owner/:channel/subscribers/:user', function(req, res) {
         res.json({});
     });
 
     /**
      * trigger an event
      */
-    app.post('/api/channels/:owner/:channel/events', function(req, res) {
+    channelapi.post('/channels/:owner/:channel/events', function(req, res) {
         res.json({});
     });
 
     /**
      * List events for a channel
      */
-    app.get('/api/channels/:owner/:channel/events', function(req, res) {
+    channelapi.get('/channels/:owner/:channel/events', function(req, res) {
         // extract parameter
         var username = req.params.owner;
         var channelname = req.params.channel;
@@ -140,6 +143,8 @@ var routes = function(app, storage, settings) {
             res.json(404, new ApiError('not found'));
         });
     });
+
+    return channelapi;
 };
 
 // Expose routes

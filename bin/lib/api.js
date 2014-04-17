@@ -3,7 +3,9 @@
 var winston = require('winston'),
     logger = winston.loggers.get('xrocketd'),
     Promise = require('bluebird'),
+    path = require('path'),
     express = require('express'),
+    bodyParser = require('body-parser'),
     xRocket = require('../../xrocket'),
     JID = require('node-xmpp-core').JID;
 
@@ -109,15 +111,30 @@ API.prototype.configurePassport = function (passport) {
         }
     ));
 
-    return passport.authenticate(['basic', 'bearer'], {
-        session: false
-    });
 };
 
 API.prototype.configureRoutes = function (app, storage, settings) {
-    var routes = xRocket.Api.Routes;
+
+    // check for authentication for api routes
+    var subpath = settings.get('subpath') || "";
+    var apipath = path.join('/' , subpath , 'api');
+
+    var passport = app.get('passport');
+
+    // the following routes are authenticated
+    app.all(apipath + '/*', passport.authenticate(['basic', 'bearer'], {
+        session: false
+    }));
+
     // load xrocketd api
-    routes(app, storage, settings);
+    var apiroutes = xRocket.Api.Routes(storage, settings);
+
+    // call our router we just created
+    app.use(apipath, apiroutes.user);
+    app.use(apipath, apiroutes.orgs);
+    app.use(apipath, apiroutes.room);
+    app.use(apipath, apiroutes.channel);
+    app.use(apipath, apiroutes.pub);
 };
 
 API.prototype.startApi = function (storage, settings, multiport) {
@@ -137,20 +154,18 @@ API.prototype.startApi = function (storage, settings, multiport) {
         logger.error('could not determine a port for api');
     }
 
-    app.use(express.logger());
-
     // REST API
     app.use(function (req, res, next) {
         res.removeHeader('X-Powered-By');
         next();
     });
 
-    app.use(express.bodyParser());
-    app.use(express.methodOverride());
+    app.use(bodyParser.json({ limit: '1mb' }));
 
     // initialize use passport
     app.use(passport.initialize());
-    app.use(passport.session());
+    this.configurePassport(passport);
+    app.set('passport', passport);
 
     var allowedHost = apisettings.cors.hosts;
 
@@ -173,15 +188,11 @@ API.prototype.startApi = function (storage, settings, multiport) {
         res.send(200);
     });
 
-    // check for authentication for api routes
-    app.all('/api/*', this.configurePassport(passport));
-
     this.configureRoutes(app, storage, settings);
 
     // web client
-    var path = require('path');
-    logger.debug(path.resolve(__dirname, '../web'));
-    app.use(express.static(path.resolve(__dirname, '../web')));
+    // logger.debug(path.resolve(__dirname, '../web'));
+    // app.use(express.static(path.resolve(__dirname, '../web')));
 
     // catch exceptions
     app.use(function (err, req, res, next) {
