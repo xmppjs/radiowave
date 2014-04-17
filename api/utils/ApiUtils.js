@@ -29,7 +29,13 @@ function exportJSON(model) {
  */
 function serverPath(req, host) {
 
+    // determine request url
     var path = req.originalUrl;
+
+    // remove first and last slash
+    path = path.replace(/^\/|\/$/g, '');
+
+    // calculate real request url
     var requrl = null;
     if (host) {
         requrl = url.resolve(host, path);
