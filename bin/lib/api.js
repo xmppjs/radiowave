@@ -5,6 +5,7 @@ var winston = require('winston'),
     Promise = require('bluebird'),
     path = require('path'),
     express = require('express'),
+    cors = require('cors'),
     bodyParser = require('body-parser'),
     xRocket = require('../../xrocket'),
     JID = require('node-xmpp-core').JID;
@@ -167,26 +168,21 @@ API.prototype.startApi = function (storage, settings, multiport) {
     this.configurePassport(passport);
     app.set('passport', passport);
 
-    var allowedHost = apisettings.cors.hosts;
-
     // check for cors
-    app.all('*', function (req, res, next) {
-        logger.debug('Valid CORS hosts : ' + JSON.stringify(allowedHost));
-        logger.debug('Request from host: ' + req.headers.origin);
-        if ((allowedHost.indexOf(req.headers.origin) > -1) ||  (process.env.NODE_ENV === 'development')) {
-            res.header('Access-Control-Allow-Origin', req.headers.origin);
-            res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-            res.header('Access-Control-Allow-Headers', 'Authorization, X-Requested-With, Content-Type, Content-Length, Content-MD5, Date, X-Api-Version');
-            res.header('Access-Control-Allow-Credentials', true);
-            logger.debug('CORS activated');
-        }
-        next();
-    });
+    var whitelist = apisettings.cors.hosts;
+    var corsOptions = {
+        origin: function(origin, callback){
+            var originIsWhitelisted = whitelist.indexOf(origin) !== -1;
+            callback(null, originIsWhitelisted);
+        },
+        credentials : true
+    };
+    app.use(cors(corsOptions));
 
-    // abort request if we got options request
-    app.options('*', function (req, res) {
+    // enable preflight
+    app.options('*', [cors(corsOptions), function (req, res) {
         res.send(200);
-    });
+    }]);
 
     this.configureRoutes(app, storage, settings);
 
