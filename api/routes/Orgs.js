@@ -4,7 +4,7 @@ var winston = require('winston'),
     express = require('express'),
     logger = winston.loggers.get('webapi');
 
-var routes = function (app) {
+var routes = function () {
 
     var orgsapi = express.Router();
 
