@@ -14,12 +14,18 @@ var routes = function (app, storage, settings) {
     logger.info('register routes');
 
     // register additional routes
-    User(app, storage, settings);
-    Orgs(app, storage, settings);
-    Room(app, storage, settings);
-    Channel(app, storage, settings);
-    Public(app, storage, settings);
+    var usr = User(storage, settings);
+    var orgs = Orgs(storage, settings);
+    var room = Room(storage, settings);
+    var channel = Channel(storage, settings);
+    var pub = Public(storage, settings);
 
+    // call our router we just created
+    app.use('/api', usr);
+    app.use('/api', orgs);
+    app.use('/api', room);
+    app.use('/api', channel);
+    app.use('/api', pub);
 };
 
 // Expose routes

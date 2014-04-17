@@ -1,6 +1,7 @@
 'use strict';
 
 var winston = require('winston'),
+    express = require('express'),
     logger = winston.loggers.get('webapi'),
     ApiError = require('../utils/ApiError'),
     ApiUtils = require('../utils/ApiUtils');
@@ -10,12 +11,14 @@ var UserManager = require('../lib/User');
 var routes = function (app, storage) {
     logger.info('register user routes');
 
+    var userapi = express.Router();
+
     var usrManager = new UserManager(storage);
 
     /**
      * Get the authenticated user
      */
-    app.get('/api/user', function (req, res) {
+    userapi.get('/user', function (req, res) {
         var jid = ApiUtils.getJID(req);
 
         res.json({user: jid.toString()});
@@ -24,14 +27,14 @@ var routes = function (app, storage) {
     /**
      * Get a single user
      */
-    app.get('/api/users/:user', function (req, res) {
+    userapi.get('/users/:user', function (req, res) {
         res.json({});
     });
 
     /**
      * List rooms for the authenticated user.
      */
-    app.get('/api/user/rooms', function (req, res) {
+    userapi.get('/user/rooms', function (req, res) {
         var jid = ApiUtils.getJID(req);
         var type = req.query.type; // all, owner, member.
 
@@ -54,7 +57,7 @@ var routes = function (app, storage) {
      *    "name" : "room_name"
      * }
      */
-    app.post('/api/user/rooms', function (req, res) {
+    userapi.post('/user/rooms', function (req, res) {
         var jid = ApiUtils.getJID(req);
         var data = req.body;
 
@@ -81,7 +84,7 @@ var routes = function (app, storage) {
     /**
      * List channels for the authenticated user.
      */
-    app.get('/api/user/channels', function (req, res) {
+    userapi.get('/user/channels', function (req, res) {
         var jid = ApiUtils.getJID(req);
         var type = req.query.type; // all, owner, member.
 
@@ -97,7 +100,7 @@ var routes = function (app, storage) {
 
     });
 
-    app.post('/api/user/channels', function (req, res) {
+    userapi.post('/user/channels', function (req, res) {
         var jid = ApiUtils.getJID(req);
         var data = req.body;
 
@@ -116,6 +119,8 @@ var routes = function (app, storage) {
             res.json(400, new ApiError());
         });
     });
+
+    return userapi;
 };
 
 // Expose routes

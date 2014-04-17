@@ -1,6 +1,7 @@
 'use strict';
 
 var winston = require('winston'),
+    express = require('express'),
     logger = winston.loggers.get('webapi'),
     JID = require('node-xmpp-core').JID,
     ApiError = require('../utils/ApiError'),
@@ -8,9 +9,11 @@ var winston = require('winston'),
 
 var UserManager = require('../lib/User');
 
-var routes = function (app, storage, settings) {
+var routes = function (storage, settings) {
 
     logger.info('register room routes');
+
+    var roomapi = express.Router();
 
     var domain = settings.get('domain');
     var usrManager = new UserManager(storage);
@@ -19,7 +22,7 @@ var routes = function (app, storage, settings) {
      * Get room
      * restriction: only owner and members can access this information
      */
-    app.get('/api/rooms/:owner/:room', function (req, res) {
+    roomapi.get('/rooms/:owner/:room', function (req, res) {
 
         // requester, should be member of the room
         var jid = ApiUtils.getJID(req);
@@ -54,7 +57,7 @@ var routes = function (app, storage, settings) {
      * Edit room
      * restriction: only owner and members can access this information
      */
-    app.patch('/api/rooms/:owner/:room', function (req, res) {
+    roomapi.patch('/rooms/:owner/:room', function (req, res) {
         res.json(404, new ApiError('not found'));
     });
 
@@ -62,7 +65,7 @@ var routes = function (app, storage, settings) {
      * Delete a room (requires admin access)
      * restriction: only owner can do this
      */
-    app.del('/api/rooms/:owner/:room', function (req, res) {
+    roomapi.delete('/rooms/:owner/:room', function (req, res) {
         var username = req.params.owner;
         var roomname = req.params.room;
 
@@ -96,7 +99,7 @@ var routes = function (app, storage, settings) {
      * List members
      * restriction: only owner and members can access this information
      */
-    app.get('/api/rooms/:owner/:room/members', function(req, res) {
+    roomapi.get('/rooms/:owner/:room/members', function(req, res) {
 
         // extract parameter
         var username = req.params.owner;
@@ -133,7 +136,7 @@ var routes = function (app, storage, settings) {
      * Check if a user is a member
      * restriction: only owner and members can access this information
      */
-    app.get('/api/rooms/:owner/:room/members/:user', function(req, res) {
+    roomapi.get('/rooms/:owner/:room/members/:user', function(req, res) {
     
         // extract parameter
         var username = req.params.owner;
@@ -187,7 +190,7 @@ var routes = function (app, storage, settings) {
      * Add user as a member
      * restriction: only owners can do this
      */
-    app.put('/api/rooms/:owner/:room/members/:user', function(req, res) {
+    roomapi.put('/rooms/:owner/:room/members/:user', function(req, res) {
         // extract parameter
         var username = req.params.owner;
         var roomname = req.params.room;
@@ -237,7 +240,7 @@ var routes = function (app, storage, settings) {
      * Remove user as a member
      * restriction: only owners can do this
      */
-    app.del('/api/rooms/:owner/:room/members/:user', function(req, res) {
+    roomapi.delete('/rooms/:owner/:room/members/:user', function(req, res) {
         // extract parameter
         var username = req.params.owner;
         var roomname = req.params.room;
@@ -294,7 +297,7 @@ var routes = function (app, storage, settings) {
     /**
      * List messages for a room
      */
-    app.get('/api/rooms/:owner/:room/messages', function(req, res) {
+    roomapi.get('/rooms/:owner/:room/messages', function(req, res) {
 
         // extract parameter
         var username = req.params.owner;
@@ -330,24 +333,25 @@ var routes = function (app, storage, settings) {
     /**
      * Get a single message
      */
-    app.get('/api/rooms/:owner/:room/messages/:number', function(req, res) {
+    roomapi.get('/rooms/:owner/:room/messages/:number', function(req, res) {
         res.json({});
     });
 
     /**
      * Create an message
      */
-    app.post('/api/rooms/:owner/:room/messages', function(req, res) {
+    roomapi.post('/rooms/:owner/:room/messages', function(req, res) {
         res.json({});
     });
 
     /**
      * Edit an message
      */
-    app.patch('/api/rooms/:owner/:room/messages/:number', function(req, res) {
+    roomapi.patch('/rooms/:owner/:room/messages/:number', function(req, res) {
         res.json({});
     });
 
+    return roomapi;
 };
 
 // Expose routes

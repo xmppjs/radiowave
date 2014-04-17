@@ -1,24 +1,29 @@
 'use strict';
 
 var winston = require('winston'),
+    express = require('express'),
     logger = winston.loggers.get('webapi');
 
-var routes = function (app) {
+var routes = function () {
     logger.info('register public routes');
+
+    var publicapi = express.Router();
 
     /**
      * List all public rooms
      */
-    app.get('/api/rooms', function (req, res) {
+    publicapi.get('/rooms', function (req, res) {
         res.json({});
     });
 
     /**
      * List public rooms for the specified user.
      */
-    app.get('/api/users/:user/rooms', function (req, res) {
+    publicapi.get('/users/:user/rooms', function (req, res) {
         res.json({});
     });
+
+    return publicapi;
 
 };
 
