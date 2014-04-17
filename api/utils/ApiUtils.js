@@ -25,7 +25,7 @@ function exportJSON(model) {
 
 function serverPath(req) {
 
-    var path = req.url;
+    var path = req.originalUrl;
     var requrl = url.resolve(req.protocol + '://' + req.get('host'), path);
     return requrl.replace(/\/$/, "");
 }
