@@ -4,28 +4,22 @@ var winston = require('winston'),
     logger = winston.loggers.get('webapi');
 
 // other routes
-var User = require('./User'),
-    Orgs = require('./Orgs'),
-    Room = require('./Room'),
-    Channel = require('./Channel'),
-    Public = require ('./public');
+var userapi = require('./User'),
+    orgsapi = require('./Orgs'),
+    roomapi = require('./Room'),
+    channelapi = require('./Channel'),
+    publicapi = require ('./public');
 
-var routes = function (app, storage, settings) {
+var routes = function (storage, settings) {
     logger.info('register routes');
 
-    // register additional routes
-    var usr = User(storage, settings);
-    var orgs = Orgs(storage, settings);
-    var room = Room(storage, settings);
-    var channel = Channel(storage, settings);
-    var pub = Public(storage, settings);
-
-    // call our router we just created
-    app.use('/api', usr);
-    app.use('/api', orgs);
-    app.use('/api', room);
-    app.use('/api', channel);
-    app.use('/api', pub);
+    return {
+        user : userapi(storage, settings),
+        orgs : orgsapi(storage, settings),
+        room : roomapi(storage, settings),
+        channel : channelapi(storage, settings),
+        pub : publicapi(storage, settings)
+    };
 };
 
 // Expose routes

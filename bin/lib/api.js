@@ -3,6 +3,7 @@
 var winston = require('winston'),
     logger = winston.loggers.get('xrocketd'),
     Promise = require('bluebird'),
+    path = require('path'),
     express = require('express'),
     bodyParser = require('body-parser'),
     xRocket = require('../../xrocket'),
@@ -113,9 +114,16 @@ API.prototype.configurePassport = function (passport) {
 };
 
 API.prototype.configureRoutes = function (app, storage, settings) {
-    var routes = xRocket.Api.Routes;
+
     // load xrocketd api
-    routes(app, storage, settings);
+    var apiroutes = xRocket.Api.Routes(storage, settings);
+
+    // call our router we just created
+    app.use('/api', apiroutes.user);
+    app.use('/api', apiroutes.orgs);
+    app.use('/api', apiroutes.room);
+    app.use('/api', apiroutes.channel);
+    app.use('/api', apiroutes.pub);
 };
 
 API.prototype.startApi = function (storage, settings, multiport) {
@@ -171,7 +179,13 @@ API.prototype.startApi = function (storage, settings, multiport) {
     });
 
     // check for authentication for api routes
-    app.all('/api/*', this.configurePassport(passport));
+    var apipath = '/api/*';
+    var subpath = settings.get('subpath') || "";
+
+    if (subpath) {
+        apipath = path.join('/' , subpath , 'api/*');
+    }
+
     // the following routes are authenticated
     app.all('/api/*', passport.authenticate(['basic', 'bearer'], {
         session: false
@@ -180,9 +194,9 @@ API.prototype.startApi = function (storage, settings, multiport) {
     this.configureRoutes(app, storage, settings);
 
     // web client
-    var path = require('path');
-    logger.debug(path.resolve(__dirname, '../web'));
-    app.use(express.static(path.resolve(__dirname, '../web')));
+    // logger.debug(path.resolve(__dirname, '../web'));
+    // app.use(express.static(path.resolve(__dirname, '../web')));
+
 
     // catch exceptions
     app.use(function (err, req, res, next) {
