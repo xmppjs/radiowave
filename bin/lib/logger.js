@@ -42,7 +42,7 @@ function configure (level) {
     winston.loggers.add('connrouter', getConfiguration('connrouter'));
     winston.loggers.add('logrouter', getConfiguration('logrouter'));
     winston.loggers.add('xeprouter', getConfiguration('xeprouter'));
-    winston.loggers.add('xepcomponent', getConfiguration('xepcomponent'));
+    winston.loggers.add('module', getConfiguration('module'));
     winston.loggers.add('xep-0045', getConfiguration('xep-0045'));
     winston.loggers.add('xep-0060', getConfiguration('xep-0060'));
     winston.loggers.add('authentication', getConfiguration('authentication'));

@@ -2,7 +2,7 @@
 
 var winston = require('winston'),
     logger = winston.loggers.get('zrocketd'),
-    xRocket = require('../../xrocket'),
+    xRocket = require('../../lib'),
     Promise = require('bluebird'),
     pem = require('pem'),
     nodexmppserver = require('node-xmpp-server');

@@ -7,7 +7,7 @@ var winston = require('winston'),
     express = require('express'),
     cors = require('cors'),
     bodyParser = require('body-parser'),
-    xRocket = require('../../xrocket'),
+    xRocket = require('../../lib'),
     JID = require('node-xmpp-core').JID;
 
 var passport = require('passport'),

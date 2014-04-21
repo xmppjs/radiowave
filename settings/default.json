@@ -1,7 +1,12 @@
 {
     // xmpp domain
     "domain": "example.net",
-    // subpath url e.g. http://exmaple.com/subpath instead of http://exmaple.com/
+    // configures the client endpoint e.g. if xrocket is deployed behind a proxy
+    "http" : {
+        "host": "http://localhost"
+    },
+    // runs api and engineio on a subpath url 
+    // e.g. http://exmaple.com/subpath instead of http://exmaple.com/
     "subpath" : "",
     // should be "development" or "production"
     "environment": "development",
@@ -22,8 +27,6 @@
         "type": "Xep0092"
     }, {
         "type": "Xep0199"
-    }, {
-        "type": "Xep0307"
     }, {
         "type": "Xep0049"
     }, {

@@ -1,6 +1,6 @@
 'use strict';
 
-var xRocket = require('../../xrocket'),
+var xRocket = require('../../lib'),
     Storage = xRocket.Storage;
 
 function StorageLoader() {}

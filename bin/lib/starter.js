@@ -11,7 +11,7 @@ var Settings = require('./settings'),
     CM = require('./cm'),
     Modules = require('./modules'),
     Storage = require('./storage'),
-    xRocket = require('../../xrocket');
+    xRocket = require('../../lib');
 
 function Starter() {
     this.settings = new Settings();

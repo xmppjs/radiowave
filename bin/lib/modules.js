@@ -3,20 +3,20 @@
 var winston = require('winston'),
     logger = winston.loggers.get('xrocketd'),
     Promise = require('bluebird'),
-    xRocket = require('../../xrocket');
+    xRocket = require('../../lib');
 
 function XepModules() {}
 
 // roaster
 XepModules.prototype.Rfc3921Roaster = function (domain, storage) {
-    return new xRocket.Xep.Rfc3921Roaster({
+    return new xRocket.Modules.Rfc3921Roaster({
         'storage': storage
     });
 };
 
 // muc
 XepModules.prototype.Xep0045 = function (domain, storage, settings) {
-    return new xRocket.Xep.Xep0045({
+    return new xRocket.Components.Xep0045({
         'subdomain': settings.subdomain,
         'domain': domain,
         'storage': storage
@@ -25,7 +25,7 @@ XepModules.prototype.Xep0045 = function (domain, storage, settings) {
 
 // pubsub
 XepModules.prototype.Xep0060 = function (domain, storage, settings) {
-    return new xRocket.Xep.Xep0060({
+    return new xRocket.Components.Xep0060({
         'subdomain': settings.subdomain,
         'domain': domain,
         'storage': storage
@@ -33,31 +33,27 @@ XepModules.prototype.Xep0060 = function (domain, storage, settings) {
 };
 
 XepModules.prototype.Rfc3921Messaging = function () {
-    return new xRocket.Xep.Rfc3921Messaging();
+    return new xRocket.Modules.Rfc3921Messaging();
 };
 
 XepModules.prototype.Xep0030 = function () {
-    return new xRocket.Xep.Xep0030();
+    return new xRocket.Modules.Xep0030();
 };
 
 XepModules.prototype.Xep0092 = function () {
-    return new xRocket.Xep.Xep0092();
+    return new xRocket.Modules.Xep0092();
 };
 
 XepModules.prototype.Xep0199 = function () {
-    return new xRocket.Xep.Xep0199();
-};
-
-XepModules.prototype.Xep0307 = function () {
-    return new xRocket.Xep.Xep0307();
+    return new xRocket.Modules.Xep0199();
 };
 
 XepModules.prototype.Xep0049 = function () {
-    return new xRocket.Xep.Xep0049();
+    return new xRocket.Modules.Xep0049();
 };
 
 XepModules.prototype.Xep0016 = function () {
-    return new xRocket.Xep.Xep0016();
+    return new xRocket.Modules.Xep0016();
 };
 
 XepModules.prototype.load = function (settings, storage) {
