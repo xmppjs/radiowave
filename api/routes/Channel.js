@@ -7,16 +7,13 @@ var winston = require('winston'),
     ApiError = require('../utils/ApiError'),
     ApiUtils = require('../utils/ApiUtils');
 
-var UserManager = require('../lib/User');
 
 var routes = function(app, storage, settings) {
 
     var channelapi = express.Router();
-
     logger.info('register channel routes');
 
     var domain = settings.get('domain');
-    var usrManager = new UserManager(storage);
 
     /**
      * Create a new channels for the authenticated user.
@@ -48,11 +45,11 @@ var routes = function(app, storage, settings) {
 
         var usr = null;
         var c = null;
-        usrManager.findUser(jid.toString()).then(function (user) {
+        storage.findUser(jid.toString()).then(function (user) {
             usr = user;
-            return usrManager.findUser(ownerjid.toString());
+            return storage.findUser(ownerjid.toString());
         }).then(function(owner){
-            return usrManager.getChannel(owner, channelname);
+            return storage.getChannel(owner, channelname);
         }).then(function(channel) {
             c = channel;
             return channel.isSubscriber(usr);
@@ -125,11 +122,11 @@ var routes = function(app, storage, settings) {
 
         var usr = null;
         var c = null;
-        usrManager.findUser(jid.toString()).then(function (user) {
+        storage.findUser(jid.toString()).then(function (user) {
             usr = user;
-            return usrManager.findUser(ownerjid.toString());
+            return storage.findUser(ownerjid.toString());
         }).then(function(owner){
-            return usrManager.getChannel(owner, channelname);
+            return storage.getChannel(owner, channelname);
         }).then(function(channel) {
             c = channel;
             return channel.isSubscriber(usr);

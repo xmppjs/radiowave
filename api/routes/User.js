@@ -6,14 +6,10 @@ var winston = require('winston'),
     ApiError = require('../utils/ApiError'),
     ApiUtils = require('../utils/ApiUtils');
 
-var UserManager = require('../lib/User');
-
 var routes = function (app, storage) {
     logger.info('register user routes');
 
     var userapi = express.Router();
-
-    var usrManager = new UserManager(storage);
 
     /**
      * Get the authenticated user
@@ -38,8 +34,8 @@ var routes = function (app, storage) {
         var jid = ApiUtils.getJID(req);
         var type = req.query.type; // all, owner, member.
 
-        usrManager.findUser(jid.toString()).then(function(user){
-            return usrManager.getRooms(user, type);
+        storage.findUser(jid.toString()).then(function(user){
+            return storage.getRooms(user, type);
         }).then(function(rooms) {
             console.log(JSON.stringify(rooms));
             res.json(rooms);
@@ -67,9 +63,9 @@ var routes = function (app, storage) {
         }
 
         console.log('start database request');
-        usrManager.findUser(jid.toString()).then(function(user){
+        storage.findUser(jid.toString()).then(function(user){
             logger.debug('found user: ' + JSON.stringify(user));
-            return usrManager.addRoom(user, data);
+            return storage.addRoom(user, data);
         }).then(function(room){
             logger.debug('found room: ' + JSON.stringify(room));
             res.json(room);
@@ -88,8 +84,8 @@ var routes = function (app, storage) {
         var jid = ApiUtils.getJID(req);
         var type = req.query.type; // all, owner, member.
 
-        usrManager.findUser(jid.toString()).then(function(user){
-            return usrManager.getChannels(user, type);
+        storage.findUser(jid.toString()).then(function(user){
+            return storage.getChannels(user, type);
         }).then(function(room){
             res.json(room);
         }).catch(function(err) {
@@ -109,8 +105,8 @@ var routes = function (app, storage) {
             res.json(new ApiError('name is missing'));
         }
 
-        usrManager.findUser(jid.toString()).then(function(user){
-            return usrManager.addChannel(user, data);
+        storage.findUser(jid.toString()).then(function(user){
+            return storage.addChannel(user, data);
         }).then(function(room){
             res.json(room);
         }).catch(function(err) {

@@ -7,8 +7,6 @@ var winston = require('winston'),
     ApiError = require('../utils/ApiError'),
     ApiUtils = require('../utils/ApiUtils');
 
-var UserManager = require('../lib/User');
-
 var routes = function (storage, settings) {
 
     logger.info('register room routes');
@@ -16,7 +14,6 @@ var routes = function (storage, settings) {
     var roomapi = express.Router();
 
     var domain = settings.get('domain');
-    var usrManager = new UserManager(storage);
 
     /**
      * Get room
@@ -36,11 +33,11 @@ var routes = function (storage, settings) {
 
         var usr = null;
         var r = null;
-        usrManager.findUser(jid.toString()).then(function (user) {
+        storage.findUser(jid.toString()).then(function (user) {
             usr = user;
-            return usrManager.findUser(ownerjid.toString());
+            return storage.findUser(ownerjid.toString());
         }).then(function(owner){
-            return usrManager.getRoom(owner, roomname);
+            return storage.getRoom(owner, roomname);
         }).then(function(room) {
             r = room;
             return room.isMember(usr);
@@ -82,10 +79,10 @@ var routes = function (storage, settings) {
         }
 
         // since only owner can delete rooms, we try to delete the room directly
-        usrManager.findUser(jid.toString()).then(function (user) {
-            return usrManager.getRoom(user, roomname);
+        storage.findUser(jid.toString()).then(function (user) {
+            return storage.getRoom(user, roomname);
         }).then(function(room) {
-            return usrManager.delRoom(room);
+            return storage.delRoom(room);
         }).then(function() {
             res.send(204);
         }).catch(function(err) {
@@ -113,11 +110,11 @@ var routes = function (storage, settings) {
 
         var usr = null;
         var r = null;
-        usrManager.findUser(jid.toString()).then(function (user) {
+        storage.findUser(jid.toString()).then(function (user) {
             usr = user;
-            return usrManager.findUser(ownerjid.toString());
+            return storage.findUser(ownerjid.toString());
         }).then(function(owner){
-            return usrManager.getRoom(owner, roomname);
+            return storage.getRoom(owner, roomname);
         }).then(function(room) {
             r = room;
             return room.isMember(usr);
@@ -159,17 +156,17 @@ var routes = function (storage, settings) {
         var mem = null;
 
         // check if the "member" is a known user
-        usrManager.findUser(memberjid.toString()).then(function(member){
+        storage.findUser(memberjid.toString()).then(function(member){
             mem = member;
             // check if the requestor is a known user
-            return usrManager.findUser(jid.toString());
+            return storage.findUser(jid.toString());
         }).then(function (user) {
             usr = user;
             // check if the owner of the room is a known user
-            return usrManager.findUser(ownerjid.toString());
+            return storage.findUser(ownerjid.toString());
         }).then(function(owner){
             // check if the owner has such room
-            return usrManager.getRoom(owner, roomname);
+            return storage.getRoom(owner, roomname);
         }).then(function(room) {
             r = room;
             // check if the requestor is member of the room
@@ -216,17 +213,17 @@ var routes = function (storage, settings) {
         var mem;
 
         // check if the "member" is a known user
-        usrManager.findUser(memberjid.toString()).then(function(member){
+        storage.findUser(memberjid.toString()).then(function(member){
             mem = member;
             // check if the requestor is a known user
-            return usrManager.findUser(jid.toString());
+            return storage.findUser(jid.toString());
         }).then(function(owner){
             // check if the owner has such room
-            return usrManager.getRoom(owner, roomname);
+            return storage.getRoom(owner, roomname);
         }).then(function(room) {
             console.log('add');
             // add member to room
-            return usrManager.addMember(room, mem);
+            return storage.addMember(room, mem);
         }).then(function() {
             res.send(204);
         }).catch(function(err) {
@@ -275,16 +272,16 @@ var routes = function (storage, settings) {
         var mem;
 
         // check if the "member" is a known user
-        usrManager.findUser(memberjid.toString()).then(function(member){
+        storage.findUser(memberjid.toString()).then(function(member){
             mem = member;
             // check if the requestor is a known user
-            return usrManager.findUser(jid.toString());
+            return storage.findUser(jid.toString());
         }).then(function(owner){
             // check if the owner has such room
-            return usrManager.getRoom(owner, roomname);
+            return storage.getRoom(owner, roomname);
         }).then(function(room) {
             // add member to room
-            return usrManager.removeMember(room, mem);
+            return storage.removeMember(room, mem);
         }).then(function() {
             res.send(204);
         }).catch(function(err) {
@@ -311,11 +308,11 @@ var routes = function (storage, settings) {
 
         var usr = null;
         var r = null;
-        usrManager.findUser(jid.toString()).then(function (user) {
+        storage.findUser(jid.toString()).then(function (user) {
             usr = user;
-            return usrManager.findUser(ownerjid.toString());
+            return storage.findUser(ownerjid.toString());
         }).then(function(owner){
-            return usrManager.getRoom(owner, roomname);
+            return storage.getRoom(owner, roomname);
         }).then(function(room) {
             r = room;
             return room.isMember(usr);
