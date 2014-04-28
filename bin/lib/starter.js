@@ -9,7 +9,7 @@ var Settings = require('./settings'),
     API = require('./api'),
     Auth = require('./auth'),
     CM = require('./cm'),
-    Modules = require('./modules'),
+    Component = require('./component'),
     Storage = require('./storage'),
     xRocket = require('../../lib');
 
@@ -18,7 +18,7 @@ function Starter() {
     this.auth = new Auth();
     this.cm = new CM();
     this.api = new API();
-    this.modules = new Modules();
+    this.component = new Component();
     this.storage = new Storage();
 
     this.xrsettings = null;
@@ -53,9 +53,9 @@ Starter.prototype.start = function(filepath) {
             return self.cm.load(self.xR, self.xrsettings, self.xrstorage);
         })
         .then(function () {
-            // load xep modules
-            logger.debug('load xmpp modules');
-            return self.modules.load(self.xrsettings, self.xrstorage);
+            // load components
+            logger.debug('load xmpp components');
+            return self.component.load(self.xrsettings, self.xrstorage);
         })
         .then(function (cr) {
             // chain XRocket to Logger to ComponentRouter
