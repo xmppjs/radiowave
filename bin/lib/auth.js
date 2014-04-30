@@ -1,7 +1,6 @@
 'use strict';
 
-var winston = require('winston'),
-    logger = winston.loggers.get('zrocketd'),
+var logger = require('../../lib/core/Logger')('zrocketd'),
     xRocket = require('../../lib'),
     Promise = require('bluebird');
 

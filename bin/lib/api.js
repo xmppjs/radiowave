@@ -1,7 +1,6 @@
 'use strict';
 
-var winston = require('winston'),
-    logger = winston.loggers.get('xrocketd'),
+var logger = require('../../lib/core/Logger')('xrocketd'),
     Promise = require('bluebird'),
     path = require('path'),
     express = require('express'),
@@ -60,7 +59,7 @@ API.prototype.verify = function (opts, cb) {
                     jid: new JID(user.jid).bare().toString()
                 })
                 .success(function (user, created) {
-                    console.log('USER created %s', user.jid);
+                    logger.debug('USER created %s', user.jid);
                     cb(null, user);
                 }).error(function(err){
                     cb(err, null);
@@ -192,7 +191,7 @@ API.prototype.startApi = function (storage, settings, multiport) {
 
     // catch exceptions
     app.use(function (err, req, res, next) {
-        console.log(err);
+        logger.error(err);
         res.send(err.status || 400);
     });
 };

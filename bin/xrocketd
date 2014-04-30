@@ -2,8 +2,6 @@
 
 'use strict';
 
-require('./lib/logger')('silly');
-
 var util = require('util'),
     Starter = require('./lib/starter');
 

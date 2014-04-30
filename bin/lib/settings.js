@@ -2,9 +2,8 @@
 
 var nconf = require('nconf'),
     Promise = require('bluebird'),
-    winston = require('winston'),
     express = require('express'),
-    logger = winston.loggers.get('xrocketd'),
+    logger = require('../../lib/core/Logger')('xrocketd'),
     fs = require('fs'),
     stripJsonComments = require('strip-json-comments');
 

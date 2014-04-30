@@ -1,7 +1,6 @@
 'use strict';
 
-var winston = require('winston'),
-    logger = winston.loggers.get('xrocketd'),
+var logger = require('../../lib/core/Logger')('xrocketd'),
     Promise = require('bluebird'),
     xRocket = require('../../lib');
 
@@ -56,7 +55,7 @@ XepModules.prototype.load = function (settings, storage) {
                         logger.warn('components ' + module.type + ' is not known.');
                     }
                 } catch (err) {
-                    console.error('error during load of component: ' + err);
+                    logger.error('error during load of component: ' + err);
                 }
             });
             resolve(cr);

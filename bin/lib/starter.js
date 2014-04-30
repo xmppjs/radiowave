@@ -1,8 +1,7 @@
 'use strict';
 
 var path = require('path'),
-    winston = require('winston'),
-    logger = winston.loggers.get('xrocketd');
+    logger = require('../../lib/core/Logger')('xrocketd');
 
 // xmpp Server
 var Settings = require('./settings'),
@@ -77,7 +76,6 @@ Starter.prototype.start = function(filepath) {
         })
         .
     catch (function (err) {
-        console.error(err);
         logger.error(err);
     });
 };

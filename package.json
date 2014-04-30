@@ -13,8 +13,6 @@
     "node-xmpp-server": "1.0.0-alpha1",
     "ltx": ">= 0.2.0",
     "node-uuid": "1.4.1",
-    "winston": "0.7.2",
-    "winston-posix-syslog": "git+https://github.com/chris-rock/winston-posix-syslog.git#tests",
     "strip-json-comments": "~0.1.1",
     "sequelize": "~1.7.0",
     "pg": "2.8.2",
@@ -32,7 +30,8 @@
     "ws": "0.4.31",
     "uuid": "1.4.1",
     "engine.io" : "1.0.5",
-    "cors" : "2.2.0"
+    "cors" : "2.2.0",
+    "bunyan" : "0.22.0"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
