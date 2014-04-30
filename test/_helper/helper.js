@@ -1,10 +1,11 @@
 'use strict';
 
-var winston = require('winston');
+var winston = require('winston'),
+    fs = require('fs');
 
 var Promise = require('bluebird'),
     Client = require('node-xmpp-client'),
-    xRocket = require('../../xrocket'),
+    xRocket = require('../../lib'),
     C2SServer = xRocket.Net.C2SServer;
 
 // user
@@ -59,6 +60,14 @@ function startBenvolio() {
 
 function startServer() {
     var promise = new Promise(function (resolve, reject) {
+
+        // remove test.sqlite
+        try {
+            fs.unlinkSync("./test.sqlite");
+        } catch (err){
+            // do nothing (e.g. if file does not exist)
+        }
+        
 
         // inistanciate storage module
         // use sqlite for testing

@@ -2,35 +2,32 @@
     // xmpp domain
     "domain": "example.net",
     // configures the client endpoint e.g. if xrocket is deployed behind a proxy
-    "http" : {
+    "http": {
         "host": "http://localhost"
     },
     // runs api and engineio on a subpath url 
     // e.g. http://exmaple.com/subpath instead of http://exmaple.com/
-    "subpath" : "",
+    "subpath": "",
     // should be "development" or "production"
     "environment": "development",
-    // load various xrocket modules
-    "modules": [{
-        "type": "Rfc3921Roaster"
-    }, {
-        "type": "Rfc3921Messaging"
+    // load various xrocket components
+    "components": [{
+        "type": "Core",
+        "modules": [
+            "roaster",
+            "messaging",
+            "Xep0030",
+            "Xep0092",
+            "Xep0199",
+            "Xep0049",
+            "Xep0016"
+        ]
     }, {
         "type": "Xep0045",
         "subdomain": "chat"
     }, {
         "type": "Xep0060",
         "subdomain": "pubsub"
-    }, {
-        "type": "Xep0030"
-    }, {
-        "type": "Xep0092"
-    }, {
-        "type": "Xep0199"
-    }, {
-        "type": "Xep0049"
-    }, {
-        "type": "Xep0016"
     }],
     // load the connection manager
     "connection": [{
@@ -58,7 +55,7 @@
     // sets the authentication mechanism
     "auth": [{
         "type": "simple",
-        "testusers" : true,
+        "testusers": true,
         "users": [{
             "user": "romeo",
             "password": "romeo"
@@ -73,9 +70,9 @@
     // storage for the data, xrocketd supports
     // sqlite, postgre and mysql
     "storage": {
-        "dialect" : "sqlite",
+        "dialect": "sqlite",
         "user": "username",
-        "password" : "password",
+        "password": "password",
         "database": "database",
         "storage": "./database.sqlite"
     },

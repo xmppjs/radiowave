@@ -9,7 +9,7 @@ var assert = require('assert'),
 helper.configureLoglevel('silly');
 
 var ltx = require('ltx'),
-    Xep0060 = require('../../xep/Xep0060-pubsub');
+    Xep0060 = require('../../lib/components/Xep0060-pubsub');
 
 describe('Xep-0060', function () {
     var xep = null;
@@ -20,6 +20,9 @@ describe('Xep-0060', function () {
             domain: 'shakespeare.lit',
             storage: null
         });
+
+        xep.initialize();
+        
         done();
     });
 

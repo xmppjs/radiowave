@@ -9,7 +9,7 @@ var Promise = require('bluebird'),
 // logging
 helper.configureLoglevel('silly');
 
-var Xep0045 = require('../../xep/Xep0045-muc');
+var Xep0045 = require('../../lib/components/Xep0045-muc');
 
 function configureXEP(server) {
     // register pubsub component
