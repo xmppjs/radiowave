@@ -11,7 +11,7 @@ var assert = require('assert'),
 helper.configureLoglevel('silly');
 
 // Xep Components
-var Rfc3921Roaster = require('../xep/Rfc3921-roaster');
+var Rfc3921Roaster = require('../lib/components/Core/modules/Rfc3921-roaster');
 
 function configureXEP(server) {
     // register messaging component

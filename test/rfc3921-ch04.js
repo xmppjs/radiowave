@@ -11,7 +11,7 @@ var assert = require('assert'),
 helper.configureLoglevel('silly');
 
 // Xep Components
-var Rfc3921Messaging = require('../xep/Rfc3921-messaging');
+var Rfc3921Messaging = require('../lib/components/Core/modules/Rfc3921-messaging');
 
 function configureXEP(server) {
     // register messaging component
@@ -42,7 +42,7 @@ function sendMessageFromJuliaToRomeo (stanza) {
                 resolve(stanza);
             });
         }).catch(reject);     
-    })
+    });
 }
 
 describe('Rfc3921', function () {

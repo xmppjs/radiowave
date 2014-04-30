@@ -1,7 +1,10 @@
-var uuid = require('node-uuid');
-var assert = require('assert');
-var Sequelize = require('sequelize');
-var databaseModels = require('../../storage/models');
+'use strict';
+
+var fs = require('fs'),
+    uuid = require('node-uuid'),
+    assert = require('assert'),
+    xRocket = require('../../lib'),
+    Storage = xRocket.Storage;
 
 describe('Model', function () {
 
@@ -9,24 +12,28 @@ describe('Model', function () {
 
     before(function (done) {
 
-        var sequelize = new Sequelize('database', 'username', 'password', {
-            dialect: 'sqlite',
-            storage: './database.sqlite'
+        // remove test.sqlite
+        try {
+            fs.unlinkSync("./test.sqlite");
+        } catch (err){
+            // do nothing (e.g. if file does not exist)
+        }
+
+        db = new Storage({
+            "dialect": "sqlite",
+            "user": "username",
+            "password": "password",
+            "database": "database",
+            "storage": "./test.sqlite"
         });
 
-        // load the database model
-        console.log('load database');
-        db = databaseModels(sequelize);
+        // return promise
+        db.initialize().then(function(){
+            done();
+        }).catch(function(err){
+            done(err);
+        });
 
-        // sync model
-        console.log('sync database models');
-        sequelize.sync({
-            force: true
-        })
-            .complete(function (err) {
-                console.log('test');
-                done(err);
-            });
     });
 
     describe('User', function () {

@@ -11,7 +11,7 @@ var assert = require('assert'),
 helper.configureLoglevel('silly');
 
 var ltx = require('ltx'),
-    Xep0060 = require('../../xep/Xep0060-pubsub');
+    Xep0060 = require('../../lib/components/Xep0060-pubsub');
 
 function configureXEP(server) {
     // register pubsub component
@@ -28,79 +28,6 @@ var uuid = require('node-uuid');
  * @see http://xmpp.org/extensions/xep-0060.html
  */
 describe('Xep-0060', function () {
-
-    // notifcations
-    /*
-    var nodes = {};
-
-    function resetSubscriptions() {
-        nodes = {};
-    }
-
-    function subscribe(cl, nodename, success, done) {
-
-        if (!nodes[nodename]) {
-            nodes[nodename] = [];
-        }
-
-        var node = nodes[nodename];
-
-        node.push({
-            'jid': cl.jid.bare(),
-            'callback': done
-        });
-
-        cl.on('stanza',
-            function (stanza) {
-                console.log("NOTIFICATION stanza " + cl.jid + " " + stanza.toString());
-
-                if (stanza.attrs.type === 'result')  {
-
-                    var pubsub = stanza.getChild('pubsub', 'http://jabber.org/protocol/pubsub');
-                    if (pubsub) {
-                        var subscribe = pubsub.getChild('subscription');
-                        // console.log('RT: ' + subscribe.toString());
-                        if (subscribe && (subscribe.attrs.subscription === 'subscribed') && (new JID(subscribe.attrs.jid).equals(cl.jid.bare()))) {
-                            success();
-                        }
-                    }
-                }
-
-                // check if we got a pubsub notification and extract node
-                var pevent = stanza.getChild('event', 'http://jabber.org/protocol/pubsub#event');
-
-                // we got an event
-                if (pevent) {
-                    var items = pevent.getChild('items');
-                    var node = items.attrs.node;
-
-                    console.log("found node:" + node);
-
-                    // call clients
-
-                    var node = nodes[node];
-
-                    if (node) {
-                        console.log("call callbacks of each node")
-                        for (var i = 0, l = node.length; i < l; i++) {
-                            console.log('call callback' + node[i].jid + ' ' + stanza.attrs.to);
-
-                            if (node[i].jid.equals(new JID(stanza.attrs.to))) {
-                                console.log("match")
-                                node[i].callback(stanza);
-                            }
-                        };
-                    }
-                }
-            }
-        );
-
-        var stanza = subscribeNode(cl.jid, nodename, done);
-        cl.send(stanza.root());
-    }
-    */
-
-    // subscribe(romeoCl, 'test', function(message) {});
 
     var node = uuid.v4();
 
@@ -271,7 +198,6 @@ describe('Xep-0060', function () {
 
             });
 
-
             it('7.1 Publish an Item to a Node with multiple items', function (done) {
 
                 var stanza = new ltx.Element('iq', {
@@ -311,6 +237,26 @@ describe('Xep-0060', function () {
                 }).catch(function(err){
                     done(err);
                 });
+            });
+
+            it('Precondition: Create a node', function (done) {
+
+                var id = 'hosdghosdfgo';
+                var stanza = pub_helper.createNodeStanza(helper.userRomeo.jid, 'newnodewithpayload', id );
+
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                    try {
+                        assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
+                        assert.equal(stanza.attrs.type, 'result');
+                        assert.equal(stanza.attrs.id, id);
+                        done();
+                    } catch(err) {
+                        done(err);
+                    }
+                }).catch(function(err){
+                    done(err);
+                });
+
             });
 
             /*
@@ -356,16 +302,16 @@ describe('Xep-0060', function () {
                 this.timeout(5000);
 
                 var publish = new ltx.Element('iq', {
-                        to: 'pubsub.example.net',
-                        from: helper.userRomeo.jid,
-                        type: 'set'
-                    }).c('pubsub', {
-                        'xmlns': 'http://jabber.org/protocol/pubsub'
-                    }).c('publish', {
-                        'node': node
-                    }).c('item', {
-                        id: 'item_01'
-                    }).t('abc');
+                    to: 'pubsub.example.net',
+                    from:  helper.userRomeo.jid,
+                    type: 'set'
+                }).c('pubsub', {
+                    'xmlns': 'http://jabber.org/protocol/pubsub'
+                }).c('publish', {
+                    'node': 'newnodewithpayload'
+                }).c('item', {
+                    id: 'item_01'
+                }).t('abc');
 
                 var julia, romeo = null;
 
@@ -376,7 +322,7 @@ describe('Xep-0060', function () {
                 })
                 .then(function () {
                     // julia subscribes room
-                    var stanza = pub_helper.subscribeNodeStanza(helper.userJulia.jid, node);
+                    var stanza = pub_helper.subscribeNodeStanza(helper.userJulia.jid, 'newnodewithpayload');
                     return helper.sendMessageWithJulia(stanza.root());
                 })
                 .then(function () {
@@ -394,6 +340,7 @@ describe('Xep-0060', function () {
                 })
                 .then(function(message){
                     try {
+                        console.log('Notification With Payload');
                         console.log("julia got: " + message.toString());
                          // verify stanza
                         var pubsubevent = message.getChild('event', 'http://jabber.org/protocol/pubsub#event');
@@ -403,6 +350,7 @@ describe('Xep-0060', function () {
                         itemselement.should.not.be.empty;
 
                         var items = itemselement.getChildren('item');
+                        console.log(items.toString());
                         items.should.not.be.empty;
                         assert.equal(items.length, 1);
                         assert.equal(items[0].attrs.id, 'item_01');
@@ -418,7 +366,26 @@ describe('Xep-0060', function () {
                 });
             });
 
-            it('Precondition: Create a node', function (done) {
+            it('Postcondition: delete node', function (done) {
+
+                var id = 'sfsoafjoieqh3';
+                var stanza = pub_helper.deleteNodeStanza(helper.userRomeo.jid, 'newnodewithpayload', id );
+
+                helper.sendMessageWithRomeo(stanza.root()).then(function(stanza){
+                    try {
+                        assert.equal(stanza.is('iq'),true, 'wrong stanza ' + stanza.root().toString());
+                        assert.equal(stanza.attrs.type, 'result');
+                        assert.equal(stanza.attrs.id, id);
+                        done();
+                    } catch(err) {
+                        done(err);
+                    }
+                }).catch(function(err){
+                    done(err);
+                });
+            });
+
+            it('Precondition: Create and configure node', function (done) {
 
                 var id = 'newnode-r2d2';
                 var config = ltx.parse("<x xmlns='jabber:x:data' type='submit'><field var='pubsub#deliver_payloads'><value>0</value></field></x>");
@@ -501,6 +468,7 @@ describe('Xep-0060', function () {
                 })
                 .then(function(message){
                     try {
+                        console.log('Notification Without Payload');
                         console.log("julia got: " + message.toString());
                         // verify stanza
                         var pubsubevent = message.getChild('event', 'http://jabber.org/protocol/pubsub#event');

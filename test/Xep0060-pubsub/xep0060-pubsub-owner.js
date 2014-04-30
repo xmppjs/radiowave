@@ -10,7 +10,7 @@ var assert = require('assert'),
 helper.configureLoglevel('silly');
 
 var ltx = require('ltx'),
-    Xep0060 = require('../../xep/Xep0060-pubsub');
+    Xep0060 = require('../../lib/components/Xep0060-pubsub');
 
 function configureXEP(server) {
     // register pubsub component

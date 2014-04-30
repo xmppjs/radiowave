@@ -11,7 +11,7 @@ var assert = require('assert'),
 helper.configureLoglevel('silly');
 
 // Xep Components
-var Xep0092 = require('../xep/Xep0092-version');
+var Xep0092 = require('../lib/components/Core/modules/Xep0092-version');
 
 function configureXEP(server) {
     // register messaging component

@@ -9,7 +9,7 @@ var assert = require('assert'),
 helper.configureLoglevel('silly');
 
 var ltx = require('ltx'),
-    Xep0045 = require('../../xep/Xep0045-muc');
+    Xep0045 = require('../../lib/components/Xep0045-muc');
 
 describe('Xep-0045', function () {
     var xep = null;
@@ -20,6 +20,9 @@ describe('Xep-0045', function () {
             domain: 'shakespeare.lit',
             storage: null
         });
+
+        xep.initialize();
+        
         done();
     })
 
@@ -29,7 +32,7 @@ describe('Xep-0045', function () {
     }
 
     describe('check match of xmpp stanzas', function () {
-
+        
         it('iq request disco#items on server', function (done) {
             var message =
             "<iq from='hag66@shakespeare.lit/pda' \
@@ -124,13 +127,14 @@ describe('Xep-0045', function () {
                 id='unique1' \
                 to='chat.shakespeare.lit' \
                 type='get'> \
-                <unique xmlns='http://jabber.org/protocol/muc#unique'/> \
+                <unique xmlns='http://jabber.org/protocol/muc#wrong'/> \
                 </iq>"
 
             assert.equal(check(message), false);
             done();
         });
 
+        
         it('mediated message invitation', function (done) {
             var message =
             "<message \

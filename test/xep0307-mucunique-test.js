@@ -11,7 +11,7 @@ var assert = require('assert'),
 helper.configureLoglevel('silly');
 
 // Xep Components
-var Xep0307 = require('../xep/Xep0307-mucunique');
+var Xep0307 = require('../lib/components/Xep0045-muc/modules/Unique');
 
 function configureXEP(server) {
     // register messaging component
