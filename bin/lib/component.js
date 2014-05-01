@@ -52,7 +52,7 @@ XepModules.prototype.load = function (settings, storage) {
                         var m = self[module.type](domain, storage, module);
                         cr.register(m);
                     } else {
-                        logger.warn('components ' + module.type + ' is not known.');
+                        logger.warn('component ' + module.type + ' is not known.');
                     }
                 } catch (err) {
                     logger.error('error during load of component: ' + err);
