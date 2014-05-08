@@ -53,17 +53,7 @@ API.prototype.verify = function (opts, cb) {
                 user.jid = new JID(user.username + '@' + self.domain).toString();
             }
 
-            // register user
-            self.storage.User
-                .findOrCreate({
-                    jid: new JID(user.jid).bare().toString()
-                })
-                .success(function (user, created) {
-                    logger.debug('USER created %s', user.jid);
-                    cb(null, user);
-                }).error(function(err){
-                    cb(err, null);
-                });
+            cb(null, user);
         }).catch (function (err) {
             logger.error('api user authentication failed %s', err);
             cb(null, null);
