@@ -45,25 +45,25 @@ Starter.prototype.start = function(filepath) {
         })
         .then(function () {
             // initialize connection router
-            self.cR = new xRocket.Router.ConnectionRouter(self.xrstorage);
+            self.connectionRouter = new xRocket.Router.ConnectionRouter(self.xrstorage);
             // store route in xrocket module
-            self.xR.addConnectionRouter(self.cR);
+            // self.xR.addConnectionRouter(self.cR);
         })
         .then(function () {
             // load connection manager
             logger.debug('load connection manger');
-            return self.cm.load(self.xR, self.xrsettings, self.xrstorage);
+            return self.cm.load(self.connectionRouter, self.xrsettings, self.xrstorage);
         })
         .then(function () {
-            // load components
+            // load components and get a component router back
             logger.debug('load xmpp components');
             return self.component.load(self.xrsettings, self.xrstorage);
         })
-        .then(function (cr) {
-            // chain XRocket to Logger to ComponentRouter
-            // var lpr = new xRocket.Router.LogRouter();
-            // chain(lpr)
-            self.cR.chain(cr);
+        .then(function (componentRouter) {
+            // chain ConnectionRouter to ComponentRouter
+            self.connectionRouter.chain(componentRouter);
+
+
         })
         .then(function () {
             // load api

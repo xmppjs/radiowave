@@ -12,7 +12,7 @@ var Rfc3921Messaging = require('../lib/components/Core/modules/Rfc3921-messaging
 
 function configureXEP(server) {
     // register messaging component
-    server.cr.register(new Rfc3921Messaging());
+    server.cr.addComponent(new Rfc3921Messaging());
 }
 
 function generateMessage (to, from) {
@@ -62,7 +62,7 @@ describe('Rfc3921', function () {
         });
 
         after(function (done) {
-            srv.xR.shutdown();
+            srv.connectionRouter.stopConnections();
             done();
         });
 

@@ -12,7 +12,7 @@ var Xep0092 = require('../lib/components/Core/modules/Xep0092-version');
 
 function configureXEP(server) {
     // register messaging component
-    server.cr.register(new Xep0092());
+    server.cr.addComponent(new Xep0092());
 }
 
 var NS_VERSION = 'jabber:iq:version',
@@ -40,7 +40,7 @@ describe('Version', function () {
         });
 
         after(function (done) {
-            srv.xR.shutdown();
+            srv.connectionRouter.stopConnections();
             done();
         });
 

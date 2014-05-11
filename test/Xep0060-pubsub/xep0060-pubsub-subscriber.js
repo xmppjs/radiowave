@@ -11,7 +11,7 @@ var ltx = require('ltx'),
 
 function configureXEP(server) {
     // register pubsub component
-    server.cr.register(new Xep0060({
+    server.cr.addComponent(new Xep0060({
         subdomain: 'pubsub',
         domain: 'example.net',
         storage: server.storage
@@ -40,7 +40,7 @@ describe('Xep-0060', function () {
     });
 
     after(function (done) {
-        srv.xR.shutdown();
+        srv.connectionRouter.stopConnections();
         done();
     });
 

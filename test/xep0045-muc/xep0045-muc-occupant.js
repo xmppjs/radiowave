@@ -11,7 +11,7 @@ var Xep0045 = require('../../lib/components/Xep0045-muc');
 
 function configureXEP(server) {
     // register pubsub component
-    server.cr.register(new Xep0045({
+    server.cr.addComponent(new Xep0045({
         subdomain: 'chat',
         domain: 'example.net',
         storage: server.storage
@@ -41,7 +41,7 @@ describe('Xep-0060', function () {
         });
 
         after(function (done) {
-            srv.xR.shutdown();
+            srv.connectionRouter.stopConnections();
             done();
         });
 

@@ -12,7 +12,7 @@ var Xep0307 = require('../lib/components/Xep0045-muc/modules/Unique');
 
 function configureXEP(server) {
     // register messaging component
-    server.cr.register(new Xep0307());
+    server.cr.addComponent(new Xep0307());
 }
 
 describe('XEP-0307', function () {
@@ -34,7 +34,7 @@ describe('XEP-0307', function () {
     });
 
     after(function (done) {
-        srv.xR.shutdown();
+        srv.connectionRouter.stopConnections();
         done();
     });
 

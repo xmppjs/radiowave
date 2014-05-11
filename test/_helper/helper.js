@@ -85,18 +85,16 @@ function startServer() {
             var cs2 = new C2SServer({});
 
             // attach connection manager to xrocket
-            var xR = new xRocket.XRocket();
             var connR = new xRocket.Router.ConnectionRouter(storage);
 
-            xR.addConnectionRouter(connR);
-            xR.addConnectionManager(cs2);
+            connR.addConnectionManager(cs2);
 
             // register users
             var simpleAuth = new xRocket.Auth.Simple();
             simpleAuth.addUser('romeo', 'romeo');
             simpleAuth.addUser('julia', 'julia');
             simpleAuth.addUser('benvolio', 'benvolio');
-            xR.connectionRouter.authMethods.push(simpleAuth);
+            connR.authMethods.push(simpleAuth);
 
             // register xep component
             var cr = new xRocket.Router.ComponentRouter({
@@ -107,7 +105,7 @@ function startServer() {
             connR.chain(cr);
 
             var returnVal = {
-                'xR': xR,
+                'connectionRouter': connR,
                 'cr': cr,
                 'storage': storage
             };
