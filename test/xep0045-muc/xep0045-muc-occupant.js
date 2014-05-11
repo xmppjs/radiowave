@@ -7,14 +7,11 @@ var Promise = require('bluebird'),
     helper = require('../_helper/helper'),
     muc_helper = require('../_helper/muc');
 
-// logging
-helper.configureLoglevel('silly');
-
 var Xep0045 = require('../../lib/components/Xep0045-muc');
 
 function configureXEP(server) {
     // register pubsub component
-    server.cr.register(new Xep0045({
+    server.cr.addComponent(new Xep0045({
         subdomain: 'chat',
         domain: 'example.net',
         storage: server.storage
@@ -38,15 +35,13 @@ describe('Xep-0060', function () {
                 srv = server;
                 configureXEP(server);
                 done();
-            })
-                .
-            catch (function (err) {
+            }).catch (function (err) {
                 done(err);
             });
         });
 
         after(function (done) {
-            srv.xR.shutdown();
+            srv.connectionRouter.stopConnections();
             done();
         });
 
@@ -529,6 +524,7 @@ describe('Xep-0060', function () {
             .then(function (){
                 return new Promise(function (resolve) {
                     romeo.once('stanza', function(stanza){
+                        
                         // TODO check details of invite
                         resolve();
                     });

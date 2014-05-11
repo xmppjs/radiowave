@@ -137,7 +137,7 @@ ConnectionManager.prototype.socketio = function (domain, keys, settings, multipo
     return sio;
 };
 
-ConnectionManager.prototype.load = function (xR, settings) {
+ConnectionManager.prototype.load = function (connectionRouter, settings) {
     var self = this;
     return new Promise(function (resolve, reject) {
 
@@ -158,7 +158,7 @@ ConnectionManager.prototype.load = function (xR, settings) {
                         if (cm) {
                             cm.registerSaslMechanism(nodexmppserver.auth.Plain);
                             cm.registerSaslMechanism(nodexmppserver.auth.XOAuth2);
-                            xR.addConnectionManager(cm);
+                            connectionRouter.addConnectionManager(cm);
                         }
                     } else {
                         logger.warn(item.type + ' is not supported as connection manager');

@@ -50,7 +50,7 @@ XepModules.prototype.load = function (settings, storage) {
                     logger.info('load components ' + module.type );
                     if (self[module.type]) {
                         var m = self[module.type](domain, storage, module);
-                        cr.register(m);
+                        cr.addComponent(m);
                     } else {
                         logger.warn('component ' + module.type + ' is not known.');
                     }

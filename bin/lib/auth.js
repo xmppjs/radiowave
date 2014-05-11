@@ -54,7 +54,7 @@ Auth.prototype.simple = function (settings) {
     return simpleAuth;
 };
 
-Auth.prototype.load = function (xR, API, settings) {
+Auth.prototype.load = function (connectionRouter, API, settings) {
     var self = this;
     return new Promise(function (resolve, reject) {
         logger.debug('auth');
@@ -66,7 +66,7 @@ Auth.prototype.load = function (xR, API, settings) {
                 var m = self[module.type](module);
 
                 // add auth to xRocket
-                xR.connectionRouter.addAuthMethod(m);
+                connectionRouter.addAuthMethod(m);
 
                 // add auth to API
                 if (API) {

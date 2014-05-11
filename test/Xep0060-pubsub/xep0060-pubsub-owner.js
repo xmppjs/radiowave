@@ -5,16 +5,13 @@ var assert = require('assert'),
     should = require('should'),
     helper = require('../_helper/helper'),
     pub_helper = require('../_helper/pubsub');
-
-// logging
-helper.configureLoglevel('silly');
-
+    
 var ltx = require('ltx'),
     Xep0060 = require('../../lib/components/Xep0060-pubsub');
 
 function configureXEP(server) {
     // register pubsub component
-    server.cr.register(new Xep0060({
+    server.cr.addComponent(new Xep0060({
         subdomain: 'pubsub',
         domain: 'example.net',
         storage: server.storage
@@ -43,7 +40,7 @@ describe('Xep-0060', function () {
     });
 
     after(function (done) {
-        srv.xR.shutdown();
+        srv.connectionRouter.stopConnections();
         done();
     });
 

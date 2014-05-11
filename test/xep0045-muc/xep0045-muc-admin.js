@@ -7,20 +7,17 @@ var Promise = require('bluebird'),
     helper = require('../_helper/helper'),
     muc_helper = require('../_helper/muc');
 
-// logging
-helper.configureLoglevel('silly');
-
 var Xep0045 = require('../../lib/components/Xep0045-muc');
 
 function configureXEP(server) {
     // register pubsub component
-    server.cr.register(new Xep0045({
+    server.cr.addComponent(new Xep0045({
         subdomain: 'chat',
         domain: 'example.net',
         storage: server.storage
     }));
 }
-    
+
 /**
  * @see http://xmpp.org/extensions/xep-0045.html#admin
  */
@@ -46,7 +43,7 @@ describe('Xep-0060', function () {
         });
 
         after(function (done) {
-            srv.xR.shutdown();
+            srv.connectionRouter.stopConnections();
             done();
         });
 
@@ -161,31 +158,30 @@ describe('Xep-0060', function () {
          * </iq>
          */
         it('9.2 Admin Requests Ban List', function (done) {
-            var julia;
 
             var nickjid = room + '/' + nick;
 
-            var msg = 
+            var msg =
             "<iq id='ban2' type='get'> \
                 <query xmlns='http://jabber.org/protocol/muc#admin'> \
                   <item affiliation='outcast'/> \
                 </query> \
             </iq>";
 
-            // start clients
-            Promise.all([helper.startJulia()]).then(function (results) {
-                    julia = results[0];
-            })
-            // send message
-            .then(function () {
-                var stanza = ltx.parse(msg);
-                stanza.attrs.from = julia.jid.toString();
-                stanza.attrs.to = nickjid;
-                julia.send(stanza);
+            var stanza = ltx.parse(msg);
+            stanza.attrs.from = helper.userJulia.jid;
+            stanza.attrs.to = nickjid;
 
-            }).then(function (){
-                done();
-            }).catch (function (err) {
+            // start clients
+            helper.sendMessageWithJulia(stanza.root()).then(function (stanza) {
+                try {
+                    assert.equal(stanza.attrs.type, 'result');
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            }).
+            catch (function (err) {
                 done(err);
             });
         });

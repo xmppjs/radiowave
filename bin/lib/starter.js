@@ -22,7 +22,7 @@ function Starter() {
 
     this.xrsettings = null;
     this.xrstorage = null;
-    this.xR = new xRocket.XRocket();
+    this.connectionRouter = null;
 }
 
 Starter.prototype.start = function(filepath) {
@@ -44,22 +44,31 @@ Starter.prototype.start = function(filepath) {
         })
         .then(function () {
             // initialize connection router
-            self.xR.addConnectionRouter(new xRocket.Router.ConnectionRouter(self.xrstorage));
+            self.connectionRouter = new xRocket.Router.ConnectionRouter(self.xrstorage);
+            // store route in xrocket module
+            // self.xR.addConnectionRouter(self.cR);
         })
         .then(function () {
             // load connection manager
             logger.debug('load connection manger');
-            return self.cm.load(self.xR, self.xrsettings, self.xrstorage);
+            return self.cm.load(self.connectionRouter, self.xrsettings, self.xrstorage);
         })
         .then(function () {
-            // load components
+            // load components and get a component router back
             logger.debug('load xmpp components');
             return self.component.load(self.xrsettings, self.xrstorage);
         })
-        .then(function (cr) {
-            // chain XRocket to Logger to ComponentRouter
-            var lpr = new xRocket.Router.LogRouter();
-            self.xR.chain(lpr).chain(cr);
+        .then(function (componentRouter) {
+            // chain ConnectionRouter to ComponentRouter
+            // self.connectionRouter.chain(componentRouter);
+
+            var starRouter = new xRocket.Router.StarRouter();
+
+            // add sending router
+            self.connectionRouter.chain(starRouter);
+
+            // add recieving router
+            starRouter.chain(componentRouter);
         })
         .then(function () {
             // load api
@@ -69,7 +78,7 @@ Starter.prototype.start = function(filepath) {
         .then(function () {
             // load auth modules
             logger.debug('initialize authentication');
-            return self.auth.load(self.xR, self.api, self.xrsettings);
+            return self.auth.load(self.connectionRouter, self.api, self.xrsettings);
         })
         .then(function () {
             logger.debug('successfully started xrocketd');

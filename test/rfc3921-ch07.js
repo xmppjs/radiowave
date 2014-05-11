@@ -7,15 +7,12 @@ var assert = require('assert'),
     ltx = require('ltx'),
     helper = require('./_helper/helper');
 
-// logging
-helper.configureLoglevel('silly');
-
 // Xep Components
 var Rfc3921Roaster = require('../lib/components/Core/modules/Rfc3921-roaster');
 
 function configureXEP(server) {
     // register messaging component
-    server.cr.register(new Rfc3921Roaster({
+    server.cr.addComponent(new Rfc3921Roaster({
         storage: server.storage
     }));
 }
@@ -55,7 +52,7 @@ describe('Rfc3921', function () {
         });
 
         after(function (done) {
-            srv.xR.shutdown();
+            srv.connectionRouter.stopConnections();
             done();
         });
 

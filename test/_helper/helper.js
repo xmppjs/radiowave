@@ -1,7 +1,6 @@
 'use strict';
 
-var winston = require('winston'),
-    fs = require('fs');
+var fs = require('fs');
 
 var Promise = require('bluebird'),
     Client = require('node-xmpp-client'),
@@ -86,28 +85,35 @@ function startServer() {
             var cs2 = new C2SServer({});
 
             // attach connection manager to xrocket
-            var xR = new xRocket.XRocket();
+            var connR = new xRocket.Router.ConnectionRouter(storage);
 
-            xR.addConnectionRouter(new xRocket.Router.ConnectionRouter(storage));
-            xR.addConnectionManager(cs2);
+            connR.addConnectionManager(cs2);
 
             // register users
             var simpleAuth = new xRocket.Auth.Simple();
             simpleAuth.addUser('romeo', 'romeo');
             simpleAuth.addUser('julia', 'julia');
             simpleAuth.addUser('benvolio', 'benvolio');
-            xR.connectionRouter.authMethods.push(simpleAuth);
+            connR.authMethods.push(simpleAuth);
 
             // register xep component
             var cr = new xRocket.Router.ComponentRouter({
                 domain: 'example.net'
             });
-            var lr = new xRocket.Router.LogRouter();
-            // chain XRocket to ComponentRouter
-            xR.chain(lr).chain(cr);
+
+            // chain ConnectionRouter to ComponentRouter
+            // connR.chain(cr);
+
+            var starRouter = new xRocket.Router.StarRouter();
+
+            // add sending router
+            connR.chain(starRouter);
+
+            // add recieving router
+            starRouter.chain(cr);
 
             var returnVal = {
-                'xR': xR,
+                'connectionRouter': connR,
                 'cr': cr,
                 'storage': storage
             };
@@ -207,46 +213,11 @@ function sendMessageWithJulia(stanza) {
     });
 }
 
-function configureLoglevel(level) {
-    console.log('configure xrocket logging');
-
-    var defaultConfiguration = {
-        console: {
-            level: level,
-            colorize: 'true'
-        }
-    };
-
-    function getConfiguration (label) {
-        var conf = Object.create(defaultConfiguration);
-        conf.console.label = label;
-        return conf;
-    }
-    
-    winston.loggers.add('xrocket', getConfiguration('xrocket'));
-    winston.loggers.add('cm', getConfiguration('cm'));
-    winston.loggers.add('router', getConfiguration('router'));
-    winston.loggers.add('connrouter', getConfiguration('connrouter'));
-    winston.loggers.add('logrouter', getConfiguration('logrouter'));
-    winston.loggers.add('xeprouter', getConfiguration('xeprouter'));
-    winston.loggers.add('xepcomponent', getConfiguration('xepcomponent'));
-    winston.loggers.add('xep-0045', getConfiguration('xep-0045'));
-    winston.loggers.add('xep-0060', getConfiguration('xep-0060'));
-    winston.loggers.add('authentication', getConfiguration('authentication'));
-    winston.loggers.add('postgresql', getConfiguration('postgresql'));
-    winston.loggers.add('storage', getConfiguration('storage'));
-    winston.loggers.add('webapi', getConfiguration('webapi'));
-
-    winston.loggers.add('websocket', getConfiguration('websocket'));
-    winston.loggers.add('socketio', getConfiguration('socketio'));
-    winston.loggers.add('bosh', getConfiguration('bosh'));
-}
 
 module.exports = {
     'userRomeo':userRomeo,
     'userBenvolio': userBenvolio,
     'userJulia': userJulia,
-    'configureLoglevel' : configureLoglevel,
     'startRomeo': startRomeo,
     'startJulia': startJulia,
     'startBenvolio': startBenvolio,

@@ -7,15 +7,12 @@ var assert = require('assert'),
     ltx = require('ltx'),
     helper = require('./_helper/helper');
 
-// logging
-helper.configureLoglevel('silly');
-
 // Xep Components
 var Xep0199 = require('../lib/components/Core/modules/Xep0199-ping');
 
 function configureXEP(server) {
     // register messaging component
-    server.cr.register(new Xep0199());
+    server.cr.addComponent(new Xep0199());
 }
 
 describe('Ping', function () {
@@ -38,7 +35,7 @@ describe('Ping', function () {
         });
 
         after(function (done) {
-            srv.xR.shutdown();
+            srv.connectionRouter.stopConnections();
             done();
         });
 
