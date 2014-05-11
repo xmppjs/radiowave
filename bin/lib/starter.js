@@ -22,8 +22,7 @@ function Starter() {
 
     this.xrsettings = null;
     this.xrstorage = null;
-    this.xR = new xRocket.XRocket();
-    this.cR = null;
+    this.connectionRouter = null;
 }
 
 Starter.prototype.start = function(filepath) {
@@ -61,9 +60,15 @@ Starter.prototype.start = function(filepath) {
         })
         .then(function (componentRouter) {
             // chain ConnectionRouter to ComponentRouter
-            self.connectionRouter.chain(componentRouter);
+            // self.connectionRouter.chain(componentRouter);
 
+            var starRouter = new xRocket.Router.StarRouter();
 
+            // add sending router
+            self.connectionRouter.chain(starRouter);
+
+            // add recieving router
+            starRouter.chain(componentRouter);
         })
         .then(function () {
             // load api
@@ -73,7 +78,7 @@ Starter.prototype.start = function(filepath) {
         .then(function () {
             // load auth modules
             logger.debug('initialize authentication');
-            return self.auth.load(self.xR, self.api, self.xrsettings);
+            return self.auth.load(self.connectionRouter, self.api, self.xrsettings);
         })
         .then(function () {
             logger.debug('successfully started xrocketd');

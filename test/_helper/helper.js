@@ -102,7 +102,15 @@ function startServer() {
             });
 
             // chain ConnectionRouter to ComponentRouter
-            connR.chain(cr);
+            // connR.chain(cr);
+
+            var starRouter = new xRocket.Router.StarRouter();
+
+            // add sending router
+            connR.chain(starRouter);
+
+            // add recieving router
+            starRouter.chain(cr);
 
             var returnVal = {
                 'connectionRouter': connR,
