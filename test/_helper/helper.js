@@ -86,8 +86,9 @@ function startServer() {
 
             // attach connection manager to xrocket
             var xR = new xRocket.XRocket();
+            var connR = new xRocket.Router.ConnectionRouter(storage);
 
-            xR.addConnectionRouter(new xRocket.Router.ConnectionRouter(storage));
+            xR.addConnectionRouter(connR);
             xR.addConnectionManager(cs2);
 
             // register users
@@ -101,9 +102,9 @@ function startServer() {
             var cr = new xRocket.Router.ComponentRouter({
                 domain: 'example.net'
             });
-            var lr = new xRocket.Router.LogRouter();
-            // chain XRocket to ComponentRouter
-            xR.chain(lr).chain(cr);
+
+            // chain ConnectionRouter to ComponentRouter
+            connR.chain(cr);
 
             var returnVal = {
                 'xR': xR,

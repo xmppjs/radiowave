@@ -23,6 +23,7 @@ function Starter() {
     this.xrsettings = null;
     this.xrstorage = null;
     this.xR = new xRocket.XRocket();
+    this.cR = null;
 }
 
 Starter.prototype.start = function(filepath) {
@@ -44,7 +45,9 @@ Starter.prototype.start = function(filepath) {
         })
         .then(function () {
             // initialize connection router
-            self.xR.addConnectionRouter(new xRocket.Router.ConnectionRouter(self.xrstorage));
+            self.cR = new xRocket.Router.ConnectionRouter(self.xrstorage);
+            // store route in xrocket module
+            self.xR.addConnectionRouter(self.cR);
         })
         .then(function () {
             // load connection manager
@@ -58,8 +61,9 @@ Starter.prototype.start = function(filepath) {
         })
         .then(function (cr) {
             // chain XRocket to Logger to ComponentRouter
-            var lpr = new xRocket.Router.LogRouter();
-            self.xR.chain(lpr).chain(cr);
+            // var lpr = new xRocket.Router.LogRouter();
+            // chain(lpr)
+            self.cR.chain(cr);
         })
         .then(function () {
             // load api
