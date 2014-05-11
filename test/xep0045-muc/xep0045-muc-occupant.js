@@ -35,9 +35,7 @@ describe('Xep-0060', function () {
                 srv = server;
                 configureXEP(server);
                 done();
-            })
-                .
-            catch (function (err) {
+            }).catch (function (err) {
                 done(err);
             });
         });
@@ -526,6 +524,7 @@ describe('Xep-0060', function () {
             .then(function (){
                 return new Promise(function (resolve) {
                     romeo.once('stanza', function(stanza){
+                        
                         // TODO check details of invite
                         resolve();
                     });
