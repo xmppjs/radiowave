@@ -7,9 +7,6 @@ var assert = require('assert'),
     ltx = require('ltx'),
     helper = require('./_helper/helper');
 
-// logging
-helper.configureLoglevel('silly');
-
 // Xep Components
 var Rfc3921Messaging = require('../lib/components/Core/modules/Rfc3921-messaging');
 

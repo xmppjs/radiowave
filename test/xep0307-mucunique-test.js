@@ -7,9 +7,6 @@ var assert = require('assert'),
     ltx = require('ltx'),
     helper = require('./_helper/helper');
 
-// logging
-helper.configureLoglevel('silly');
-
 // Xep Components
 var Xep0307 = require('../lib/components/Xep0045-muc/modules/Unique');
 

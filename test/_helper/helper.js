@@ -1,7 +1,6 @@
 'use strict';
 
-var winston = require('winston'),
-    fs = require('fs');
+var fs = require('fs');
 
 var Promise = require('bluebird'),
     Client = require('node-xmpp-client'),
@@ -207,46 +206,11 @@ function sendMessageWithJulia(stanza) {
     });
 }
 
-function configureLoglevel(level) {
-    console.log('configure xrocket logging');
-
-    var defaultConfiguration = {
-        console: {
-            level: level,
-            colorize: 'true'
-        }
-    };
-
-    function getConfiguration (label) {
-        var conf = Object.create(defaultConfiguration);
-        conf.console.label = label;
-        return conf;
-    }
-    
-    winston.loggers.add('xrocket', getConfiguration('xrocket'));
-    winston.loggers.add('cm', getConfiguration('cm'));
-    winston.loggers.add('router', getConfiguration('router'));
-    winston.loggers.add('connrouter', getConfiguration('connrouter'));
-    winston.loggers.add('logrouter', getConfiguration('logrouter'));
-    winston.loggers.add('xeprouter', getConfiguration('xeprouter'));
-    winston.loggers.add('xepcomponent', getConfiguration('xepcomponent'));
-    winston.loggers.add('xep-0045', getConfiguration('xep-0045'));
-    winston.loggers.add('xep-0060', getConfiguration('xep-0060'));
-    winston.loggers.add('authentication', getConfiguration('authentication'));
-    winston.loggers.add('postgresql', getConfiguration('postgresql'));
-    winston.loggers.add('storage', getConfiguration('storage'));
-    winston.loggers.add('webapi', getConfiguration('webapi'));
-
-    winston.loggers.add('websocket', getConfiguration('websocket'));
-    winston.loggers.add('socketio', getConfiguration('socketio'));
-    winston.loggers.add('bosh', getConfiguration('bosh'));
-}
 
 module.exports = {
     'userRomeo':userRomeo,
     'userBenvolio': userBenvolio,
     'userJulia': userJulia,
-    'configureLoglevel' : configureLoglevel,
     'startRomeo': startRomeo,
     'startJulia': startJulia,
     'startBenvolio': startBenvolio,

@@ -7,9 +7,6 @@ var assert = require('assert'),
     helper = require('../_helper/helper'),
     pub_helper = require('../_helper/pubsub');
 
-// logging
-helper.configureLoglevel('silly');
-
 var ltx = require('ltx'),
     Xep0060 = require('../../lib/components/Xep0060-pubsub');
 

@@ -5,9 +5,6 @@ var assert = require('assert'),
     should = require('should'),
     helper = require('../_helper/helper');
 
-// logging
-helper.configureLoglevel('silly');
-
 var ltx = require('ltx'),
     Xep0045 = require('../../lib/components/Xep0045-muc');
 
