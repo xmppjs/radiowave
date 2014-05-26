@@ -32,7 +32,7 @@ API.prototype.findAuthMethod = function (method) {
     return found;
 };
 
-API.prototype.verify = function (opts, cb) {
+API.prototype.verify = function (storage, opts, cb) {
     var self = this;
     var auth = this.findAuthMethod(opts.saslmech);
     if (auth.length > 0) {
@@ -43,6 +43,7 @@ API.prototype.verify = function (opts, cb) {
             opts.jid = new JID(opts.username + '@' + this.domain).toString();
         }
 
+        var usr = null;
         auth[0].authenticate(opts).then(function (user) {
             logger.debug('api user authenticated ');
 
@@ -53,7 +54,11 @@ API.prototype.verify = function (opts, cb) {
                 user.jid = new JID(user.username + '@' + self.domain).toString();
             }
 
-            cb(null, user);
+            usr = user;
+            // create user on-the-fly
+            return storage.findOrCreateUser(user.jid.toString());
+        }).then(function () {
+            cb(null, usr);
         }).catch (function (err) {
             logger.error('api user authentication failed %s', err);
             cb(null, null);
@@ -65,7 +70,7 @@ API.prototype.verify = function (opts, cb) {
     }
 };
 
-API.prototype.configurePassport = function (passport) {
+API.prototype.configurePassport = function (passport, storage) {
     var self = this;
 
     /**
@@ -80,7 +85,7 @@ API.prototype.configurePassport = function (passport) {
                 'oauth_token': accessToken
             };
 
-            self.verify(opts, done);
+            self.verify(storage, opts, done);
         }
     ));
 
@@ -97,7 +102,7 @@ API.prototype.configurePassport = function (passport) {
                 'password': password
             };
 
-            self.verify(opts, done);
+            self.verify(storage, opts, done);
         }
     ));
 
@@ -154,7 +159,7 @@ API.prototype.startApi = function (storage, settings, multiport) {
 
     // initialize use passport
     app.use(passport.initialize());
-    this.configurePassport(passport);
+    this.configurePassport(passport, storage);
     app.set('passport', passport);
 
     // check for cors
