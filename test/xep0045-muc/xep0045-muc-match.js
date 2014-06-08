@@ -12,6 +12,7 @@ describe('Xep-0045', function () {
     var xep = null;
 
     before(function (done) {
+        this.timeout(5000);
         xep = new Xep0045({
             subdomain: 'chat',
             domain: 'shakespeare.lit',
