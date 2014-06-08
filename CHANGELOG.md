@@ -1,5 +1,36 @@
 # Changelog
 
+
+## 0.5.0 
+
+* take care: breaking api changes
+* support for engine.io
+* switch to express 4.0
+* harmonized components and modules
+* implement support for mediated invitations
+* improvement: overhaul of the core eventing model
+* feature: implemented star router
+* harmonize methods between xmpp calls and api calls
+
+## 0.4.2
+
+* complete rewrite of storage module with sequelize
+
+## 0.4.1
+
+* more muc features
+* upgraded node-xmpp version
+
+## 0.4.0
+
+* refactureing of folder structure
+
+## 0.3.0
+
+* feature: added Oauth and LDAP authentication mechanism
+* switch to bluebird promise library
+* various api bug fixes
+
 ## 0.2.0
 
 * feature: Roaster support
