@@ -21,6 +21,7 @@ describe('Ping', function () {
         var srv = null;
 
         before(function (done) {
+            this.timeout(5000);
             helper.startServer()
             // configure muc module
             .then(function (server) {

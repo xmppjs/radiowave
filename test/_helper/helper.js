@@ -1,6 +1,8 @@
 'use strict';
 
-var fs = require('fs');
+var fs = require('fs'),
+    path = require('path'),
+    os = require('os');
 
 var Promise = require('bluebird'),
     Client = require('node-xmpp-client'),
@@ -75,7 +77,7 @@ function startServer() {
             username: 'username',
             password: 'password',
             dialect: 'sqlite',
-            storage: './test.sqlite'
+            storage: path.resolve(os.tmpdir(),'test.sqlite')
         });
         s.initialize({
             force: true
