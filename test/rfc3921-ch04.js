@@ -8,11 +8,13 @@ var assert = require('assert'),
     helper = require('./_helper/helper');
 
 // Xep Components
-var Rfc3921Messaging = require('../lib/components/Core/modules/Rfc3921-messaging');
+// var Rfc3921Messaging = require('../lib/components/Core/modules/Rfc3921-messaging');
 
 function configureXEP(server) {
     // register messaging component
-    server.cr.addComponent(new Rfc3921Messaging());
+
+    // in inclueded in the current star router. therefore no specific module is required
+    // server.cr.addComponent(new Rfc3921Messaging());
 }
 
 function generateMessage (to, from) {
@@ -80,7 +82,6 @@ describe('Rfc3921', function () {
          *
          */
         it('4.2. Specifying a Message Type', function (done) {
-            this.timeout(5000);
             var stanza = generateMessage(helper.userRomeo.jid, helper.userJulia.jid );
             var body = ltx.parse("<body>Wherefore art thou, Romeo?</body>");
             stanza.cnode(body);
@@ -113,7 +114,6 @@ describe('Rfc3921', function () {
          *
          */
         it('4.3. Specifying a Message Body', function (done) {
-            this.timeout(5000);
             var stanza = generateMessage(helper.userRomeo.jid, helper.userJulia.jid );
 
             var body = ltx.parse("<body>Wherefore art thou, Romeo?</body>");
@@ -153,7 +153,6 @@ describe('Rfc3921', function () {
          *
          */
         it('4.4. Specifying a Message Subject', function (done) {
-            this.timeout(5000);
             var stanza = generateMessage(helper.userRomeo.jid, helper.userJulia.jid );
 
             var subject = ltx.parse("<subject>I implore you!</subject>");
@@ -215,7 +214,6 @@ describe('Rfc3921', function () {
          * </message>
          */
         it('4.5. Specifying a Conversation Thread', function (done) {
-            this.timeout(5000);
             var stanza = generateMessage(helper.userRomeo.jid, helper.userJulia.jid );
 
             var body = ltx.parse("<body>Wherefore art thou, Romeo?</body>");
