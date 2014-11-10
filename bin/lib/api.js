@@ -5,7 +5,6 @@ var logger = require('../../lib/core/Logger')('xrocketd'),
     path = require('path'),
     express = require('express'),
     cors = require('cors'),
-    bodyParser = require('body-parser'),
     xRocket = require('../../lib'),
     JID = require('node-xmpp-core').JID;
 
@@ -154,8 +153,6 @@ API.prototype.startApi = function (storage, settings, multiport) {
         res.removeHeader('X-Powered-By');
         next();
     });
-
-    app.use(bodyParser.json({ limit: '1mb' }));
 
     // initialize use passport
     app.use(passport.initialize());

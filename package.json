@@ -32,7 +32,8 @@
     "engine.io" : "1.0.5",
     "cors" : "2.2.0",
     "bunyan" : "0.22.0",
-    "bunyan-logstash-tcp" : "~0.1.0"
+    "bunyan-logstash-tcp" : "~0.1.0",
+    "body-parser" : "~1.0.2"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
