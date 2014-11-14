@@ -29,7 +29,7 @@
     "socket.io": "0.9.x",
     "ws": "0.4.31",
     "uuid": "1.4.1",
-    "engine.io" : "1.0.5",
+    "engine.io" : "1.4.2",
     "cors" : "2.2.0",
     "bunyan" : "0.22.0",
     "bunyan-logstash-tcp" : "~0.1.0",
