@@ -13,7 +13,7 @@
     "body-parser": "~1.9.2",
     "bunyan": "1.2.3 ",
     "bunyan-logstash-tcp": "~0.3.0",
-    "cors": "2.2.0",
+    "cors": "2.5.2",
     "engine.io": "1.4.3",
     "express": "~4.10.2",
     "ldapjs": "0.7.0",
