@@ -57,6 +57,7 @@ API.prototype.verify = function (storage, opts, cb) {
             // create user on-the-fly
             return storage.findOrCreateUser(user.jid.toString());
         }).then(function () {
+            logger.info('api authentication finalized with user: ' + JSON.stringify(usr));
             cb(null, usr);
         }).catch (function (err) {
             logger.error('api user authentication failed %s', err);
