@@ -3,14 +3,14 @@
 'use strict';
 
 var util = require('util'),
-    Starter = require('../loader/starter');
+  Starter = require('../loader/starter');
 
 // read arguments
 var argv = process.argv;
 
 if (argv.length !== 3) {
-    util.puts('Usage: node zrocket settings.json');
-    process.exit(1);
+  util.puts('Usage: node zrocket settings.json');
+  process.exit(1);
 }
 
 var server = new Starter();
