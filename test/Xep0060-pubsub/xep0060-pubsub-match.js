@@ -2,63 +2,63 @@
 
 // assertion
 var assert = require('assert'),
-    should = require('should'),
-    helper = require('../_helper/helper');
+  should = require('should'),
+  helper = require('../_helper/helper');
 
 var ltx = require('ltx'),
-    Xep0060 = require('../../lib/components/Xep0060-pubsub');
+  Xep0060 = require('../../lib/components/Xep0060-pubsub');
 
 describe('Xep-0060', function () {
-    var xep = null;
+  var xep = null;
 
-    before(function (done) {
-        this.timeout(5000);
-        xep = new Xep0060({
-            subdomain: 'pubsub',
-            domain: 'shakespeare.lit',
-            storage: null
-        });
-
-        xep.initialize();
-        
-        done();
+  before(function (done) {
+    this.timeout(5000);
+    xep = new Xep0060({
+      subdomain: 'pubsub',
+      domain: 'shakespeare.lit',
+      storage: null
     });
 
-    function check(message) {
-        var stanza = ltx.parse(message);
-        return xep.match(stanza);
-    }
+    xep.initialize();
 
-    describe('check match of xmpp stanzas', function () {
+    done();
+  });
 
-        it('iq request discover features', function (done) {
-            var message =
-            "<iq type='get' \
+  function check(message) {
+    var stanza = ltx.parse(message);
+    return xep.match(stanza);
+  }
+
+  describe('check match of xmpp stanzas', function () {
+
+    it('iq request discover features', function (done) {
+      var message =
+        "<iq type='get' \
             from = 'francisco@denmark.lit/barracks'\
                 to='pubsub.shakespeare.lit' \
                 id='feature1'> \
               <query xmlns='http://jabber.org/protocol/disco#info'/> \
             </iq>";
 
-            assert.ok(check(message));
-            done();
-        });
+      assert.ok(check(message));
+      done();
+    });
 
-        it('iq request discover nodes', function (done) {
-            var message =
-            "<iq type='get' \
+    it('iq request discover nodes', function (done) {
+      var message =
+        "<iq type='get' \
                 from='francisco@denmark.lit/barracks' \
                 to='pubsub.shakespeare.lit' \
                 id='nodes1'> \
               <query xmlns='http://jabber.org/protocol/disco#items'/> \
             </iq>";
-            assert.ok(check(message));
-            done();
-        });
+      assert.ok(check(message));
+      done();
+    });
 
-        it('iq request discover node information', function (done) {
-            var message =
-            "<iq type='get' \
+    it('iq request discover node information', function (done) {
+      var message =
+        "<iq type='get' \
                 from='francisco@denmark.lit/barracks' \
                 to='pubsub.shakespeare.lit' \
                 id='info2'> \
@@ -66,13 +66,13 @@ describe('Xep-0060', function () {
                      node='blogs'/> \
             </iq>";
 
-            assert.ok(check(message));
-            done();
-        });
+      assert.ok(check(message));
+      done();
+    });
 
-        it('subscription is accepted', function (done) {
-            var message =
-            "<iq type='set' \
+    it('subscription is accepted', function (done) {
+      var message =
+        "<iq type='set' \
                 from='francisco@denmark.lit/barracks' \
                 to='pubsub.shakespeare.lit' \
                 id='sub1'> \
@@ -83,13 +83,13 @@ describe('Xep-0060', function () {
               </pubsub> \
             </iq>";
 
-            assert.ok(check(message));
-            done();
-        });
+      assert.ok(check(message));
+      done();
+    });
 
-        it('publish is accepted', function (done) {
-            var message =
-            "<iq type='set' \
+    it('publish is accepted', function (done) {
+      var message =
+        "<iq type='set' \
                 from='hamlet@denmark.lit/blogbot' \
                 to='pubsub.shakespeare.lit' \
                 id='publish1'> \
@@ -112,13 +112,13 @@ describe('Xep-0060', function () {
               </pubsub> \
             </iq>";
 
-            assert.ok(check(message));
-            done();
-        });
+      assert.ok(check(message));
+      done();
+    });
 
-        it('node deletion is accepted', function (done) {
-            var message =
-            "<iq type='set' \
+    it('node deletion is accepted', function (done) {
+      var message =
+        "<iq type='set' \
                 from='hamlet@denmark.lit/elsinore' \
                 to='pubsub.shakespeare.lit' \
                 id='retract1'> \
@@ -129,13 +129,13 @@ describe('Xep-0060', function () {
               </pubsub> \
             </iq>";
 
-            assert.ok(check(message));
-            done();
-        });
+      assert.ok(check(message));
+      done();
+    });
 
-        it('subscription with wrong target', function (done) {
-            var message =
-            "<iq type='set' \
+    it('subscription with wrong target', function (done) {
+      var message =
+        "<iq type='set' \
                 from='francisco@denmark.lit/barracks' \
                 to='pubsub2.shakespeare.lit' \
                 id='sub1'> \
@@ -146,13 +146,13 @@ describe('Xep-0060', function () {
               </pubsub> \
             </iq>";
 
-            assert.equal(check(message), false);
-            done();
-        });
+      assert.equal(check(message), false);
+      done();
+    });
 
-        it('publish with wrong target', function (done) {
-            var message =
-            "<iq type='set' \
+    it('publish with wrong target', function (done) {
+      var message =
+        "<iq type='set' \
                 from='hamlet@denmark.lit/blogbot' \
                 to='2pubsub.shakespeare.lit' \
                 id='publish1'> \
@@ -175,8 +175,8 @@ describe('Xep-0060', function () {
               </pubsub> \
             </iq>";
 
-            assert.equal(check(message), false);
-            done();
-        });
+      assert.equal(check(message), false);
+      done();
     });
+  });
 });
