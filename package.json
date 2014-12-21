@@ -9,7 +9,7 @@
   },
   "author": "Christoph Hartmann <chris@lollyrock.com>",
   "dependencies": {
-    "bluebird": "~2.4.0",
+    "bluebird": "~2.4.1",
     "body-parser": "~1.10.0",
     "bunyan": "1.2.3 ",
     "bunyan-logstash-tcp": "~0.3.0",
