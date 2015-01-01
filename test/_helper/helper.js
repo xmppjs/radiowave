@@ -40,8 +40,8 @@ function startClient(user) {
     cl.on('online', function () {
       resolve(cl);
     });
-    cl.on('error', function () {
-      reject();
+    cl.on('error', function (err) {
+      reject(err);
     });
   });
   return promise;
@@ -165,7 +165,6 @@ function sendMessageWithRomeo(stanza) {
       }).
     catch(function (err) {
       console.error(err);
-      romeo.end();
       reject(err);
     });
   });
@@ -209,12 +208,10 @@ function sendMessageWithJulia(stanza) {
       }).
     catch(function (err) {
       console.error(err);
-      julia.end();
       reject(err);
     });
   });
 }
-
 
 module.exports = {
   'userRomeo': userRomeo,

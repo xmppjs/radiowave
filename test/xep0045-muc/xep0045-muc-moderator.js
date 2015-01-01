@@ -3,7 +3,7 @@
 /**
  * @see http://xmpp.org/extensions/xep-0045.html#moderator
  */
-describe('Xep-0060', function () {
+describe('Xep-0045', function () {
   describe('8. Moderator Use Cases', function () {
 
     /*

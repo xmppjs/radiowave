@@ -49,10 +49,10 @@ describe('Model', function () {
       }, {
         jid: 'bob@example.net',
         name: 'Bob'
-      }]).success(function (user) {
+      }]).then(function (user) {
         // cool users are there
         done();
-      }).error(function (err) {
+      }).catch(function (err) {
         done(err);
       });
 
@@ -64,25 +64,25 @@ describe('Model', function () {
         where: {
           jid: 'john@example.net'
         }
-      }).success(function (john) {
+      }).then(function (john) {
 
         db.User.find({
           where: {
             jid: 'alice@example.net'
           }
-        }).success(function (alice) {
+        }).then(function (alice) {
 
           john.addRoaster(alice, {
             name: 'ms. a',
             group: 'friends',
             subscription: 'none'
-          }).success(function () {
+          }).then(function () {
             done();
           });
         });
 
 
-      }).error(function (err) {
+      }).catch(function (err) {
         done(err);
       });
 

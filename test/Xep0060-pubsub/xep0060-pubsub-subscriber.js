@@ -263,7 +263,6 @@ describe('Xep-0060', function () {
        *     id='unsub1'/>
        */
       it('6.2. Unsubscribe from a Node', function (done) {
-        console.log('6.2. Unsubscribe from a Node');
         var id = 'unsubscribe-r2d2';
         var stanza = new ltx.Element('iq', {
           to: 'pubsub.example.net',
