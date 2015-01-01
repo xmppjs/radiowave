@@ -21,7 +21,7 @@ function configureXEP(server) {
 /**
  * @see http://xmpp.org/extensions/xep-0045.html#admin
  */
-describe('Xep-0060', function () {
+describe('Xep-0045', function () {
   describe('9. Admin Use Cases', function () {
 
     var room = 'julia_room_01@chat.example.net';
