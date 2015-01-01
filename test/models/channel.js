@@ -49,10 +49,10 @@ describe('Model', function () {
       }, {
         jid: 'bob@example.net',
         name: 'Bob'
-      }]).success(function (user) {
+      }]).then(function (user) {
         // cool users are there
         done();
-      }).error(function (err) {
+      }).catch(function (err) {
         done(err);
       });
 
@@ -64,27 +64,27 @@ describe('Model', function () {
         where: {
           jid: 'john@example.net'
         }
-      }).success(function (user) {
+      }).then(function (user) {
 
         db.Channel.create({
           uuid: uuid.v4(),
           name: 'channel1'
-        }).success(function (channel) {
+        }).then(function (channel) {
           // done();
 
           user.addChannel(channel, {
             affiliation: db.ChannelSub.Affiliation.Owner,
             substate: db.ChannelSub.SubState.Member
-          }).success(function () {
+          }).then(function () {
             console.log('got here');
             // added channel as member
             done();
-          }).error(function (err) {
+          }).catch(function (err) {
             done(err);
           });
 
         });
-      }).error(function (err) {
+      }).catch(function (err) {
         done(err);
       });
 
@@ -96,25 +96,25 @@ describe('Model', function () {
         where: {
           jid: 'alice@example.net'
         }
-      }).success(function (user) {
+      }).then(function (user) {
 
         db.Channel.create({
           uuid: uuid.v4(),
           name: 'channel2'
-        }).success(function (channel) {
+        }).then(function (channel) {
 
           user.addChannel(channel, {
             affiliation: db.ChannelSub.Affiliation.Owner,
             substate: db.ChannelSub.SubState.Member
-          }).success(function () {
+          }).then(function () {
             console.log('got here');
             done();
-          }).error(function (err) {
+          }).catch(function (err) {
             done(err);
           });
 
         });
-      }).error(function (err) {
+      }).catch(function (err) {
         done(err);
       });
 
@@ -126,14 +126,14 @@ describe('Model', function () {
         where: {
           jid: 'john@example.net'
         }
-      }).success(function (user) {
+      }).then(function (user) {
 
         user.getChannels({
           where: {
             affiliation: db.ChannelSub.Affiliation.Owner,
             substate: db.ChannelSub.SubState.Member
           }
-        }).success(function (ownerChannels) {
+        }).then(function (ownerChannels) {
           assert.equal(ownerChannels.length, 1);
           done();
         });
@@ -146,13 +146,13 @@ describe('Model', function () {
         where: {
           name: 'channel1'
         }
-      }).success(function (channel) {
+      }).then(function (channel) {
 
         db.ChannelConf.create({
           key: 'foo',
           value: 'bar'
-        }).success(function (conf) {
-          channel.addConfiguration(conf).success(function () {
+        }).then(function (conf) {
+          channel.addConfiguration(conf).then(function () {
             done();
           });
         });
@@ -165,15 +165,13 @@ describe('Model', function () {
         where: {
           name: 'channel1'
         }
-      }).success(function (channel) {
-
-
+      }).then(function (channel) {
 
         db.ChannelConf.create({
           key: 'foo2',
           value: 'bar2'
-        }).success(function (conf) {
-          channel.addConfiguration(conf).success(function () {
+        }).then(function (conf) {
+          channel.addConfiguration(conf).then(function () {
             done();
           });
         });
@@ -186,25 +184,25 @@ describe('Model', function () {
         where: {
           name: 'channel1'
         }
-      }).success(function (channel) {
+      }).then(function (channel) {
 
         channel.getConfigurations({
           where: {
             key: 'foo'
           }
-        }).success(function (conf) {
+        }).then(function (conf) {
           if (conf && conf.length === 1) {
             var c = conf[0];
             c.value = 'bar2';
-            c.save().success(function () {
+            c.save().then(function () {
               done();
             })
           } else {
             db.ChannelConf.create({
               key: 'foo',
               value: 'bar2'
-            }).success(function (conf) {
-              channel.addConfiguration(conf).success(function () {
+            }).then(function (conf) {
+              channel.addConfiguration(conf).then(function () {
                 done('we should not land here');
               });
             });
@@ -221,9 +219,9 @@ describe('Model', function () {
         where: {
           name: 'channel1'
         }
-      }).success(function (channel) {
+      }).then(function (channel) {
 
-        channel.getConfigurations().success(function (conf) {
+        channel.getConfigurations().then(function (conf) {
           console.log(JSON.stringify(conf));
           try {
             assert.equal(conf.length, 2);

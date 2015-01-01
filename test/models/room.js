@@ -49,10 +49,10 @@ describe('Model', function () {
       }, {
         jid: 'bob@example.net',
         name: 'Bob'
-      }]).success(function (user) {
+      }]).then(function (user) {
         // cool users are there
         done();
-      }).error(function (err) {
+      }).catch(function (err) {
         done(err);
       });
 
@@ -64,28 +64,28 @@ describe('Model', function () {
         where: {
           jid: 'john@example.net'
         }
-      }).success(function (user) {
+      }).then(function (user) {
 
         db.Room.create({
           uuid: uuid.v4(),
           name: 'room1'
-        }).success(function (room) {
+        }).then(function (room) {
           // done();
 
           user.addRoom(room, {
             role: db.RoomMembers.Role.Moderator,
             affiliation: db.RoomMembers.Affiliation.Owner,
             nickname: 'jj'
-          }).success(function () {
+          }).then(function () {
             console.log('got here');
             // added room as member
             done();
-          }).error(function (err) {
+          }).catch(function (err) {
             done(err);
           });
 
         });
-      }).error(function (err) {
+      }).catch(function (err) {
         done(err);
       });
 
@@ -97,28 +97,28 @@ describe('Model', function () {
         where: {
           jid: 'bob@example.net'
         }
-      }).success(function (user) {
+      }).then(function (user) {
 
         db.Room.create({
           uuid: uuid.v4(),
           name: 'room2'
-        }).success(function (room) {
+        }).then(function (room) {
           // done();
 
           user.addRoom(room, {
             role: db.RoomMembers.Role.Moderator,
             affiliation: db.RoomMembers.Affiliation.Owner,
             nickname: 'bb'
-          }).success(function () {
+          }).then(function () {
             console.log('got here');
             // added room as member
             done();
-          }).error(function (err) {
+          }).catch(function (err) {
             done(err);
           });
 
         });
-      }).error(function (err) {
+      }).catch(function (err) {
         done(err);
       });
 
@@ -130,28 +130,28 @@ describe('Model', function () {
         where: {
           jid: 'alice@example.net'
         }
-      }).success(function (user) {
+      }).then(function (user) {
 
         db.Room.create({
           uuid: uuid.v4(),
           name: 'room3'
-        }).success(function (room) {
+        }).then(function (room) {
           // done();
 
           user.addRoom(room, {
             role: db.RoomMembers.Role.Moderator,
             affiliation: db.RoomMembers.Affiliation.Owner,
             nickname: 'aa'
-          }).success(function () {
+          }).then(function () {
             console.log('got here');
             // added room as member
             done();
-          }).error(function (err) {
+          }).catch(function (err) {
             done(err);
           });
 
         });
-      }).error(function (err) {
+      }).catch(function (err) {
         done(err);
       });
 
@@ -163,24 +163,24 @@ describe('Model', function () {
         where: {
           name: 'room1'
         }
-      }).success(function (room) {
+      }).then(function (room) {
 
         db.User.find({
           where: {
             jid: 'alice@example.net'
           }
-        }).success(function (user) {
+        }).then(function (user) {
 
           room.addMember(user, {
             role: db.RoomMembers.Role.Participant,
             affiliation: db.RoomMembers.Affiliation.Member,
             nickname: 'ar1'
-          }).success(function () {
+          }).then(function () {
             done();
           });
 
         });
-      }).error(function (err) {
+      }).catch(function (err) {
         done(err);
       });
     });
@@ -191,24 +191,24 @@ describe('Model', function () {
         where: {
           name: 'room2'
         }
-      }).success(function (room) {
+      }).then(function (room) {
 
         db.User.find({
           where: {
             jid: 'alice@example.net'
           }
-        }).success(function (user) {
+        }).then(function (user) {
 
           room.addMember(user, {
             role: db.RoomMembers.Role.Participant,
             affiliation: db.RoomMembers.Affiliation.Member,
             nickname: 'ar2'
-          }).success(function () {
+          }).then(function () {
             done();
           });
 
         });
-      }).error(function (err) {
+      }).catch(function (err) {
         done(err);
       });
     });
@@ -221,9 +221,9 @@ describe('Model', function () {
         where: {
           jid: 'alice@example.net'
         }
-      }).success(function (user) {
+      }).then(function (user) {
 
-        /*user.getRooms().success(function(rooms){
+        /*user.getRooms().then(function(rooms){
 
             var ownerRooms = [];
 
@@ -243,7 +243,7 @@ describe('Model', function () {
           where: {
             affiliation: db.RoomMembers.Affiliation.Owner
           }
-        }).success(function (ownerRooms) {
+        }).then(function (ownerRooms) {
           assert.equal(ownerRooms.length, 1);
           done();
         });
@@ -258,9 +258,9 @@ describe('Model', function () {
         where: {
           jid: 'alice@example.net'
         }
-      }).success(function (user) {
+      }).then(function (user) {
 
-        user.getRooms().success(function (rooms) {
+        user.getRooms().then(function (rooms) {
           // count length, alice should be part of 3 rooms
           assert.equal(rooms.length, 3);
           done();
@@ -275,13 +275,13 @@ describe('Model', function () {
         where: {
           jid: 'alice@example.net'
         }
-      }).success(function (alice) {
+      }).then(function (alice) {
 
         db.Room.find({
           where: {
             name: 'room2'
           }
-        }).success(function (room2) {
+        }).then(function (room2) {
           room2.nickname(alice).then(function (nickname) {
             assert.equal(nickname, 'ar2');
             done();
@@ -299,9 +299,9 @@ describe('Model', function () {
         where: {
           jid: 'bob@example.net'
         }
-      }).success(function (user) {
+      }).then(function (user) {
 
-        user.getRooms().success(function (rooms) {
+        user.getRooms().then(function (rooms) {
           // count length, alice should be part of 3 rooms
           assert.equal(rooms.length, 1);
           done();
@@ -318,12 +318,12 @@ describe('Model', function () {
         where: {
           name: 'room1'
         }
-      }).success(function (room) {
+      }).then(function (room) {
 
         db.RoomMessage.create({
           content: 'bla blub'
-        }).success(function (message) {
-          room.addMessage(message).success(function () {
+        }).then(function (message) {
+          room.addMessage(message).then(function () {
             done();
           });
         });
@@ -340,8 +340,8 @@ describe('Model', function () {
         where: {
           name: 'room1'
         }
-      }).success(function (room) {
-        room.getMessages().success(function (messages) {
+      }).then(function (room) {
+        room.getMessages().then(function (messages) {
           assert.equal(messages.length, 1);
           done();
         });
@@ -356,8 +356,8 @@ describe('Model', function () {
         where: {
           name: 'room1'
         }
-      }).success(function (room) {
-        room.getMessages().success(function (messages) {
+      }).then(function (room) {
+        room.getMessages().then(function (messages) {
           assert.equal(messages.length, 1);
           done();
         });
