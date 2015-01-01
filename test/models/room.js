@@ -73,9 +73,9 @@ describe('Model', function () {
           // done();
 
           user.addRoom(room, {
-            role: db.RoomMembers.Role.Moderator,
-            affiliation: db.RoomMembers.Affiliation.Owner,
-            nickname: 'jj'
+            'role': db.RoomMember.Role.Moderator,
+            'affiliation': db.RoomMember.Affiliation.Owner,
+            'nickname': 'jj'
           }).then(function () {
             console.log('got here');
             // added room as member
@@ -106,9 +106,9 @@ describe('Model', function () {
           // done();
 
           user.addRoom(room, {
-            role: db.RoomMembers.Role.Moderator,
-            affiliation: db.RoomMembers.Affiliation.Owner,
-            nickname: 'bb'
+            'role': db.RoomMember.Role.Moderator,
+            'affiliation': db.RoomMember.Affiliation.Owner,
+            'nickname': 'bb'
           }).then(function () {
             console.log('got here');
             // added room as member
@@ -139,9 +139,9 @@ describe('Model', function () {
           // done();
 
           user.addRoom(room, {
-            role: db.RoomMembers.Role.Moderator,
-            affiliation: db.RoomMembers.Affiliation.Owner,
-            nickname: 'aa'
+            'role': db.RoomMember.Role.Moderator,
+            'affiliation': db.RoomMember.Affiliation.Owner,
+            'nickname': 'aa'
           }).then(function () {
             console.log('got here');
             // added room as member
@@ -172,9 +172,10 @@ describe('Model', function () {
         }).then(function (user) {
 
           room.addMember(user, {
-            role: db.RoomMembers.Role.Participant,
-            affiliation: db.RoomMembers.Affiliation.Member,
-            nickname: 'ar1'
+            'role': db.RoomMember.Role.Participant,
+            'affiliation': db.RoomMember.Affiliation.Member,
+            'nickname': 'ar1',
+            'state': db.RoomMember.State.Accepted
           }).then(function () {
             done();
           });
@@ -200,9 +201,9 @@ describe('Model', function () {
         }).then(function (user) {
 
           room.addMember(user, {
-            role: db.RoomMembers.Role.Participant,
-            affiliation: db.RoomMembers.Affiliation.Member,
-            nickname: 'ar2'
+            'role': db.RoomMember.Role.Participant,
+            'affiliation': db.RoomMember.Affiliation.Member,
+            'nickname': 'ar2'
           }).then(function () {
             done();
           });
@@ -229,7 +230,7 @@ describe('Model', function () {
 
             // find rooms where alice is owner
             rooms.forEach(function(room){
-                if (room.RoomMembers.affiliation === 'owner') {
+                if (room.RoomMember.affiliation === 'owner') {
                     ownerRooms.push(room);
                 }
             });
@@ -241,7 +242,7 @@ describe('Model', function () {
 
         user.getRooms({
           where: {
-            affiliation: db.RoomMembers.Affiliation.Owner
+            'RoomMember.affiliation': db.RoomMember.Affiliation.Owner
           }
         }).then(function (ownerRooms) {
           assert.equal(ownerRooms.length, 1);
@@ -260,7 +261,11 @@ describe('Model', function () {
         }
       }).then(function (user) {
 
-        user.getRooms().then(function (rooms) {
+        user.getRooms({
+          where: {
+            'RoomMember.affiliation': [db.RoomMember.Affiliation.Owner, db.RoomMember.Affiliation.Member]
+          }
+        }).then(function (rooms) {
           // count length, alice should be part of 3 rooms
           assert.equal(rooms.length, 3);
           done();
@@ -270,24 +275,19 @@ describe('Model', function () {
 
     it('get the nickname of alice for room2', function (done) {
 
-      // find all rooms where I participate
-      db.User.find({
+      db.Room.find({
         where: {
-          jid: 'alice@example.net'
+          name: 'room2'
         }
-      }).then(function (alice) {
-
-        db.Room.find({
+      }).then(function (room2) {
+        room2.getMembers({
           where: {
-            name: 'room2'
+            jid: 'alice@example.net'
           }
-        }).then(function (room2) {
-          room2.nickname(alice).then(function (nickname) {
-            assert.equal(nickname, 'ar2');
-            done();
-          });
-        });
-
+        }).then(function(members){
+          assert.equal(members[0].RoomMember.nickname, 'ar2');
+          done();
+        })
       });
     });
 
