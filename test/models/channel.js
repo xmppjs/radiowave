@@ -73,8 +73,8 @@ describe('Model', function () {
           // done();
 
           user.addChannel(channel, {
-            affiliation: db.ChannelSub.Affiliation.Owner,
-            substate: db.ChannelSub.SubState.Member
+            'affiliation': db.ChannelSub.Affiliation.Owner,
+            'substate': db.ChannelSub.SubState.Member
           }).then(function () {
             console.log('got here');
             // added channel as member
@@ -104,8 +104,8 @@ describe('Model', function () {
         }).then(function (channel) {
 
           user.addChannel(channel, {
-            affiliation: db.ChannelSub.Affiliation.Owner,
-            substate: db.ChannelSub.SubState.Member
+            'affiliation': db.ChannelSub.Affiliation.Owner,
+            'substate': db.ChannelSub.SubState.Member
           }).then(function () {
             console.log('got here');
             done();
@@ -130,8 +130,7 @@ describe('Model', function () {
 
         user.getChannels({
           where: {
-            affiliation: db.ChannelSub.Affiliation.Owner,
-            substate: db.ChannelSub.SubState.Member
+            'ChannelSub.affiliation': db.ChannelSub.Affiliation.Owner
           }
         }).then(function (ownerChannels) {
           assert.equal(ownerChannels.length, 1);
