@@ -3,7 +3,7 @@
 var featureGenerator = require('../FeatureGenerator');
 
 module.exports = function (grunt) {
-  grunt.registerTask('genfeatures', 'Generate features.js from features.xml.', function () {
+  grunt.registerTask('generatefeatures', 'Generate features.js from features.xml.', function () {
 
     var done = this.async();
     var options = this.options();

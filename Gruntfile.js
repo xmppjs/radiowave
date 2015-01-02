@@ -33,12 +33,13 @@ module.exports = function (grunt) {
         verbose: true
       }
     },
-    genfeatures: {
+    generatefeatures: {
       options: {
         files: [
           'lib/components/Core/modules/Xep0030-disco/features.xml',
           'lib/components/Xep0060-pubsub/features.xml',
-          'lib/components/Xep0045-muc/features.xml']
+          'lib/components/Xep0045-muc/features.xml'
+        ]
       }
     }
   });

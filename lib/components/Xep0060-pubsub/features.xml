@@ -86,10 +86,7 @@
 </var>
 <var>
   <name>http://jabber.org/protocol/pubsub#last-published</name>
-  <desc>
-    The service supports sending of the last published item to new 
-    subscribers and to newly available resources.
-  </desc>
+  <desc>The service supports sending of the last published item to new subscribers and to newly available resources.</desc>
   <doc>XEP-0060</doc>
 </var>
 <var>
