@@ -40,7 +40,7 @@ function generateFeatureJs(filename) {
   fileContent += '\'use strict\';\n';
 
   // generate features as javascript file
-  var headline = '// Generated with xRocket. Please change the feature.xml file and run grunt generate:features';
+  var headline = '// Generated with xRocket. Please change the feature.xml file and run grunt generatefeatures';
   fileContent += headline + '\n';
 
   fileContent += '\n';
@@ -72,11 +72,14 @@ function generateFeatureJs(filename) {
     } else {
       key = featurename;
     }
-    console.log(featurename);
-    console.log(key);
+    //console.log(featurename);
+    //console.log(key);
 
-    // fileContent += key + ' : ' + '\'' + feature.name + '\','
-    fileContent += key + ' : ' + JSON.stringify(feature);
+    var jsContent = JSON.stringify(feature);
+    console.log(jsContent);
+    jsContent = jsContent.replace(/"/g, '\'');
+    console.log(jsContent);
+    fileContent += key + ' : ' + jsContent;
     if (i + 1 < features.length) {
       fileContent += ',';
     }
