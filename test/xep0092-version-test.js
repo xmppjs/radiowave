@@ -18,7 +18,7 @@ function configureXEP(server) {
 var NS_VERSION = 'jabber:iq:version',
   NAME = 'xRocket',
   VERSION = '0.1.0',
-  OS = 'xRocket operating system';
+  OS = 'RocketOS';
 
 describe('Version', function () {
   describe('C2S', function () {
