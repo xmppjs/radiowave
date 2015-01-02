@@ -25,5 +25,6 @@
     "strict": true,
     "sub" : true,
     "trailing": true,
-    "node": true
+    "node": true,
+    "predef": [ "-Promise" ] // https://github.com/jshint/jshint/issues/1747
 }
