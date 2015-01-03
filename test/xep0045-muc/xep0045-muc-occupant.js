@@ -349,7 +349,62 @@ describe('Xep-0045', function () {
      * </message>
      */
     it('7.4 Sending a Message to All Occupants', function (done) {
-      done();
+
+      var julia, romeo = null;
+
+      var msg = "<message \
+          from='hag66@shakespeare.lit/pda' \
+          id='hysf1v37' \
+          to='coven@chat.shakespeare.lit' \
+          type='groupchat'> \
+          <body>Harpier cries: 'tis time, 'tis time.</body> \
+        </message>"
+
+      // start clients
+      Promise.all([helper.startJulia(), helper.startRomeo()]).then(function (results) {
+          julia = results[0];
+          romeo = results[1];
+        }).then(function () {
+          // romeo and julia join room
+          var juliaJoinStanza = muc_helper.presenceStanza(room, nick, julia.jid.toString())
+          julia.send(juliaJoinStanza);
+
+          var romeoJoinStanza = muc_helper.presenceStanza(room, nick, romeo.jid.toString())
+          romeo.send(romeoJoinStanza);
+
+        }).then(function(){
+          // wait until romeo is online
+          return new Promise(function (resolve) {
+            romeo.once('stanza', function (stanza) {
+              assert.equal(stanza.is('presence'), true, 'Is a presence stanza')
+              resolve();
+            });
+          });
+        }).then(function(){
+          // send message
+          var stanza = ltx.parse(msg);
+          stanza.attrs.from = julia.jid.toString();
+          stanza.attrs.to = room;
+          julia.send(stanza);
+        }).then(function () {
+          return new Promise(function (resolve) {
+            romeo.on('stanza', function (stanza) {
+              if (stanza.is('message')) {
+                
+                assert.equal(stanza.attrs.from, 'julia_room_01@chat.example.net/julia');
+
+                var body = stanza.getChild('body');
+                assert.equal(body.getText(), 'Harpier cries: \'tis time, \'tis time.');
+                resolve();
+              }
+            });
+          });
+        }).then(function () {
+          done();
+        }).catch(function (err) {
+          done(err);
+        });
+
     });
 
     /*
@@ -493,27 +548,25 @@ describe('Xep-0045', function () {
      * </message>
      */
     it('7.8.2 Mediated Invitation', function (done) {
-      var julia, romeo = null;
+      var julia, benvolio = null;
 
-      var invitee = 'romeo@example.net';
+      var invitee = 'benvolio@example.net';
 
       var msg =
         "<message  \
-              id='nzd143v8'  \
-              to='coven@chat.shakespeare.lit'>  \
-              <x xmlns='http://jabber.org/protocol/muc#user'>  \
-                  <invite to='" + invitee + "'>  \
-                      <reason>  \
-                      Hey Hecate, this is the place for all good witches!  \
-                      </reason>  \
-                  </invite>  \
-              </x>  \
-            </message>";
+          id='nzd143v8'  \
+          to='coven@chat.shakespeare.lit'>  \
+          <x xmlns='http://jabber.org/protocol/muc#user'>  \
+            <invite to='" + invitee + "'>  \
+              <reason>Hey Hecate, this is the place for all good witches!</reason> \
+            </invite>  \
+          </x>  \
+        </message>";
 
       // start clients
-      Promise.all([helper.startJulia(), helper.startRomeo()]).then(function (results) {
+      Promise.all([helper.startJulia(), helper.startBenvolio()]).then(function (results) {
           julia = results[0];
-          romeo = results[1];
+          benvolio = results[1];
         })
         // send message
         .then(function () {
@@ -524,9 +577,14 @@ describe('Xep-0045', function () {
         })
         .then(function () {
           return new Promise(function (resolve) {
-            romeo.once('stanza', function (stanza) {
+            benvolio.once('stanza', function (stanza) {
+              assert.equal(stanza.is('message'), true)
 
-              // TODO check details of invite
+              var invite = stanza.getChild('x').getChild('invite');
+              assert.equal(invite.attrs.from, 'julia@example.net')
+              var reason = invite.getChild('reason');
+              assert.equal(reason.getText(), 'Hey Hecate, this is the place for all good witches!' )
+
               resolve();
             });
           });
@@ -536,11 +594,7 @@ describe('Xep-0045', function () {
         }).catch(function (err) {
           done(err);
         });
-
-
-
     });
-
 
     /*
      * 7.14 Exiting a Room
