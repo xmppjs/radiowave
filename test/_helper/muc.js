@@ -5,17 +5,23 @@ var Promise = require('bluebird'),
 
 var helper = require('./helper');
 
-function juliaCreateRoom(room, nick, done) {
-  console.log('julia creates a new room');
-  var julia;
-  var nickname = room + '/' + nick;
+function presenceStanza(room, nick, fromJid) {
 
   var msg =
-    "<presence> \
-        <x xmlns='http://jabber.org/protocol/muc'/> \
-    </presence>";
+  "<presence> \
+      <x xmlns='http://jabber.org/protocol/muc'/> \
+  </presence>";
 
-  var stanza;
+  var stanza = ltx.parse(msg);
+  stanza.attrs.from = fromJid;
+  stanza.attrs.to = room + '/' + nick;;
+
+  return stanza
+}
+
+function juliaCreateRoom(room, nick, done) {
+  console.log('julia creates a new room');
+  var julia = null;
 
   // start clients
   Promise.all([helper.startJulia()]).then(function (results) {
@@ -24,10 +30,7 @@ function juliaCreateRoom(room, nick, done) {
     })
     // send message
     .then(function () {
-      stanza = ltx.parse(msg);
-      stanza.attrs.from = julia.jid.toString();
-      stanza.attrs.to = nickname;
-
+      var stanza = presenceStanza(room, nick, julia.jid.toString())
       console.log('julia send message: ' + stanza.toString());
       julia.send(stanza);
     })
@@ -64,6 +67,8 @@ function juliaCreateRoom(room, nick, done) {
 }
 
 
+
 module.exports = {
-  'juliaCreateRoom': juliaCreateRoom
+  'juliaCreateRoom': juliaCreateRoom,
+  'presenceStanza' : presenceStanza
 };
