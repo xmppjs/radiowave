@@ -28,7 +28,7 @@
     "passport-http-bearer": "~1.0.1",
     "pem": "~1.4.4",
     "pg": "4.1.1",
-    "sequelize": "2.0.0-rc6",
+    "sequelize": "2.0.0-rc3",
     "socket.io": "0.9.x",
     "strip-json-comments": "~1.0.2",
     "superagent": "~0.21.0",
