@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.0
+
+* upgrade to sequelize 2.0
+* upgrade to latest express 4
+* deactivate storage of pubsub messages
+* optimize json export
+* restructure folder structure
+* fix all jshint issues
+* use 2 space intend instead of 4
+* fix all test case with latest upgrades
+* implement all database actions with transactions
+
+## 0.5.2
+
+* update engine.io
+
+## 0.5.1
+
+* improve logging
 
 ## 0.5.0 
 
