@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1
+
+* stop using git flow
+* update node-xmpp and pg dependencies
+* simplify json api helper
+* bugfix: return rooms with members
+
 ## 0.6.0
 
 * upgrade to sequelize 2.0
