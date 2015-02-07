@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.2
+
+* clean up old test code
+* feature: emit events for room create, update and delete
+* return creation date for room json
+
 ## 0.6.1
 
 * stop using git flow

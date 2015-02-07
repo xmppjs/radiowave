@@ -1,7 +1,7 @@
 {
   "name": "xrocketd",
   "description": "lightweight xmpp server library",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "private": true,
   "main": "lib/index.js",
   "bin": {
