@@ -3,7 +3,7 @@
 'use strict';
 
 var util = require('util'),
-  Starter = require('../loader/starter');
+  Starter = require('../lib/loader/starter');
 
 // read arguments
 var argv = process.argv;
