@@ -54,9 +54,10 @@
     "supertest": "0.8.1",
     "sqlite3": "~3.0.5"
   },
-  "scripts": {},
+  "scripts": {
+    "test": "grunt test"
+  },
   "engines": {
-    "node": "0.10.x",
-    "npm": "1.2.x"
+    "node": "0.10.x"
   }
 }
