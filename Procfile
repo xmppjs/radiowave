@@ -1,1 +1,1 @@
-web: node bin/xrocketd settings/default.json
+web: node bin/radiowave settings/default.json
