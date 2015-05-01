@@ -8,28 +8,72 @@ RadioWave is a lightweight xmpp server that is made for the web:
 
 ## Quickstart
 
-```bash
+### Docker
 
+```
+# Start PostgresSQL
+docker run --name radiowave-pg -e POSTGRES_PASSWORD=mysecretpassword -d postgres
+
+# Start Radiowave
+docker build -t radiowave .
+docker run --name radiowave --link radiowave-pg:pg -d -p 5222:5222 -p 5280:5280 -p 9031:9031 -p 9030:9030 -p 8080:8080 radiowave
+
+# detect ip if you are using boot2docker via `boot2docker ip`
+
+# Debug Docker container
+docker exec -it radiowave /bin/bash
+
+```
+
+By default three users are configured:
+
+```json
+    "type": "simple",
+    "testusers": true,
+    "users": [{
+        "user": "romeo",
+        "password": "romeo"
+    }, {
+        "user": "mercutio",
+        "password": "mercutio"
+    }, {
+        "user": "benvolio",
+        "password": "benvolio"
+    }]
+``
+
+Configure Adium
+
+![Adium Config](https://raw.github.com/node-xmpp/radiowave/master/docs/config_adium_01.png)
+![Adium Config](https://raw.github.com/node-xmpp/radiowave/master/docs/config_adium_02.png)
+
+### Manual Installation
+
+Prepare your server:
+
+```bash
 # debian
 apt-get install libicu-dev
 
-# mac
+# mac (optional)
 brew install icu4c
 ln -s /usr/local/Cellar/icu4c/<VERSION>/bin/icu-config /usr/local/bin/icu-config
 ln -s /usr/local/Cellar/icu4c/<VERSION>/include/* /usr/local/include
+```
 
-# install node server
-npm install -g radiowave'
-export DATABASE_URL=postgres://postgres:password@localhost/database
+Adapt the `settings/default.json` to your needs. If you do not install a specific database, Radiowave will fallback to SQLite.
+
+```
+npm install -g radiowave
 foreman start
 ```
 
-## Register as service
+### Register as service
 
 ```bash
 foreman export upstart /etc/init
 service radiowave start
-``
+```
 
 ## Features & Roadmap
 
