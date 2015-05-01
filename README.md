@@ -1,6 +1,6 @@
-# xRocket
+# RadioWave
 
-xRocket is a lightweight xmpp server that is made for the web:
+RadioWave is a lightweight xmpp server that is made for the web:
 
  - easy deployment on cloud platforms
  - fast

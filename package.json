@@ -1,11 +1,11 @@
 {
-  "name": "xrocketd",
+  "name": "radiowave",
   "description": "lightweight xmpp server library",
   "version": "0.6.3",
   "private": true,
   "main": "lib/index.js",
   "bin": {
-    "xrocket": "./bin/xrocketd"
+    "radiowave": "./bin/radiowave"
   },
   "author": "Christoph Hartmann <chris@lollyrock.com>",
   "dependencies": {
