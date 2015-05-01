@@ -27,20 +27,22 @@ function sendMessageFromJuliaToRomeo(stanza) {
     var julia, romeo = null;
 
     // start clients
-    Promise.all([helper.startJulia(), helper.startRomeo()]).then(function (results) {
-        julia = results[0];
-        romeo = results[1];
-      })
-      .then(function () {
-        // send publish message
-        console.log('julia send: ' + stanza.root().toString());
-        julia.send(stanza);
-      })
-      .then(function () {
-        romeo.once('stanza', function (stanza) {
-          resolve(stanza);
-        });
-      }).catch(reject);
+    helper.startJulia().then(function(j){
+      julia = j;
+      return helper.startRomeo();
+    }).then(function (r) {
+      romeo = r
+    })
+    .then(function () {
+      // send publish message
+      console.log('julia send: ' + stanza.root().toString());
+      julia.send(stanza);
+    })
+    .then(function () {
+      romeo.once('stanza', function (stanza) {
+        resolve(stanza);
+      });
+    }).catch(reject);
   });
 }
 
