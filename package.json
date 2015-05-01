@@ -23,40 +23,43 @@
     "bunyan-logstash-tcp": "~0.3.4",
     "cors": "2.6.0",
     "engine.io": "1.5.1",
-    "express": "~4.10.6",
+    "express": "4.12.3",
     "ldapjs": "0.7.1",
     "lodash": "3.7.0",
     "ltx": "0.8.0",
     "nconf": "~0.7.1",
-    "node-uuid": "1.4.3",
+    "node-uuid": "~1.4.2",
     "node-xmpp-core": "~1.0.0",
     "node-xmpp-server": "~1.0.0",
     "passport": "0.2.1",
     "passport-http": "~0.2.2",
     "passport-http-bearer": "~1.0.1",
     "pem": "~1.7.2",
-    "pg-hstore" : "2.3.2",
+    "pg-hstore": "2.3.2",
     "pg": "4.3.0",
     "sequelize": "2.0.0-rc8",
     "socket.io": "0.9.x",
     "strip-json-comments": "~1.0.2",
     "superagent": "~0.21.0",
-    "node-uuid": "~1.4.2",
     "ws": "0.7.1"
   },
   "devDependencies": {
     "grunt": "~0.4.5",
     "grunt-contrib-jshint": "~0.11.2",
     "grunt-mocha-cli": "~1.13.0",
-    "node-xmpp-client": "1.0.0-alpha2",
+    "grunt-mocha-istanbul": "^2.4.0",
     "grunt-retire": "~0.3.10",
+    "istanbul": "^0.3.13",
+    "mocha": "^2.2.4",
+    "node-xmpp-client": "1.0.0-alpha20",
     "should": "4.4.1",
-    "supertest": "0.8.1",
-    "sqlite3": "~3.0.5"
+    "sqlite3": "~3.0.5",
+    "supertest": "0.15.0"
   },
-  "scripts": {},
+  "scripts": {
+    "test": "grunt test"
+  },
   "engines": {
-    "node": "0.10.x",
-    "npm": "1.2.x"
+    "node": "0.10.x"
   }
 }
