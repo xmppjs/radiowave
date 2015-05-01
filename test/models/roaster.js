@@ -3,8 +3,8 @@
 var fs = require('fs'),
   uuid = require('node-uuid'),
   assert = require('assert'),
-  xRocket = require('../../lib'),
-  Storage = xRocket.Storage;
+  radiowave = require('../../lib'),
+  Storage = radiowave.Storage;
 
 describe('Model', function () {
 

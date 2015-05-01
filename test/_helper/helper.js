@@ -6,8 +6,8 @@ var fs = require('fs'),
 
 var Promise = require('bluebird'),
   Client = require('node-xmpp-client'),
-  xRocket = require('../../lib'),
-  C2SServer = xRocket.Net.C2SServer;
+  radiowave = require('../../lib'),
+  C2SServer = radiowave.Net.C2SServer;
 
 // user
 var userRomeo = {
@@ -72,7 +72,7 @@ function startServer() {
 
     // inistanciate storage module
     // use sqlite for testing
-    var s = new xRocket.Storage({
+    var s = new radiowave.Storage({
       database: 'database',
       username: 'username',
       password: 'password',
@@ -86,27 +86,27 @@ function startServer() {
       // C2S Server 
       var cs2 = new C2SServer({});
 
-      // attach connection manager to xrocket
-      var connR = new xRocket.Router.ConnectionRouter(storage);
+      // attach connection manager to radiowave
+      var connR = new radiowave.Router.ConnectionRouter(storage);
 
       connR.addConnectionManager(cs2);
 
       // register users
-      var simpleAuth = new xRocket.Auth.Simple();
+      var simpleAuth = new radiowave.Auth.Simple();
       simpleAuth.addUser('romeo', 'romeo');
       simpleAuth.addUser('julia', 'julia');
       simpleAuth.addUser('benvolio', 'benvolio');
       connR.authMethods.push(simpleAuth);
 
       // register xep component
-      var cr = new xRocket.Router.ComponentRouter({
+      var cr = new radiowave.Router.ComponentRouter({
         domain: 'example.net'
       });
 
       // chain ConnectionRouter to ComponentRouter
       // connR.chain(cr);
 
-      var starRouter = new xRocket.Router.StarRouter();
+      var starRouter = new radiowave.Router.StarRouter();
 
       // add sending router
       connR.chain(starRouter);

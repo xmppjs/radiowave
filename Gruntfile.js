@@ -7,7 +7,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-mocha-cli');
   grunt.loadNpmTasks('grunt-retire');
 
-  // load xrocket tasks
+  // load radiowave tasks
   grunt.loadTasks('./grunt/tasks');
 
   // Project configuration.

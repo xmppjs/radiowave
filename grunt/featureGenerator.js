@@ -40,7 +40,7 @@ function generateFeatureJs(filename) {
   fileContent += '\'use strict\';\n';
 
   // generate features as javascript file
-  var headline = '// Generated with xRocket. Please change the feature.xml file and run grunt generatefeatures';
+  var headline = '// Generated with Radiowave. Please change the feature.xml file and run grunt generatefeatures';
   fileContent += headline + '\n';
 
   fileContent += '\n';

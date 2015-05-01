@@ -16,9 +16,9 @@ function configureXEP(server) {
 }
 
 var NS_VERSION = 'jabber:iq:version',
-  NAME = 'xRocket',
-  VERSION = '0.1.0',
-  OS = 'RocketOS';
+  NAME = 'Radiowave',
+  VERSION = '1.0.0',
+  OS = 'RadioOS';
 
 describe('Version', function () {
   describe('C2S', function () {

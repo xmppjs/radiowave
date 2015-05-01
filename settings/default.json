@@ -1,7 +1,7 @@
 {
     // xmpp domain
     "domain": "example.net",
-    // configures the client endpoint e.g. if xrocket is deployed behind a proxy
+    // configures the client endpoint e.g. if radiowave is deployed behind a proxy
     "http": {
         "host": "http://localhost"
     },
@@ -10,7 +10,7 @@
     "subpath": "",
     // should be "development" or "production"
     "environment": "development",
-    // load various xrocket components
+    // load various radiowave components
     "components": [{
         "type": "Core",
         "modules": [
@@ -67,8 +67,10 @@
             "password": "benvolio"
         }]
     }],
-    // storage for the data, xrocketd supports
+    // storage for the data, radiowave supports
     // sqlite, postgre and mysql
+    // configuration will be ignored, if a postgres
+    // database is linked via docker
     "storage": {
         "dialect": "sqlite",
         "user": "username",
