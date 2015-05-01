@@ -2,12 +2,12 @@
     // xmpp domain
     "domain": "example.net",
     // configures the client endpoint e.g. if radiowave is deployed behind a proxy
-    "http": {
-        "host": "http://localhost"
-    },
+    //"http": {
+    //    "host": "http://localhost"
+    //},
     // runs api and engineio on a subpath url 
     // e.g. http://exmaple.com/subpath instead of http://exmaple.com/
-    "subpath": "",
+    // "subpath": "",
     // should be "development" or "production"
     "environment": "development",
     // load various radiowave components
@@ -24,7 +24,7 @@
         ]
     }, {
         "type": "Xep0045",
-        "subdomain": "chat"
+        "subdomain": "conference"
     }, {
         "type": "Xep0060",
         "subdomain": "pubsub"
@@ -41,11 +41,7 @@
         "interface": "0.0.0.0"
     }, {
         "type": "websocket",
-        "port": 42426,
-        "interface": "0.0.0.0"
-    }, {
-        "type": "socketio",
-        "port": 8888,
+        "port": 5281,
         "interface": "0.0.0.0"
     }, {
         "type": "engineio",
@@ -69,7 +65,7 @@
     }],
     // storage for the data, radiowave supports
     // sqlite, postgre and mysql
-    // configuration will be ignored, if a postgres
+    // configuration will be ignored, if a postgres 
     // database is linked via docker
     "storage": {
         "dialect": "sqlite",
@@ -81,9 +77,10 @@
     // api and cors settings
     "api": {
         "activate": true,
-        "port": 8888,
+        "port": 8080,
         "cors": {
-            "hosts": ["http://localhost", "http://example.net"]
+            // do not use * in production
+            "hosts": ["*"]
         }
     }
 }
