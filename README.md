@@ -119,6 +119,109 @@ service radiowave start
 | [XEP-0158: CAPTCHA Forms](http://xmpp.org/extensions/xep-0158.html)  | Prevent bots | ✘ |
 | [XEP-0205: Best Practices to Discourage Denial of Service Attacks](http://xmpp.org/extensions/xep-0205.html) | Prevent denial of service attacks | ✘ |
 
+
+# FAQ
+
+## REST api
+
+Radiowave ships with a REST api. To determine the own JID:
+
+```
+curl -s --user romeo:romeo http://192.168.59.103:8080/api/user | jq '.'
+{
+  "user": "romeo@example.net"
+}
+```
+
+Create a new MUC room via Rest API:
+
+```bash
+$ curl -s --user romeo:romeo http://192.168.59.103:8080/api/user/rooms | jq '.'
+[]
+
+$ curl -s -X POST --user romeo:romeo --data  '{"name" : "romeo"}' http://localhost:8080/api/user/rooms --header "Content-Type:application/json" | jq '.'
+{
+  "id": 1,
+  "name": "romeo",
+  "updatedAt": "2015-05-01T13:33:41.000Z",
+  "createdAt": "2015-05-01T13:33:41.000Z"
+}
+
+$ curl -s --user romeo:romeo http://192.168.59.103:8080/api/user/rooms | jq '.'
+[
+  {
+    "id": 1,
+    "name": "romeo",
+    "subject": null,
+    "description": null,
+    "createdAt": "2015-05-01T13:33:41.000Z",
+    "updatedAt": "2015-05-01T13:33:41.000Z",
+    "members": [
+      {
+        "jid": "romeo@example.net",
+        "RoomMember": {
+          "nickname": "",
+          "role": "moderator",
+          "affiliation": "owner",
+          "state": "accepted",
+          "createdAt": "2015-05-01 13:33:41.000 +00:00",
+          "updatedAt": "2015-05-01 13:33:41.000 +00:00",
+          "UserId": 1,
+          "RoomId": 1
+        }
+      }
+    ]
+  }
+]
+```
+
+## Database
+
+Radiowave uses [sequelize](http://docs.sequelizejs.com/en/latest/) as database abstractions layer. While it provides support for PostgreSQL, MySQL, MariaDB, SQLite and MSSQL, Radiowave is only tested on SQLite and PostgresSQL. 
+
+Radioware make heavy use of SQL transactions to ensure no data is corrupted. Since SQLite is not optimized for handling many parallel connection, I recommend to use PostgresSQL for production. Change the configuration file accordingly:
+
+```json
+"storage": {
+    "dialect" : "postgres",
+    "native": true,
+    "user": "postgres",
+    "password" : "supersecretpassword",
+    "database": "radiowave",
+    "host": "localhost",
+    "port": 5432
+}
+```
+
+## Logging
+
+Radiowave uses [bunyan](https://github.com/trentm/node-bunyan) as logger framework. To format the json output pipe the content to bunyan.
+
+```
+$ node bin/radiowave settings/default.json |bunyan
+
+[2015-05-01T13:31:25.029Z] DEBUG: radiowave/35782 on milkyway.fritz.box: Load file: /Users/chris/Development/xrocket/xrocketd/settings/default.json (widget_type=radiowave)
+[2015-05-01T13:31:25.047Z] DEBUG: radiowave/35782 on milkyway.fritz.box: Environment: development (widget_type=radiowave)
+[2015-05-01T13:31:25.048Z] DEBUG: radiowave/35782 on milkyway.fritz.box: port: 5222 (widget_type=radiowave)
+[2015-05-01T13:31:25.048Z] DEBUG: radiowave/35782 on milkyway.fritz.box: port: 5280 (widget_type=radiowave)
+[2015-05-01T13:31:25.048Z] DEBUG: radiowave/35782 on milkyway.fritz.box: port: 5281 (widget_type=radiowave)
+[2015-05-01T13:31:25.048Z] DEBUG: radiowave/35782 on milkyway.fritz.box: port: 8889 (widget_type=radiowave)
+[2015-05-01T13:31:25.048Z] DEBUG: radiowave/35782 on milkyway.fritz.box: port: 8080 (widget_type=radiowave)
+[2015-05-01T13:31:25.049Z] DEBUG: radiowave/35782 on milkyway.fritz.box: load storage module (widget_type=radiowave)
+[2015-05-01T13:31:25.050Z] DEBUG: radiowave/35782 on milkyway.fritz.box: initialize (widget_type=storage)
+[2015-05-01T13:31:25.234Z] DEBUG: radiowave/35782 on milkyway.fritz.box: load connection manger (widget_type=radiowave)
+[2015-05-01T13:31:25.241Z] DEBUG: radiowave/35782 on milkyway.fritz.box: load xmpp components (widget_type=radiowave)
+[2015-05-01T13:31:25.241Z] DEBUG: radiowave/35782 on milkyway.fritz.box: Configure domain: example.net (widget_type=radiowave)
+[2015-05-01T13:31:25.245Z]  INFO: radiowave/35782 on milkyway.fritz.box: load components Core (widget_type=radiowave)
+[2015-05-01T13:31:25.246Z] DEBUG: radiowave/35782 on milkyway.fritz.box: load core modules (widget_type=core)
+[2015-05-01T13:31:25.247Z]  INFO: radiowave/35782 on milkyway.fritz.box: load RFC 3921: Roaster (widget_type=roaster)
+[2015-05-01T13:31:25.247Z] DEBUG: radiowave/35782 on milkyway.fritz.box: load module: RFC 3921: Roaster (widget_type=xcomponent)
+[2015-05-01T13:31:25.248Z]  INFO: radiowave/35782 on milkyway.fritz.box: load XEP-0016: Privacy Lists (widget_type=privacylist)
+[2015-05-01T13:31:25.248Z] DEBUG: radiowave/35782 on milkyway.fritz.box: load module: XEP-0016: Privacy Lists (widget_type=xcomponent)
+[2015-05-01T13:31:25.248Z]  INFO: radiowave/35782 on milkyway.fritz.box: load XEP-0030: Service Discovery (widget_type=disco)
+...
+```
+
 # Author
 
  * Christoph Hartmann <chris@lollyrock.com>
