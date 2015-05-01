@@ -1,10 +1,11 @@
 # RadioWave
 
-RadioWave is a lightweight xmpp server that is made for the web:
+RadioWave is a lightweight XMPP server that is made for the web:
 
- - easy deployment on cloud platforms
+ - easy deployment
+ - simple configuration via JSON
  - fast
- - simple to configure
+ - rest api
 
 ## Quickstart
 
@@ -75,9 +76,9 @@ foreman export upstart /etc/init
 service radiowave start
 ```
 
-## Features & Roadmap
+# Features & Roadmap
 
-✔ supported, ∅ partially supported by xRocket, ✘ not supported by xRocket (yet)
+✔ supported, ∅ partially supported by Radiowave, ✘ not supported by Radiowave (yet)
          
 | Reference     | Description | Supported |
 | ------------- | ----------- | --------- |
