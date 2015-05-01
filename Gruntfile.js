@@ -6,6 +6,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-mocha-cli');
   grunt.loadNpmTasks('grunt-retire');
+  grunt.loadNpmTasks('grunt-mocha-istanbul')
 
   // load radiowave tasks
   grunt.loadTasks('./grunt/tasks');
@@ -33,6 +34,21 @@ module.exports = function (grunt) {
         verbose: true
       }
     },
+    'mocha_istanbul': {
+      coveralls: {
+        src: 'test',
+        options: {
+          coverage: true,
+          legend: true,
+          /* check: {
+            lines: 90,
+            statements: 90
+          }, */
+          root: './lib',
+          reportFormats: [ 'lcov', 'html' ]
+        }
+      }
+    },
     generatefeatures: {
       options: {
         files: [
@@ -44,8 +60,19 @@ module.exports = function (grunt) {
     }
   });
 
+  grunt.event.on('coverage', function(lcov, done){
+    require('coveralls').handleInput(lcov, function(error) {
+      if (error) {
+        console.log(error)
+        return done(error)
+      }
+      done()
+    })  
+  })
+
   // Configure tasks.
   grunt.registerTask('default', ['test']);
-  grunt.registerTask('test', ['mochacli', 'jshint', 'retire']);
+  grunt.registerTask('coveralls', ['mocha_istanbul:coveralls'])
+  grunt.registerTask('test', ['mochacli', 'jshint', 'retire', 'coveralls']);
 
 };
