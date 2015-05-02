@@ -41,12 +41,12 @@ By default three users are configured:
         "user": "benvolio",
         "password": "benvolio"
     }]
-``
+```
 
 Configure Adium
 
-![Adium Config](https://raw.github.com/node-xmpp/radiowave/master/docs/config_adium_01.png)
-![Adium Config](https://raw.github.com/node-xmpp/radiowave/master/docs/config_adium_02.png)
+![Adium Config](https://raw.githubusercontent.com/node-xmpp/radiowave/master/doc/config_adium_01.png)
+![Adium Config](https://raw.githubusercontent.com/node-xmpp/radiowave/master/doc/config_adium_02.png)
 
 ### Manual Installation
 
