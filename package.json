@@ -1,7 +1,7 @@
 {
   "name": "radiowave",
   "description": "lightweight xmpp server library",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "author": "Christoph Hartmann <chris@lollyrock.com>",
   "keywords": [
     "xmpp",
