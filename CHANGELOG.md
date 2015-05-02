@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0
+
+* rename to radiowave
+* add Dockerfile
+* support for linked postgres instance (Docker)
+* more example in readme
+* add travis test
+
 ## 0.6.2
 
 * clean up old test code
