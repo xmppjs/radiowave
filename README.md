@@ -1,6 +1,6 @@
-# RadioWave
+# Radiowave
 
-RadioWave is a lightweight XMPP server that is made for the web:
+Radiowave is a lightweight XMPP server that is made for the web:
 
  - easy deployment
  - simple configuration via JSON
@@ -78,15 +78,15 @@ service radiowave start
 
 # Features & Roadmap
 
-✔ supported, ∅ partially supported by Radiowave, ✘ not supported by Radiowave (yet)
+✔ supported, ✘ not supported by Radiowave (yet)
          
 | Reference     | Description | Supported |
 | ------------- | ----------- | --------- |
 | Core XMPP specifications |||
 | [RFC-3920 Extensible Messaging and Presence Protocol (XMPP): Core](http://tools.ietf.org/html/rfc3920)      | XMPP Core mechanisms and routing | ✔ |
-| [RFC-3921 XMPP: Instant Messaging and Presence](http://tools.ietf.org/html/rfc3921)      | XMPP IM and presence | ∅ |
+| [RFC-3921 XMPP: Instant Messaging and Presence](http://tools.ietf.org/html/rfc3921)      | XMPP IM and presence | (✔) |
 | [RFC-6120 XMPP: Core ](http://tools.ietf.org/html/rfc6120)      | RFC-3920 update| ✔ |
-| [RFC-6121 XMPP: Instant Messaging and Presence](http://tools.ietf.org/html/rfc6121)      | RFC-3920 update | ∅ |
+| [RFC-6121 XMPP: Instant Messaging and Presence](http://tools.ietf.org/html/rfc6121)      | RFC-3920 update | (✔) |
 | [RFC-6122 XMPP: Address Format](http://tools.ietf.org/html/rfc6122)      | Format for user and services addresses | ✔ |
 | XMPP Server compliance |||
 | [XEP-0212: XMPP Basic Server 2008](http://xmpp.org/extensions/xep-0212.html) | Compliance Specification | ✘ |
@@ -98,21 +98,21 @@ service radiowave start
 | [XEP-0030: Service Discovery](http://xmpp.org/extensions/xep-0030.html)  | Discover features and capabilities of server | ✘ |
 | [XEP-0115: Entity Capabilities](http://xmpp.org/extensions/xep-0115.html)  |  | ✘ |
 | XMPP Advanced Server Extensions  |||
-| [XEP-0045: Multi-User Chat](http://xmpp.org/extensions/xep-0045.html)  | Chat conferences with multiple users | ✘ |
+| [XEP-0045: Multi-User Chat](http://xmpp.org/extensions/xep-0045.html)  | Chat conferences with multiple users | (✔) |
 | [XEP-0054: vcard-temp](http://xmpp.org/extensions/xep-0054.html) | Business cards storage |✘|
-| [XEP-0060: Publish-Subscribe](http://xmpp.org/extensions/xep-0060.html)  | Publish and subscribe over xmpp| ∅ |
+| [XEP-0060: Publish-Subscribe](http://xmpp.org/extensions/xep-0060.html)  | Publish and subscribe over xmpp| (✔) |
 | [XEP-0114: Jabber Component Protocol](http://xmpp.org/extensions/xep-0114.html) | Server-side components |✘|
-| [XEP-0124: BOSH](http://xmpp.org/extensions/xep-0124.html) | BOSH HTTP Binding|✘|
+| [XEP-0124: BOSH](http://xmpp.org/extensions/xep-0124.html) | BOSH HTTP Binding| ✔ |
 | [XEP-0163: Personal Eventing Protocol](http://xmpp.org/extensions/xep-0163.html) | user location, modd or activity |✘|
 | [XEP-0191: Blocking Command](http://xmpp.org/extensions/xep-0191.html) | Communication blocking|✘|
 | [XEP-0198: Stream Management](http://xmpp.org/extensions/xep-0198.html) | Stream commands|✘|
-| [XEP-0206: XMPP Over BOSH](http://xmpp.org/extensions/xep-0206.html)  | Connect over HTTP with long-polling |✘ |
+| [XEP-0206: XMPP Over BOSH](http://xmpp.org/extensions/xep-0206.html)  | Connect over HTTP with long-polling | ✔ |
 | XMPP Extensions     |||
 | [XEP-0004: Data Forms](http://xmpp.org/extensions/xep-0004.html) | XML Forms for queries and responses| ✘ |
 | [XEP-0092: Software Version](http://xmpp.org/extensions/xep-0092.html)  | Discover software release| ✔ |
 | [XEP-0199: XMPP Ping](http://xmpp.org/extensions/xep-0199.html)  | Ping Pong for XMPP | ✔ |
 | [XEP-0203: Delayed Delivery](http://xmpp.org/extensions/xep-0203.html)  | Offline messaging|✘ |
-| [DRAFT: Websocket](http://tools.ietf.org/html/draft-ietf-xmpp-websocket-00)  | Connect over HTTP with websockets |✘ |
+| [DRAFT: Websocket](http://tools.ietf.org/html/draft-ietf-xmpp-websocket-00)  | Connect over HTTP with websockets | ✔ |
 | [XEP-0307:Unique Room Names for Multi-User Chat](http://xmpp.org/extensions/xep-0307.html)  | Create unique room names | ✔ |
 | XMPP Security    |||
 | [XEP-0077: In-band Registration](http://xmpp.org/extensions/xep-0077.html)  | For account creators | ✘ |
